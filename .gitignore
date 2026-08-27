@@ -1,0 +1,35 @@
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Secrets & Environment Configuration (CRITICAL - NEVER COMMIT)
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Local Data & Outputs (except placeholder tracking files)
+data/*
+!data/.gitkeep
+!data/sample_doc.md
+
+outputs/*
+!outputs/.gitkeep
+
+# Vector Stores & Databases
+chroma_db/
+.chroma/
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# IDE & System Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
