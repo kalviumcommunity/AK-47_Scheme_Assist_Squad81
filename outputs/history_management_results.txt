@@ -1,0 +1,77 @@
+********************************************************************************
+   STARTING SIMULATION WITH STRATEGY: TRIM (Budget: 180)
+********************************************************************************
+
+--- TURN 1 ---
+User: What eligibility rules apply for the Senior Citizen Support scheme?
+Assistant: The Senior Citizen Support scheme requires applicants to be 60+ years old and have an annual income under $2,500. Documentation includes proof of age and income.
+Current History Token Count: 73
+
+--- TURN 2 ---
+User: Can you show me the exact documentation guidelines and proof of income requirements?
+Assistant: Based on the official circular: 'Official Income Verification circular and guidelines: All applicants must submit a certified copy of tax returns or a salary certificate issued by a recognized local gazetted authority. Self-employed individuals need an affidavit from a notary public confirming average monthly income limits. The government reserves the right to audit bank accounts.', you can submit either tax returns, a salary certificate, or an affidavit from a notary public.
+Current History Token Count: 179
+
+--- TURN 3 (Will overflow budget) ---
+User: What is the processing time and where should I submit my completed form?
+
+[BUDGET EXCEEDED] Current tokens: 197 > Budget: 180
+Applying strategy: 'TRIM' to reduce token footprint...
+  -> Trimmed oldest conversation turn:
+     User:   What eligibility rules apply for the Sen...
+     Assist: The Senior Citizen Support scheme requir...
+  -> Trimming complete. New token count: 145
+Assistant: Applications are processed in 15 business days at the District Welfare Office. You can submit it in person or online via the official scheme portal: schemeassist.gov.in.
+
+[BUDGET EXCEEDED] Current tokens: 182 > Budget: 180
+Applying strategy: 'TRIM' to reduce token footprint...
+  -> Trimmed oldest conversation turn:
+     User:   Can you show me the exact documentation ...
+     Assist: Based on the official circular: 'Officia...
+  -> Trimming complete. New token count: 76
+Final History Token Count: 76
+
+Final Message History State:
+  [0] SYSTEM: You are SchemeAssist, a helpful government welfare scheme RAG assistant....
+  [1] USER: What is the processing time and where should I submit my completed form?...
+  [2] ASSISTANT: Applications are processed in 15 business days at the District Welfare Office. You can submit it in person or online via...
+********************************************************************************
+   COMPLETED SIMULATION FOR STRATEGY: TRIM
+********************************************************************************
+
+********************************************************************************
+   STARTING SIMULATION WITH STRATEGY: SUMMARIZE (Budget: 180)
+********************************************************************************
+
+--- TURN 1 ---
+User: What eligibility rules apply for the Senior Citizen Support scheme?
+Assistant: The Senior Citizen Support scheme requires applicants to be 60+ years old and have an annual income under $2,500. Documentation includes proof of age and income.
+Current History Token Count: 73
+
+--- TURN 2 ---
+User: Can you show me the exact documentation guidelines and proof of income requirements?
+Assistant: Based on the official circular: 'Official Income Verification circular and guidelines: All applicants must submit a certified copy of tax returns or a salary certificate issued by a recognized local gazetted authority. Self-employed individuals need an affidavit from a notary public confirming average monthly income limits. The government reserves the right to audit bank accounts.', you can submit either tax returns, a salary certificate, or an affidavit from a notary public.
+Current History Token Count: 179
+
+--- TURN 3 (Will overflow budget) ---
+User: What is the processing time and where should I submit my completed form?
+
+[BUDGET EXCEEDED] Current tokens: 197 > Budget: 180
+Applying strategy: 'SUMMARIZE' to reduce token footprint...
+  -> Summarization complete. New token count: 153
+Assistant: Applications are processed in 15 business days at the District Welfare Office. You can submit it in person or online via the official scheme portal: schemeassist.gov.in.
+
+[BUDGET EXCEEDED] Current tokens: 190 > Budget: 180
+Applying strategy: 'SUMMARIZE' to reduce token footprint...
+  -> Summarization complete. New token count: 102
+Final History Token Count: 102
+
+Final Message History State:
+  [0] SYSTEM: You are SchemeAssist, a helpful government welfare scheme RAG assistant....
+  [1] SYSTEM: [Summary of earlier discussion: User and Assistant discussed eligibility requirements, income thresholds, documentation ...
+  [2] USER: What is the processing time and where should I submit my completed form?...
+  [3] ASSISTANT: Applications are processed in 15 business days at the District Welfare Office. You can submit it in person or online via...
+********************************************************************************
+   COMPLETED SIMULATION FOR STRATEGY: SUMMARIZE
+********************************************************************************
+
