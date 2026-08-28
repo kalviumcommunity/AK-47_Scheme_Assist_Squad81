@@ -1,0 +1,67 @@
+================================================================================
+  [RAG App] SchemeAssist - LLM Output Control & Parameter Experiments
+================================================================================
+
+---------------- PART 1: TEMPERATURE PARAMETER EXPERIMENT ----------------
+Prompt: 'Generate a creative name and tagline for an automated welfare assistant.'
+
+[Testing Temperature = 0.0 (Deterministic / Grounded)]
+  Run 1: "SchemeAssist: Your Gateway to Simple Welfare Discovery." (Mock=True)
+  Run 2: "SchemeAssist: Your Gateway to Simple Welfare Discovery." (Mock=True)
+  Run 3: "SchemeAssist: Your Gateway to Simple Welfare Discovery." (Mock=True)
+
+[Testing Temperature = 1.2 (Stochastic / Creative)]
+  Run 1: "GovBuddy | Skip the red-tape, unlock benefits instantly!" (Mock=True)
+  Run 2: "GovBuddy | Skip the red-tape, unlock benefits instantly!" (Mock=True)
+  Run 3: "WelfareWise - Navigate national support systems like a pro!" (Mock=True)
+
+Summary of Temperature Runs:
+  Uniqueness at Temp = 0.0: 1/3 unique response(s)
+  Uniqueness at Temp = 1.2: 2/3 unique response(s)
+
+------------------ PART 2: MAX TOKENS LENGTH CAPPING ------------------
+Prompt: 'Briefly explain the steps required to receive governmental financial support.'
+
+[Testing without token limit (Unlimited)]
+  Output: To receive financial support, you must first verify your age and local residency at the local department, complete Form 82-B, attach income details, and submit.
+  Finish Reason: 'stop'
+
+[Testing with max_tokens = 15 (Truncated)]
+  Output: To receive financial support, you must first verify your age and local residency at ...
+  Finish Reason: 'length'
+
+-------------------- PART 3: STOP SEQUENCE FILTERS --------------------
+Prompt: 'Where is the form submitted and how is it processed?'
+Stop Sequences: ['Office', 'online']
+
+[Testing without stop sequences]
+  Output: "Submit the completed PDF at the nearest District Welfare Office. You can also submit online."
+  Finish Reason: 'stop'
+
+[Testing with stop sequences: ['Office', 'online']]
+  Output: "Submit the completed PDF at the nearest District Welfare"
+  Finish Reason: 'stop'
+
+
+======================================================================
+  RECOMMENDED SETTINGS FOR GROUNDED, FACTUAL RAG TASKS
+======================================================================
+1. Temperature: Set to 0.0 (or very low, <= 0.2).
+   - Rationale: High temperatures introduce stochastic sampling which can lead to hallucinated
+     facts or rambling sentences. Temperature 0.0 guarantees maximum determinism, causing the
+     model to select the highest-probability tokens based purely on the retrieved context.
+     
+2. Max Tokens: Set to a sensible limit (e.g., 300 to 500 tokens).
+   - Rationale: Prevents unexpected token consumption and billing spikes in case of runaway
+     generation or loop bugs, while leaving sufficient room for complete factual answers.
+     
+3. Top P (Nucleus Sampling): Keep at 1.0 if temperature is 0.0, or reduce to 0.1 if using temperature.
+   - Rationale: Combining temperature 0.0 with top_p 1.0 is standard. Restricting Top P to a
+     low value (like 0.1) limits the vocabulary selection to only the most confident tokens.
+     
+4. Stop Sequences: Utilize ['\n\n', 'User:', 'Context:'] as needed.
+   - Rationale: Explicitly halts generation if the model tries to self-talk or generate extra
+     turns (such as fabricating a new conversation turn or repeating headers), which preserves
+     control boundaries.
+======================================================================
+
