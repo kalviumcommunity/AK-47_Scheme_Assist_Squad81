@@ -1,0 +1,59 @@
+======================================================================
+  [RAG App] SchemeAssist - Tokenization & Cost Estimation Utility
+======================================================================
+Loaded Tokenizer for model: gpt-4o-mini (Encoding: o200k_base)
+
+------------------------- PART 1: THREE SAMPLES REPORT -------------------------
+[Short Query]
+  Character Length : 71
+  Word Count       : 11
+  Token Count      : 12
+  Tokens / Char    : 0.1690
+  Tokens / Word    : 1.0909
+
+[Paragraph]
+  Character Length : 343
+  Word Count       : 41
+  Token Count      : 56
+  Tokens / Char    : 0.1633
+  Tokens / Word    : 1.3659
+
+[Full Document]
+  Character Length : 596
+  Word Count       : 69
+  Token Count      : 96
+  Tokens / Char    : 0.1611
+  Tokens / Word    : 1.3913
+
+----------------------- PART 2: COST ESTIMATION MODEL -----------------------
+Pricing Model: gpt-4o-mini
+  Input Rate  : $0.150 per 1M tokens
+  Output Rate : $0.600 per 1M tokens
+
+[Scenario: Single Query with Ingested Context]
+  Input Tokens  (Prompt + Context) : 123
+  Output Tokens (Response)         : 55
+  Total Transaction Tokens         : 178
+  Estimated Transaction Cost       : $0.00005145
+
+[Projection: 10,000 Transactions]
+  Estimated Total Cost             : $0.5145
+
+------------------ PART 3: TEXT CHARACTERISTICS VS TOKENS ------------------
+Different text structures scale differently due to the tokenizer's subword rules.
+
+Text Category                            | Chars  | Words | Tokens | Tokens/Char | Tokens/Word
+----------------------------------------------------------------------------------------
+Standard English Prosaic Text            | 78     | 13    | 15     | 0.1923      | 1.1538
+Dense Code Snippet (Python)              | 54     | 16    | 24     | 0.4444      | 1.5000
+Repeated Special Characters              | 33     | 1     | 14     | 0.4242      | 14.0000
+Non-ASCII Text (Hindi - Hindi script)    | 63     | 12    | 21     | 0.3333      | 1.7500
+Long Non-Standard Compound Word Blocks   | 85     | 2     | 18     | 0.2118      | 9.0000
+
+Key Observations:
+1. Standard English words average ~4 characters and ~1 token or less, with low token/char ratios.
+2. Code snippets and punctuation-heavy lines use more tokens per character due to syntax delimiters.
+3. Non-ASCII languages (like Hindi) require multiple tokens per single character because tiktoken 
+   encodes non-ASCII characters as multi-byte sequences, dramatically increasing costs.
+4. Extremely long or compound words are split into subword fragments, yielding higher token counts.
+======================================================================
