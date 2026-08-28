@@ -110,6 +110,41 @@ python src/main.py
 
 ---
 
+## 🛠️ Implemented Core Concepts
+
+To support robust RAG operation, we have added three core utilities evaluating token usage, context history, and execution control:
+
+### 1. Token Estimation & Billing
+- **Script**: `src/token_counter.py`
+- **Output Report**: `outputs/token_estimation_results.txt`
+- **Purpose**: Counts token usage locally using `tiktoken` (`gpt-4o-mini` / `o200k_base` model mapping) and profiles input/output costs at target rates ($0.15/1M input, $0.60/1M output).
+- **Execution**:
+  ```bash
+  python src/token_counter.py
+  ```
+
+### 2. Context Window & History Manager
+- **Script**: `src/history_manager.py`
+- **Output Report**: `outputs/history_management_results.txt`
+- **Purpose**: Enforces conversational token limits using two budget-preservation strategy handlers:
+  - **Trimming**: Evicts older user-assistant conversation turn pairs while preserving the target system prompt.
+  - **Summarization**: Compresses older middle turns into a concise single system summary block.
+- **Execution**:
+  ```bash
+  python src/history_manager.py
+  ```
+
+### 3. Model Parameters & Output Control
+- **Script**: `src/model_parameter_experiment.py`
+- **Output Report**: `outputs/parameter_experiments_results.txt`
+- **Purpose**: Demonstrates execution behavior when tuning generation controls (Temperature, `max_tokens` length truncation, and `stop` sequence halting filters), recommending deterministic settings needed for grounded, factual schemes matching.
+- **Execution**:
+  ```bash
+  python src/model_parameter_experiment.py
+  ```
+
+---
+
 ## 🔒 Security & Secret Management
 
 - **API Keys are strictly excluded from source code:** All secrets are loaded dynamically at runtime via `python-dotenv` from the `.env` file.
