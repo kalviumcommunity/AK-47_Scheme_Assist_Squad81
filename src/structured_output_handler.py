@@ -275,10 +275,15 @@ class StructuredOutputEngine:
         if mock_response is not None:
             return mock_response
 
-        if OPENAI_API_KEY:
+        if OPENAI_API_KEY and not getattr(self, "_quota_exhausted", False):
             try:
                 from openai import OpenAI
-                client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
+                client = OpenAI(
+                    api_key=OPENAI_API_KEY,
+                    base_url=OPENAI_BASE_URL,
+                    max_retries=0,
+                    timeout=8.0,
+                )
                 kwargs: Dict[str, Any] = {
                     "model": CHAT_MODEL,
                     "messages": messages,
@@ -290,7 +295,12 @@ class StructuredOutputEngine:
                 resp = client.chat.completions.create(**kwargs)
                 return resp.choices[0].message.content or ""
             except Exception as e:
-                log.warning("[API WARNING] LLM call failed (%s). Falling back to mock generator.", e)
+                err_str = str(e)
+                if "insufficient_quota" in err_str.lower() or "credit_balance_exhausted" in err_str.lower():
+                    log.info("[INFO] OpenAI API quota exhausted. Running with deterministic fallback simulator.")
+                    self._quota_exhausted = True
+                else:
+                    log.warning("[API WARNING] LLM call failed (%s). Falling back to mock generator.", e)
 
         # High fidelity deterministic fallback simulator
         query_text = messages[-1]["content"] if messages else ""

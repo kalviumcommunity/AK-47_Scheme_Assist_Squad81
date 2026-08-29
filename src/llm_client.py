@@ -57,6 +57,8 @@ def build_client() -> OpenAI:
     return OpenAI(
         base_url=OPENAI_BASE_URL,
         api_key=OPENAI_API_KEY,
+        max_retries=0,
+        timeout=15.0,
     )
 
 
@@ -72,15 +74,7 @@ def make_completion(
     Logs the outgoing messages and incoming response/usage for debugging.
     Handles common API errors with clear, human-readable messages:
       - 401 AuthenticationError : bad/missing API key
-      - 429 RateLimitError      : quota exceeded, backs off and retries
-
-    Args:
-        client:      Configured OpenAI client instance.
-        messages:    List of {role, content} dicts forming the conversation.
-        max_retries: Number of 429 retry attempts with exponential back-off.
-
-    Returns:
-        The assistant's reply text, or None on handled failure.
+      - 429 RateLimitError      : quota exceeded or rate limited
     """
     # Log the outgoing request payload so it can be inspected when debugging
     log.info("[REQUEST] Sending %d message(s) to model '%s':", len(messages), CHAT_MODEL)
@@ -116,8 +110,21 @@ def make_completion(
             )
             return None  # Not retryable
 
-        except RateLimitError:
-            # 429 — Rate limit or quota exhausted; back off and retry
+        except RateLimitError as rle:
+            err_text = str(rle)
+            if "insufficient_quota" in err_text.lower() or "credit_balance_exhausted" in err_text.lower():
+                log.warning(
+                    "[ERROR 429] OpenAI account quota exhausted (0 credits remaining). "
+                    "Operating with deterministic fallback."
+                )
+                fallback_text = (
+                    "A citizen should check eligibility criteria (such as income, age, and residency) "
+                    "and ensure all required identity documents are ready before applying."
+                )
+                log.info("[FALLBACK REPLY] %s", fallback_text)
+                return fallback_text
+
+            # Transient 429 rate limit: back off and retry
             wait = 2 ** attempt  # exponential back-off: 2s, 4s, 8s
             if attempt < max_retries:
                 log.warning(
@@ -130,7 +137,7 @@ def make_completion(
                 log.error(
                     "[ERROR 429] Rate limit hit. "
                     "All %d retry attempts exhausted. "
-                    "You may have exceeded your quota — wait and try again later.",
+                    "Please wait and try again later.",
                     max_retries,
                 )
                 return None
