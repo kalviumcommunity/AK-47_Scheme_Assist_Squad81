@@ -1,0 +1,178 @@
+{
+  "module": "3.17 Structured Output & JSON Response Handling",
+  "model": "gpt-4o-mini",
+  "scenarios": [
+    {
+      "scenario_id": 1,
+      "title": "Standard Clean JSON Generation & Parsing",
+      "tasks_covered": [
+        "Task 1 - Prompt for JSON structure",
+        "Task 2 - Parse into usable object",
+        "Task 4 - Field validation"
+      ],
+      "query": "What are the eligibility requirements for the Senior Citizen Pension scheme?",
+      "raw_response": "{\n  \"answer\": \"Senior citizens aged 60 years and above with an annual family income below INR 2,00,000 are eligible for the monthly pension scheme.\",\n  \"source\": \"Ministry of Social Justice Circular No. 44/2023\",\n  \"confidence\": \"High\",\n  \"key_eligibility\": [\n    \"Age >= 60 years\",\n    \"Family income < INR 2,00,000/year\",\n    \"Resident citizen\"\n  ]\n}",
+      "parse_result": {
+        "success": true,
+        "data": {
+          "answer": "Senior citizens aged 60 years and above with an annual family income below INR 2,00,000 are eligible for the monthly pension scheme.",
+          "source": "Ministry of Social Justice Circular No. 44/2023",
+          "confidence": "High",
+          "key_eligibility": [
+            "Age >= 60 years",
+            "Family income < INR 2,00,000/year",
+            "Resident citizen"
+          ]
+        },
+        "error_type": null,
+        "error_message": null,
+        "raw_content": "{\n  \"answer\": \"Senior citizens aged 60 years and above with an annual family income below INR 2,00,000 are eligible for the monthly pension scheme.\",\n  \"source\": \"Ministry of Social Justice Circular No. 44/2023\",\n  \"confidence\": \"High\",\n  \"key_eligibility\": [\n    \"Age >= 60 years\",\n    \"Family income < INR 2,00,000/year\",\n    \"Resident citizen\"\n  ]\n}",
+        "was_cleaned": false,
+        "recovery_attempted": false,
+        "validated_model": {
+          "answer": "Senior citizens aged 60 years and above with an annual family income below INR 2,00,000 are eligible for the monthly pension scheme.",
+          "source": "Ministry of Social Justice Circular No. 44/2023",
+          "confidence": "High",
+          "key_eligibility": [
+            "Age >= 60 years",
+            "Family income < INR 2,00,000/year",
+            "Resident citizen"
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": 2,
+      "title": "Conversational Prose & Markdown Wrapped JSON Extraction",
+      "tasks_covered": [
+        "Task 2 - Usable object",
+        "Task 3 - Robust cleaning of prose wrappers"
+      ],
+      "raw_response": "Hello! I am happy to help you with your inquiry regarding solar subsidies.\n\nHere is the structured details you requested:\n```json\n{\n  \"answer\": \"PM Surya Ghar Muft Bijli Yojana offers up to 40% capital subsidy on residential solar systems up to 3kW capacity.\",\n  \"source\": \"MNRE Rooftop Solar Scheme Guidelines 2024\",\n  \"confidence\": \"High\",\n  \"key_eligibility\": [\"Individual home owner\", \"Valid grid electricity connection\", \"Adequate roof space\"]\n}\n```\n\nPlease let me know if you need help filling out the subsidy application form!",
+      "parse_result": {
+        "success": true,
+        "data": {
+          "answer": "PM Surya Ghar Muft Bijli Yojana offers up to 40% capital subsidy on residential solar systems up to 3kW capacity.",
+          "source": "MNRE Rooftop Solar Scheme Guidelines 2024",
+          "confidence": "High",
+          "key_eligibility": [
+            "Individual home owner",
+            "Valid grid electricity connection",
+            "Adequate roof space"
+          ]
+        },
+        "error_type": null,
+        "error_message": null,
+        "raw_content": "Hello! I am happy to help you with your inquiry regarding solar subsidies.\n\nHere is the structured details you requested:\n```json\n{\n  \"answer\": \"PM Surya Ghar Muft Bijli Yojana offers up to 40% capital subsidy on residential solar systems up to 3kW capacity.\",\n  \"source\": \"MNRE Rooftop Solar Scheme Guidelines 2024\",\n  \"confidence\": \"High\",\n  \"key_eligibility\": [\"Individual home owner\", \"Valid grid electricity connection\", \"Adequate roof space\"]\n}\n```\n\nPlease let me know if you need help filling out the subsidy application form!",
+        "was_cleaned": true,
+        "recovery_attempted": false,
+        "validated_model": {
+          "answer": "PM Surya Ghar Muft Bijli Yojana offers up to 40% capital subsidy on residential solar systems up to 3kW capacity.",
+          "source": "MNRE Rooftop Solar Scheme Guidelines 2024",
+          "confidence": "High",
+          "key_eligibility": [
+            "Individual home owner",
+            "Valid grid electricity connection",
+            "Adequate roof space"
+          ]
+        }
+      }
+    },
+    {
+      "scenario_id": 3,
+      "title": "Malformed JSON Syntax Graceful Detection",
+      "tasks_covered": [
+        "Task 3 - Handle malformed JSON gracefully without crashing"
+      ],
+      "raw_response": "{\"answer\": \"Farmers can receive INR 6,000 per year under PM-KISAN in three equal installments.\", \"source\": \"PM-KISAN Operational Guidelines, \"confidence\": High, \"key_eligibility\": [\"Landholding farmer families\",] }",
+      "parse_result": {
+        "success": false,
+        "data": null,
+        "error_type": "MALFORMED_JSON_SYNTAX",
+        "error_message": "JSONDecodeError: Expecting ',' delimiter at line 1, col 143",
+        "raw_content": "{\"answer\": \"Farmers can receive INR 6,000 per year under PM-KISAN in three equal installments.\", \"source\": \"PM-KISAN Operational Guidelines, \"confidence\": High, \"key_eligibility\": [\"Landholding farmer families\",] }",
+        "was_cleaned": true,
+        "recovery_attempted": false
+      }
+    },
+    {
+      "scenario_id": 4,
+      "title": "Missing Required Fields Validation Rejection",
+      "tasks_covered": [
+        "Task 4 - Validate required fields before data use"
+      ],
+      "raw_response": "{\n  \"answer\": \"Applicants must submit their Domicile Certificate and Income Certificate at the Tahsildar office.\",\n  \"confidence\": \"Medium\",\n  \"key_eligibility\": [\"Domicile Certificate\", \"Income Certificate\"]\n}",
+      "parse_result": {
+        "success": false,
+        "data": {
+          "answer": "Applicants must submit their Domicile Certificate and Income Certificate at the Tahsildar office.",
+          "confidence": "Medium",
+          "key_eligibility": [
+            "Domicile Certificate",
+            "Income Certificate"
+          ]
+        },
+        "error_type": "MISSING_REQUIRED_FIELDS",
+        "error_message": "Missing required field(s): source",
+        "raw_content": "{\n  \"answer\": \"Applicants must submit their Domicile Certificate and Income Certificate at the Tahsildar office.\",\n  \"confidence\": \"Medium\",\n  \"key_eligibility\": [\"Domicile Certificate\", \"Income Certificate\"]\n}",
+        "was_cleaned": false,
+        "recovery_attempted": false
+      }
+    },
+    {
+      "scenario_id": 5,
+      "title": "Malformed-then-Recovered Automated Self-Healing Workflow",
+      "tasks_covered": [
+        "Task 5 - Malformed-then-recovered case with sample parsed results"
+      ],
+      "query": "How can a senior citizen apply for old age financial aid?",
+      "initial_malformed_response": "Sure! The answer is that senior citizens aged 60+ can apply with Aadhaar. Source: State Social Welfare Handbook 2024.",
+      "recovery_history": [
+        {
+          "step": 1,
+          "type": "INITIAL_CALL",
+          "raw_response": "Sure! The answer is that senior citizens aged 60+ can apply with Aadhaar. Source: State Social Welfare Handbook 2024.",
+          "success": false,
+          "error_type": "MALFORMED_JSON_SYNTAX",
+          "error_message": "JSONDecodeError: Expecting value at line 1, col 1"
+        },
+        {
+          "step": 2,
+          "type": "RECOVERY_RETRY_ATTEMPT_1",
+          "raw_response": "{\"answer\": \"Senior citizens aged 60+ with annual income under INR 2,00,000 can apply for state pension benefits with Aadhaar and income proof.\", \"source\": \"State Social Welfare Handbook 2024\", \"confidence\": \"High\", \"key_eligibility\": [\"Age >= 60\", \"Income < 2 LPA\", \"Aadhaar Card\"]}",
+          "success": true,
+          "error_type": null,
+          "error_message": null
+        }
+      ],
+      "parse_result": {
+        "success": true,
+        "data": {
+          "answer": "Senior citizens aged 60+ with annual income under INR 2,00,000 can apply for state pension benefits with Aadhaar and income proof.",
+          "source": "State Social Welfare Handbook 2024",
+          "confidence": "High",
+          "key_eligibility": [
+            "Age >= 60",
+            "Income < 2 LPA",
+            "Aadhaar Card"
+          ]
+        },
+        "error_type": null,
+        "error_message": null,
+        "raw_content": "{\"answer\": \"Senior citizens aged 60+ with annual income under INR 2,00,000 can apply for state pension benefits with Aadhaar and income proof.\", \"source\": \"State Social Welfare Handbook 2024\", \"confidence\": \"High\", \"key_eligibility\": [\"Age >= 60\", \"Income < 2 LPA\", \"Aadhaar Card\"]}",
+        "was_cleaned": false,
+        "recovery_attempted": true,
+        "validated_model": {
+          "answer": "Senior citizens aged 60+ with annual income under INR 2,00,000 can apply for state pension benefits with Aadhaar and income proof.",
+          "source": "State Social Welfare Handbook 2024",
+          "confidence": "High",
+          "key_eligibility": [
+            "Age >= 60",
+            "Income < 2 LPA",
+            "Aadhaar Card"
+          ]
+        }
+      }
+    }
+  ]
+}
