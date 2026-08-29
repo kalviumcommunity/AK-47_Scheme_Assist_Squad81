@@ -133,3 +133,107 @@ python src/prompt_builder.py
 
 Outputs are automatically saved to `outputs/prompt_comparison_results.txt` and documented in `prompts/PROMPT_ANALYSIS.md`.
 
+---
+
+## 📦 Structured Output & JSON Response Handling (3.17)
+
+Production RAG assistants cannot rely on free-form conversational prose because downstream software systems, databases, and UI components require deterministic, structured data shapes (e.g. separating the exact answer text from cited sources and eligibility criteria).
+
+SchemeAssist implements a **multi-tier defensive parser**, **Pydantic schema validation**, and an **automated self-healing recovery loop** in [`src/structured_output_handler.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/src/structured_output_handler.py).
+
+### 🏗️ Architecture & Pipeline Overview
+
+```mermaid
+flowchart TD
+    A[Citizen Query + Context] --> B[Structured Prompt Builder]
+    B --> C["LLM Request (response_format: json_object, temp: 0.0)"]
+    C --> D[Raw Model Output String]
+    D --> E{Multi-Tier Defensive Parser}
+    
+    E -- Fast Path --> F[Direct json.loads]
+    E -- Fallback --> G[Markdown Code-Block & Regex Cleaner]
+    
+    F --> H{JSON Syntax Valid?}
+    G --> H
+    
+    H -- No --> I[Report MALFORMED_JSON_SYNTAX]
+    H -- Yes --> J{Validate Required Fields: answer, source}
+    
+    J -- Missing / Empty --> K[Report MISSING_REQUIRED_FIELDS]
+    J -- Valid --> L[Pydantic Schema Validation: SchemeAnswerResponse]
+    
+    I --> M{Recovery Loop Enabled?}
+    K --> M
+    
+    M -- Yes --> N[Construct Corrective LLM Retry Prompt]
+    N --> C
+    M -- Max Retries Exceeded --> O[Graceful Failure Return]
+    
+    L -- Valid --> P[Programmatic Python Dict / Model Ready for App]
+```
+
+### 📋 JSON Schema Contract
+
+Defined in [`prompts/json_structured_prompt.txt`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/prompts/json_structured_prompt.txt):
+
+```json
+{
+  "answer": "string (Concise 2-3 sentence factual answer)",
+  "source": "string (Official scheme circular, portal, or guideline citation)",
+  "confidence": "string (High | Medium | Low)",
+  "key_eligibility": ["string", "string"]
+}
+```
+
+### 🛡️ Defensive Multi-Tier Parsing Strategy
+
+| Layer | Strategy | Description |
+| :--- | :--- | :--- |
+| **Tier 1: Direct Parse** | `json.loads(raw)` | Ultra-fast native parsing when model returns clean JSON. |
+| **Tier 2: Heuristic Cleaner** | Regex ```` ```(?:json)?\s*(\{.*?\})\s*``` ```` | Extracts JSON blocks wrapped in markdown fences or conversational preambles/closings. |
+| **Tier 3: Boundary Extractor** | Regex `(\{.*\})` | Isolates JSON object boundaries if surrounded by conversational filler. |
+| **Tier 4: Graceful Error Handling** | Structured `ParseResult` | Never raises unhandled exceptions. Classifies failures into `MALFORMED_JSON_SYNTAX`, `MISSING_REQUIRED_FIELDS`, or `EMPTY_REQUIRED_FIELDS`. |
+| **Tier 5: Automated Recovery** | Targeted Self-Healing Retry | Sends previous raw response + explicit error message back to model requesting single corrected JSON object. |
+
+---
+
+### 🧪 Run Structured Output Suite & Evaluation
+
+To execute all 5 test scenarios (Standard Clean JSON, Conversational Markdown Extraction, Syntax Error Detection, Field Validation Rejection, and Self-Healing Recovery):
+
+```bash
+python src/structured_output_handler.py
+```
+
+### 📊 Test Scenarios & Results Matrix
+
+| Scenario ID | Scenario Name | Tasks Covered | Parse Status | Result Details |
+| :---: | :--- | :--- | :---: | :--- |
+| **1** | **Standard Clean JSON** | Tasks 1, 2, 4 | `True` (Valid) | Clean prompt generation with `json_object` mode parsed directly to dict and Pydantic object. |
+| **2** | **Conversational Prose Wrapper** | Tasks 2, 3 | `True` (Cleaned) | Successfully extracted JSON from markdown code block surrounded by conversational greeting and closing. |
+| **3** | **Malformed Syntax Detection** | Task 3 | `False` (Handled) | Trailing commas and missing quotes detected safely as `MALFORMED_JSON_SYNTAX` without application crash. |
+| **4** | **Missing Fields Validation** | Task 4 | `False` (Handled) | Missing mandatory `source` field detected and rejected as `MISSING_REQUIRED_FIELDS`. |
+| **5** | **Self-Healing Recovery Workflow** | Task 5 | `True` (Recovered) | Initial malformed response automatically triggered corrective retry prompt, resulting in valid parsed JSON. |
+
+Execution artifacts are persisted to:
+- **Machine-Readable JSON**: [`outputs/structured_output_results.json`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/structured_output_results.json)
+- **Formatted Text Report**: [`outputs/structured_output_results.txt`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/structured_output_results.txt)
+
+---
+
+### 🎥 Video Walkthrough Script (3–5 Minutes)
+
+When recording your screen-share submission, follow this structured walkthrough:
+
+1. **Why Structured Output is Needed for App Integration (0:00 - 1:00)**:
+   - Explain that a demo printing plain text is easy, but a production RAG application requires machine-readable data. Downstream code cannot reliably use regex to separate answers from citations or filter by eligibility criteria if the model answers in free prose.
+2. **Instructing the Model for Valid JSON (1:00 - 1:45)**:
+   - Walk through [`prompts/json_structured_prompt.txt`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/prompts/json_structured_prompt.txt). Show the explicit JSON schema definition, the `response_format={"type": "json_object"}` setting, and `temperature=0.0` for deterministic generation.
+3. **Defensive Parsing & Validation (1:45 - 2:45)**:
+   - Show `StructuredOutputEngine.parse_and_validate()` in [`src/structured_output_handler.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/src/structured_output_handler.py). Highlight direct parsing, markdown block extraction, required field verification (`answer`, `source`), and Pydantic model validation (`SchemeAnswerResponse`).
+4. **What Can Go Wrong & Handling Malfunctions (2:45 - 3:45)**:
+   - Explain failure modes: syntax errors (missing quotes, trailing commas), markdown fencing wrappers, and dropped required keys. Show how Scenarios 2, 3, and 4 handle these without crashing.
+5. **Follow-Up: How to Recover from Malformed Output? (3:45 - 4:45)**:
+   - Demonstrate Scenario 5: Self-healing retry loop. Show how the engine feeds the malformed string and specific error message back to the LLM in a corrective turn to obtain a 100% valid parsed output on retry.
+
+

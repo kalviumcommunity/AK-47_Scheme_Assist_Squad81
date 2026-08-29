@@ -19,6 +19,8 @@ outputs/*
 !outputs/.gitkeep
 !outputs/token_estimation_results.txt
 !outputs/prompt_comparison_results.txt
+!outputs/structured_output_results.json
+!outputs/structured_output_results.txt
 
 # Vector Stores & Databases
 chroma_db/
