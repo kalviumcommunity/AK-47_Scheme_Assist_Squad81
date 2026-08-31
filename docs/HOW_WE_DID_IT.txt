@@ -1,0 +1,64 @@
+================================================================================
+HOW WE IMPLEMENTED BOTH MODULES & TECHNOLOGIES USED
+================================================================================
+
+1. PROMPT TEMPLATES & REUSABLE PROMPT DESIGN (3.18)
+--------------------------------------------------------------------------------
+WHAT WE DID:
+1. Decoupled Prompts from Logic: Moved all prompt strings into a dedicated prompts/
+   module so changes never touch application code.
+2. Created a Template Engine: Built a PromptTemplate class that defines named 
+   placeholders ({context}, {question}, {role_instruction}) and default values.
+3. Runtime Value Injection: Created render() to validate and inject runtime data
+   (retrieved guidelines, user queries, citizen demographic parameters).
+4. Reused Across Multiple Features: Shared the exact same template structure across:
+   - Feature 1 (Interactive Chat Path): Real-time citizen Q&A guidance.
+   - Feature 2 (Batch CLI Evaluator): Automated multi-scheme compliance audits.
+   - Feature 3 (Applicant Profiler): Demographic eligibility checks.
+5. Implemented Safe Versioning: Built TemplateRegistry to manage versions (v1.0.0
+   baseline vs v2.0.0 with grounding and citation rules) without breaking consumers.
+
+WHAT WE USED:
+- string.Formatter & Python str.format(**values) for placeholder parsing and dynamic injection.
+- Python unittest for automated test coverage (9/9 passing tests).
+- tiktoken (cl100k_base / gpt-4o-mini) for exact token counting of rendered prompts.
+- SimpleRetriever for keyword search over markdown guidelines in data/.
+
+
+2. STRUCTURED OUTPUT & JSON RESPONSE HANDLING (3.17)
+--------------------------------------------------------------------------------
+WHAT WE DID:
+1. Prompted for Strict JSON Schema: Configured system instructions with explicit JSON keys
+   (answer, source, confidence, key_eligibility) and OpenAI response_format={"type": "json_object"}.
+2. Defensive Multi-Tier Parsing: Built a parser that handles any model output without crashing:
+   - Tier 1: Direct json.loads() parsing.
+   - Tier 2: Markdown regex code block stripping (```json ... ```).
+   - Tier 3: Curly-brace boundary extraction.
+   - Tier 4: Graceful failure fallback.
+3. Field & Type Validation: Passed parsed data into Pydantic models (SchemeAnswerResponse)
+   to enforce required fields, types, and string length rules.
+4. Self-Healing Recovery Loop: If JSON or validation fails, fed the validation error back
+   to the LLM in an automated retry turn for self-correction.
+
+WHAT WE USED:
+- pydantic (BaseModel, Field, ValidationError) for schema validation and typing.
+- openai API Client with response_format={"type": "json_object"}.
+- re (Python Regular Expressions) for multi-tier JSON markdown extraction.
+- logging & File Handlers for comprehensive tracking of model payloads and errors.
+
+
+================================================================================
+COMPARISON SUMMARY
+================================================================================
+Aspect              | 3.18: Prompt Templates        | 3.17: Structured JSON Output
+--------------------+-------------------------------+-----------------------------
+Primary Goal        | Single source of truth;       | Guarantee predictable,
+                    | stop hardcoding prompt text.  | machine-readable JSON data.
+Core Technique      | Placeholder injection         | response_format: json_object
+                    | ({context}, {question}).      | + system schema prompting.
+Validation Tool     | TemplateValidationError.      | Pydantic (SchemeAnswerResponse).
+Error Handling      | Validates missing variables   | Multi-tier regex extraction
+                    | before API calls.             | + Self-healing reprompting.
+Key Benefit         | Update prompt once, all       | App code receives validated,
+                    | features update automatically.| typed Python objects.
+================================================================================
