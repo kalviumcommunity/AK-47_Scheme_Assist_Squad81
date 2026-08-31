@@ -3,11 +3,12 @@ from typing import List, Dict
 
 from bs4 import BeautifulSoup
 from pypdf import PdfReader
+from src.cleaning import clean_text
 
 def load_documents_from_data_dir(data_dir: str = "data") -> List[Dict[str, str]]:
     """
     Ingests PDF, HTML, Markdown, and TXT documents from the specified data directory.
-    Handles unreadable/malformed files and skips unsupported formats.
+    Cleans raw extracted text of boilerplate, normalizes spaces/encoding, and skips unsupported formats.
     """
     documents = []
     if not os.path.exists(data_dir):
@@ -40,10 +41,9 @@ def load_documents_from_data_dir(data_dir: str = "data") -> List[Dict[str, str]]
                 # Remove script and style elements to avoid extracting code/css
                 for script_or_style in soup(["script", "style"]):
                     script_or_style.decompose()
-                # Get text with whitespace separators
-                content = soup.get_text(separator=" ").strip()
-                # Clean up excessive duplicate whitespace/newlines
-                content = " ".join(content.split())
+                # Get text with newline separators to preserve line structure for boilerplate cleaning
+                content = soup.get_text(separator="\n").strip()
+
             elif ext == ".pdf":
                 # PDF loading and extraction
                 reader = PdfReader(filepath)
@@ -56,21 +56,25 @@ def load_documents_from_data_dir(data_dir: str = "data") -> List[Dict[str, str]]
                 if not content:
                     raise ValueError("Extracted PDF text content is empty or unreadable.")
 
+            # Sanitize raw text through the cleaning pipeline
+            cleaned_content = clean_text(content)
+
             # Record document and preserve source filename/identity
             documents.append({
                 "filename": filename,
-                "content": content
+                "content": cleaned_content
             })
             
             # Confirm intake with length and preview
-            preview = content[:200].replace("\n", " ")
-            if len(content) > 200:
+            preview = cleaned_content[:200].replace("\n", " ")
+            if len(cleaned_content) > 200:
                 preview += "..."
-            print(f"[INGESTION SUCCESS] Loaded '{filename}' (length: {len(content)} chars) - Sample: \"{preview}\"")
+            print(f"[INGESTION SUCCESS] Loaded '{filename}' (Raw: {len(content)} chars, Cleaned: {len(cleaned_content)} chars) - Sample: \"{preview}\"")
 
         except Exception as e:
             print(f"[INGESTION ERROR] Failed to load '{filename}': {e}")
 
     print(f"[INGESTION LOG] Successfully ingested {len(documents)} document(s) from '{data_dir}/'.")
     return documents
+
 

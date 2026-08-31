@@ -3,10 +3,10 @@
 =================================================================
 [CONFIG WARNING] OPENAI_API_KEY is not set in .env. Running in mock/offline mode.
 [INGESTION ERROR] Failed to load 'corrupt_pdf.pdf': startxref not found
-[INGESTION SUCCESS] Loaded 'sample_doc.md' (length: 597 chars) - Sample: "# Knowledge Base Document: Government Welfare Schemes Overview  ## Overview This knowledge base contains official notifications, circulars, and guidelines regarding government welfare assistance progr..."
-[INGESTION SUCCESS] Loaded 'sample_html.html' (length: 216 chars) - Sample: "Welfare Scheme Guidelines National Healthcare Support Scheme (NHSS) This is a sample HTML document representing welfare guidelines. Eligibility Criteria Must be a resident/citizen. Annual family incom..."
-[INGESTION SUCCESS] Loaded 'sample_pdf.pdf' (length: 213 chars) - Sample: "SchemeAssist PDF Ingest Sample Format: PDF Document Eligibility guidance for national welfare schemes is detailed here. 1. Citizenship: Must be a legal resident. 2. Income restriction: Family income s..."
-[INGESTION SUCCESS] Loaded 'sample_text.txt' (length: 358 chars) - Sample: "SchemeAssist Document Ingest Sample File: sample_text.txt Format: Plain Text  About the Welfare Schemes: This document contains general plain text information about national welfare schemes. Eligibili..."
+[INGESTION SUCCESS] Loaded 'sample_doc.md' (Raw: 597 chars, Cleaned: 596 chars) - Sample: "# Knowledge Base Document: Government Welfare Schemes Overview  ## Overview This knowledge base contains official notifications, circulars, and guidelines regarding government welfare assistance progr..."
+[INGESTION SUCCESS] Loaded 'sample_html.html' (Raw: 444 chars, Cleaned: 279 chars) - Sample: "Welfare Scheme Guidelines  National Healthcare Support Scheme (NHSS)  This is a sample HTML "document" representing healthcare guidelines.  Eligibility Criteria  Must be a resident / citizen.  Annual ..."
+[INGESTION SUCCESS] Loaded 'sample_pdf.pdf' (Raw: 213 chars, Cleaned: 213 chars) - Sample: "SchemeAssist PDF Ingest Sample Format: PDF Document Eligibility guidance for national welfare schemes is detailed here. 1. Citizenship: Must be a legal resident. 2. Income restriction: Family income s..."
+[INGESTION SUCCESS] Loaded 'sample_text.txt' (Raw: 625 chars, Cleaned: 528 chars) - Sample: "================================================== SchemeAssist Document Ingest Sample File: sample_text.txt Format: Plain Text  About the Welfare Schemes: This document contains general plain text in..."
 [INGESTION WARNING] Skipping unsupported file format: 'unsupported_format.xyz'
 [INGESTION LOG] Successfully ingested 4 document(s) from 'data/'.
 [PROMPT LOG] Loaded system prompt (332 chars).
