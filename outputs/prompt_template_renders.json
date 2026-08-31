@@ -1,0 +1,67 @@
+[
+  {
+    "sample_id": "EXAMPLE_1_DIRECT_ANSWER",
+    "description": "Direct render using prompts/answer.py ANSWER template with runtime context and question injection",
+    "template_name": "ANSWER",
+    "rendered_prompt": "You are a support assistant. Answer ONLY from the context.\nIf the answer isn't there, say you don't know.\n\nContext:\n# Knowledge Base Document: Government Welfare Schemes Overview\n\n## Overview\nThis knowledge base contains official notifications, circulars, and guidelines regarding government welf...\n\nQuestion: What is the maximum income limit for applying?",
+    "token_count": 67
+  },
+  {
+    "sample_id": "FEATURE_1_CHAT_PATH",
+    "description": "Interactive Citizen Chat Assistant turn using SCHEME_QA_TEMPLATE_V2",
+    "template_name": "scheme_qa (v2.0.0)",
+    "rendered_system_prompt": "You are SchemeAssist, the official AI assistant specializing in government welfare schemes, eligibility rules, and application procedures.\nTone & Style: Objective, citizen-friendly, and concise\nGrounding Rules:\n- Answer strictly from the provided context guidelines.\n- If the answer is not present in the context, respond strictly with: 'I do not have sufficient verified information in the official guidelines to answer this query.'\n- Citation Requirement: Cite official scheme circulars, portal links, or eligibility clauses whenever available.",
+    "rendered_user_prompt": "Role: SchemeAssist welfare guidance specialist\n\nContext Information:\n\"\"\"\n# Knowledge Base Document: Government Welfare Schemes Overview\n\n## Overview\nThis knowledge base contains official notifications, circulars, and guidelines regarding government welfare assistance programs across departments.\n\n## Primary Objectives\n- Discoverability: Enable citizens and helpdesk executives to search and identify applicable welfare schemes.\n- Eligibility Guidance: Explain specific age, income, occupation, category, and demographic qualifications.\n- Application Enablement: Provide clear documentation checklists, step-by-step application instructions, and official portal links.\n\"\"\"\n\nCitizen Question: What documentation do I need to prepare for scheme application?\n\nInstructions:\n1. Base your answer strictly on the context provided above.\n2. If the context does not contain the answer, reply with: \"I do not have sufficient verified information to answer this question. Please consult the official department portal.\"\n3. Keep the response to 2 to 3 sentences.\n4. Format requirements: Plain text with bulleted points for lists of documents or criteria.",
+    "response": "A citizen should check eligibility criteria (such as income, age, and residency) and ensure all required identity documents are ready before applying.",
+    "tokens": {
+      "system_tokens": 98,
+      "user_tokens": 202,
+      "reply_tokens": 27
+    }
+  },
+  {
+    "sample_id": "FEATURE_2_BATCH_RUN_101",
+    "description": "Batch Audit evaluation for Pre-Matric Minority Scholarship Scheme",
+    "template_name": "scheme_batch_eval (v1.0.0)",
+    "rendered_prompt": "[BATCH EVALUATION RUN #101]\nTarget Scheme: Pre-Matric Minority Scholarship Scheme\nAuditing Standard: Strict Compliance with Welfare Eligibility Guidelines\n\nOfficial Guidelines Context:\nEligibility: Minority students studying in Classes 1-10 with family income not exceeding Rs. 1.00 Lakh per annum.\nRequired Documents: Income Certificate, Minority Declaration, Previous Marksheet.\n\nEvaluation Query / Test Scenario:\nAssess compliance for an applicant in Class 8 with family income of Rs. 85,000/year.\n\nRequired Output:\n- Verification Status (PASS / FAIL / INSUFFICIENT_DATA)\n- Direct Factual Findings (citing clause from context)\n- Recommendation for Citizen",
+    "response": "A citizen should check eligibility criteria (such as income, age, and residency) and ensure all required identity documents are ready before applying.",
+    "token_count": 134
+  },
+  {
+    "sample_id": "FEATURE_2_BATCH_RUN_102",
+    "description": "Batch Audit evaluation for National Means-cum-Merit Scholarship Scheme (NMMSS)",
+    "template_name": "scheme_batch_eval (v1.0.0)",
+    "rendered_prompt": "[BATCH EVALUATION RUN #102]\nTarget Scheme: National Means-cum-Merit Scholarship Scheme (NMMSS)\nAuditing Standard: Strict Compliance with Welfare Eligibility Guidelines\n\nOfficial Guidelines Context:\nEligibility: Students in Class 8 from government/aided schools with at least 55% marks in Class 7 and parental income under Rs. 3.5 Lakh.\nIneligibility: Students of Kendriya Vidyalaya and Jawahar Navodaya Vidyalaya are NOT eligible.\n\nEvaluation Query / Test Scenario:\nCheck eligibility for a student studying in Kendriya Vidyalaya with 90% marks in Class 7.\n\nRequired Output:\n- Verification Status (PASS / FAIL / INSUFFICIENT_DATA)\n- Direct Factual Findings (citing clause from context)\n- Recommendation for Citizen",
+    "response": "A citizen should check eligibility criteria (such as income, age, and residency) and ensure all required identity documents are ready before applying.",
+    "token_count": 163
+  },
+  {
+    "sample_id": "FEATURE_2_BATCH_RUN_103",
+    "description": "Batch Audit evaluation for Post-Matric Technical Higher Education Grant",
+    "template_name": "scheme_batch_eval (v1.0.0)",
+    "rendered_prompt": "[BATCH EVALUATION RUN #103]\nTarget Scheme: Post-Matric Technical Higher Education Grant\nAuditing Standard: Strict Compliance with Welfare Eligibility Guidelines\n\nOfficial Guidelines Context:\nEligibility: Full-time diploma and undergraduate engineering students with family income <= Rs. 2.5 Lakh.\nRequired Documents: College Admission Receipt, Marksheets, Caste/Income Certificate.\n\nEvaluation Query / Test Scenario:\nApplicant is enrolled in part-time correspondence diploma with income Rs. 1.5 Lakh.\n\nRequired Output:\n- Verification Status (PASS / FAIL / INSUFFICIENT_DATA)\n- Direct Factual Findings (citing clause from context)\n- Recommendation for Citizen",
+    "response": "A citizen should check eligibility criteria (such as income, age, and residency) and ensure all required identity documents are ready before applying.",
+    "token_count": 131
+  },
+  {
+    "sample_id": "FEATURE_3_APPLICANT_PROFILER",
+    "description": "Applicant profiling prompt rendering dynamic citizen demographic fields",
+    "template_name": "scheme_eligibility_eval (v1.0.0)",
+    "rendered_prompt": "Evaluate eligibility for the following applicant against the official scheme guidelines.\n\nScheme: Post-Matric Higher Education Grant\n\nOfficial Scheme Rules:\n# Knowledge Base Document: Government Welfare Schemes Overview\n\n## Overview\nThis knowledge base contains official notifications, circulars, and guidelines regarding government welfare assistance programs across departments.\n\n## Primary Objectives\n- Discoverability: Enable citizens and helpdesk executives to search and identify applicable welfare schemes.\n- Eligibility Guidance: Explain specific age, income, occupation, category, and demographic qualifications.\n- Application Enablement: Provide clear documentation checklists, step-by-step application instructions, and official portal links.\n\nApplicant Profile:\n- Age: 19\n- Annual Family Income: Rs. 1,80,000 / year\n- Category / Demographics: OBC Minority\n- Occupation / Status: First-Year B.Tech Undergraduate Student\n\nDetermine:\n1. Is the applicant Eligible, Ineligible, or Needs Verification?\n2. Highlight matching / failing criteria based strictly on the scheme rules.",
+    "token_count": 199
+  },
+  {
+    "sample_id": "VERSION_COMPARISON_V1",
+    "description": "Scheme Q&A Template Version 1.0.0 render",
+    "template_name": "scheme_qa (v1.0.0)",
+    "rendered_prompt": "You are a support assistant for welfare schemes. Answer ONLY from the context.\nIf the answer isn't there, say you don't know.\n\nContext:\nPM-Kisan scheme provides Rs. 6,000 per year in three equal installments to eligible landholding farmer families.\n\nQuestion: How many installments are provided under PM-Kisan?",
+    "token_count": 64
+  },
+  {
+    "sample_id": "VERSION_COMPARISON_V2",
+    "description": "Scheme Q&A Template Version 2.0.0 render (Enhanced grounding & citation)",
+    "template_name": "scheme_qa (v2.0.0)",
+    "rendered_prompt": "Role: SchemeAssist welfare guidance specialist\n\nContext Information:\n\"\"\"\nPM-Kisan scheme provides Rs. 6,000 per year in three equal installments to eligible landholding farmer families.\n\"\"\"\n\nCitizen Question: How many installments are provided under PM-Kisan?\n\nInstructions:\n1. Base your answer strictly on the context provided above.\n2. If the context does not contain the answer, reply with: \"I do not have sufficient verified information to answer this question. Please consult the official department portal.\"\n3. Keep the response to 2 to 3 sentences.\n4. Format requirements: Plain text with bulleted points for lists of documents or criteria.",
+    "token_count": 129
+  }
+]

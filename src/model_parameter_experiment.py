@@ -7,6 +7,15 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.config import OPENAI_API_KEY, CHAT_MODEL, OPENAI_BASE_URL
 
+import io
+
+# Ensure stdout handles UTF-8 on Windows terminals
+if hasattr(sys.stdout, "buffer"):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 # Grounded settings recommendations documentation
 RECOMMENDED_SETTINGS_DOC = """
 ======================================================================
@@ -49,6 +58,8 @@ class MockChatCompletionResponse:
         self.choices = [MockChoice(content, finish_reason)]
 
 
+_API_QUOTA_EXHAUSTED = False
+
 def run_llm_call(
     messages: List[Dict[str, str]],
     temperature: float = 1.0,
@@ -60,12 +71,18 @@ def run_llm_call(
     Calls the OpenAI API if config matches, otherwise acts as a deterministic mock simulator
     demonstrating the effect of parameters.
     """
+    global _API_QUOTA_EXHAUSTED
     prompt_text = messages[-1]["content"] if messages else ""
     
-    if OPENAI_API_KEY:
+    if OPENAI_API_KEY and not _API_QUOTA_EXHAUSTED:
         try:
             from openai import OpenAI
-            client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
+            client = OpenAI(
+                api_key=OPENAI_API_KEY,
+                base_url=OPENAI_BASE_URL,
+                max_retries=0,
+                timeout=8.0,
+            )
             response = client.chat.completions.create(
                 model=CHAT_MODEL,
                 messages=messages,
@@ -80,7 +97,13 @@ def run_llm_call(
                 "is_mock": False
             }
         except Exception as e:
-            print(f"[API WARNING] OpenAI call failed: {e}. Running in Mock mode.")
+            err_str = str(e)
+            if "insufficient_quota" in err_str.lower() or "credit_balance_exhausted" in err_str.lower():
+                if not _API_QUOTA_EXHAUSTED:
+                    print("[INFO] OpenAI API quota exhausted. Running experiments with deterministic simulator.")
+                _API_QUOTA_EXHAUSTED = True
+            else:
+                print(f"[API WARNING] OpenAI call failed: {e}. Running in Mock mode.")
             
     # MOCK COMPLETED RESPONSES SIMULATING THE PARAMETERS
     is_creative_request = "creative name" in prompt_text.lower() or "slogan" in prompt_text.lower()

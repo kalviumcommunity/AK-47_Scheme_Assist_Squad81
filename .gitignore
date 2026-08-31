@@ -21,6 +21,8 @@ outputs/*
 !outputs/prompt_comparison_results.txt
 !outputs/structured_output_results.json
 !outputs/structured_output_results.txt
+!outputs/prompt_template_renders.txt
+!outputs/prompt_template_renders.json
 
 # Vector Stores & Databases
 chroma_db/
