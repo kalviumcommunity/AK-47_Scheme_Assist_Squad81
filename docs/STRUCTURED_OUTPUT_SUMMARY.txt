@@ -1,0 +1,3 @@
+3.17 Structured Output & JSON Response Handling - Implementation Summary
+
+In this module, we implemented end-to-end structured JSON output generation by configuring explicit system schema prompts and OpenAI response_format json_object mode. We developed a defensive multi-tier parsing pipeline that extracts valid JSON from raw text, markdown code blocks, and malformed strings without crashing. Strict field and type validation was enforced using Pydantic models (SchemeAnswerResponse) to verify required fields, types, and length constraints before downstream consumption. To handle incomplete or invalid outputs, we built an automated self-healing recovery loop that feeds validation errors back to the model for self-correction.
