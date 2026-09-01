@@ -1,0 +1,621 @@
+================================================================================
+  SAMPLE CHUNKS VISUAL BOUNDARY INSPECTION (ALL STRATEGIES)
+================================================================================
+
+
+################################################################################
+### STRATEGY: Fixed-Size (Naive 500 chars, no overlap)
+### Total Chunks: 13 | Avg Size: 484.9 chars
+################################################################################
+
+--- [CHUNK: sample_doc.md_fixed_001] (Chars: 500, Tokens: 85, Offset: 0-500) ---
+# Knowledge Base Document: Government Welfare Schemes Policy & Operational Guidelines (2026-2027)
+
+## 1. Executive Summary & Policy Objectives
+The National Welfare Assistance Framework establishes comprehensive social security, direct income support, and healthcare enablement for economically vulnerable citizens, smallholder agriculturalists, and senior citizens. The primary objective is to eliminate administrative intermediaries through direct benefit transfer (DBT), ensure universal access to 
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_002] (Chars: 500, Tokens: 93, Offset: 500-1000) ---
+tertiary healthcare, and streamline citizen-centric grievance resolution across all union territories and state jurisdictions.
+
+## 2. Scheme Component A: Small & Marginal Farmers Direct Income Support (PM-DIS)
+### 2.1 Overview & Scope
+The Small & Marginal Farmers Direct Income Support (PM-DIS) initiative provides supplementary financial security to eligible landholding farming families to assist with farm input procurement, seasonal seed purchasing, and agricultural machinery rental expenses.
+
+#
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_003] (Chars: 500, Tokens: 108, Offset: 1000-1500) ---
+## 2.2 Eligibility Criteria
+To qualify under PM-DIS, applicant households must meet each of the following mandatory conditions:
+- The farmer must possess cultivable agricultural land up to a maximum holding limit of 2.0 hectares (5.0 acres) as per official State land revenue records.
+- The applicant must hold an active Aadhaar card linked to a valid bank account enabled for Direct Benefit Transfer (DBT) via Aadhaar Payment Bridge (APB).
+- The applicant's household must not have any member servin
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_004] (Chars: 500, Tokens: 107, Offset: 1500-2000) ---
+g as a constitutional post holder, government employee, or registered income-tax payer in previous assessment years.
+
+### 2.3 Financial Entitlements & Disbursement Schedule
+Eligible beneficiaries receive an annual financial benefit of Rs 6,000 payable in three equal four-monthly installments of Rs 2,000 each:
+- Installment 1: Transferred directly in April for Kharif season sowing preparations.
+- Installment 2: Transferred directly in August for mid-season cultivation and fertilizer support.
+- In
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_005] (Chars: 500, Tokens: 93, Offset: 2000-2500) ---
+stallment 3: Transferred directly in December for Rabi season harvesting and crop rotation.
+
+### 2.4 Exclusion Criteria
+The following categories are explicitly disqualified from receiving benefits under PM-DIS regardless of land size:
+- Institutional landholders and corporate agricultural enterprises.
+- Current and former members of Parliament, State Legislative Assemblies, and Municipal Corporations.
+- Retired individuals receiving a monthly pension exceeding Rs 10,000 per month (excluding mult
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_006] (Chars: 500, Tokens: 103, Offset: 2500-3000) ---
+i-tasking staff / Class IV employees).
+- Professionals including doctors, engineers, lawyers, and chartered accountants registered with recognized professional councils.
+
+## 3. Scheme Component B: Universal Senior Citizen Health Coverage (USC-HC)
+### 3.1 Health Insurance Coverage & Benefits
+The Universal Senior Citizen Health Coverage (USC-HC) provides cashless tertiary and secondary healthcare hospitalization benefits up to Rs 5,00,000 per eligible family per year on a family floater basis acro
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_007] (Chars: 500, Tokens: 102, Offset: 3000-3500) ---
+ss all empanelled public and private healthcare facilities nationwide.
+
+### 3.2 Medical Eligibility & Age Limits
+- Primary beneficiary must be an Indian citizen aged 60 years or older on the date of policy enrollment.
+- Total gross annual household income must not exceed Rs 3,00,000 as certified by the competent revenue authority.
+- Pre-existing medical conditions, including cardiovascular disorders, diabetes, and oncology treatments, are covered from day one with zero waiting period.
+
+### 3.3 E
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_008] (Chars: 500, Tokens: 95, Offset: 3500-4000) ---
+mpanelled Hospital Network & Claim Settlement
+Beneficiaries can access care at over 28,000 empanelled hospitals across India using their digital Golden Health Card. Claims are processed via a paperless automated adjudication portal with pre-authorization granted within 60 minutes for emergency hospitalizations and 4 hours for planned elective surgeries.
+
+## 4. Application, Verification & Documentation Workflow
+### 4.1 Application Submission Channels
+Eligible citizens may submit applications thro
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_009] (Chars: 500, Tokens: 103, Offset: 4000-4500) ---
+ugh two official mechanisms:
+1. Online Self-Registration: Citizens can log in to the national welfare portal (https://welfare.gov.in) using Aadhaar-based OTP authentication.
+2. Common Service Centers (CSC): Rural citizens without internet access can register at nearby Gram Panchayat CSC kiosks with biometric verification for a fixed nominal processing fee of Rs 20.
+
+### 4.2 Mandatory Documentation Checklist
+Applicants must upload or submit certified photocopies of the following credentials:
+- Va
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_010] (Chars: 500, Tokens: 119, Offset: 4500-5000) ---
+lid Aadhaar Card (with updated demographic details).
+- Proof of Land Ownership / Record of Rights (RoR / Khasra-Khatauni extract).
+- Bank Account Passbook copy showing IFSC code, account number, and DBT-seeding stamp.
+- Income Certificate issued by Sub-Divisional Magistrate (SDM) or Tehsildar within the last 12 months.
+- Age Verification Proof (Voter ID, School Leaving Certificate, or Aadhaar).
+
+### 4.3 Three-Tier Verification & Approval Process
+Applications proceed through a structured three-ti
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_011] (Chars: 500, Tokens: 120, Offset: 5000-5500) ---
+er administrative review:
+- Tier 1 (Village Level): Gram Panchayat Patwari/Talati conducts on-site land physical verification and biometric matching within 7 working days.
+- Tier 2 (Tehsil Level): Sub-Divisional Magistrate (SDM) audits documentation for income exclusions and tax payer overlaps within 5 working days.
+- Tier 3 (District Level): District Nodal Officer sanctions final inclusion and generates the beneficiary entitlement order.
+
+## 5. Grievance Redressal, SLA & Escalation Mechanism
+##
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_012] (Chars: 500, Tokens: 114, Offset: 5500-6000) ---
+# 5.1 Helpdesk & Communication Channels
+Citizens can track application progress, report delayed installments, or file complaints through:
+- National Toll-Free Helpline: 1800-111-5555 (Operates 24/7 in 12 regional languages).
+- Centralized Public Grievance Redress and Monitoring System (CPGRAMS) web portal.
+- District Welfare Officer Helpdesk located at every District Collectorate office.
+
+### 5.2 Service Level Agreement (SLA) Resolution Timelines
+- Missing or delayed direct installment transfer 
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_013] (Chars: 304, Tokens: 57, Offset: 6000-6304) ---
+disputes: Mandatory resolution within 15 working days from complaint receipt.
+- Emergency hospital pre-authorization rejections: Escalation review and medical committee ruling within 48 hours.
+- General eligibility dispute appeal: Final hearing and decision by District Magistrate within 30 working days.
+--------------------------------------------------------------------------------
+
+
+################################################################################
+### STRATEGY: Fixed-Size (500 chars, 80 char overlap)
+### Total Chunks: 16 | Avg Size: 464.2 chars
+################################################################################
+
+--- [CHUNK: sample_doc.md_fixed_001] (Chars: 500, Tokens: 85, Offset: 0-500) ---
+# Knowledge Base Document: Government Welfare Schemes Policy & Operational Guidelines (2026-2027)
+
+## 1. Executive Summary & Policy Objectives
+The National Welfare Assistance Framework establishes comprehensive social security, direct income support, and healthcare enablement for economically vulnerable citizens, smallholder agriculturalists, and senior citizens. The primary objective is to eliminate administrative intermediaries through direct benefit transfer (DBT), ensure universal access to 
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_002] (Chars: 500, Tokens: 96, Offset: 420-920) ---
+ntermediaries through direct benefit transfer (DBT), ensure universal access to tertiary healthcare, and streamline citizen-centric grievance resolution across all union territories and state jurisdictions.
+
+## 2. Scheme Component A: Small & Marginal Farmers Direct Income Support (PM-DIS)
+### 2.1 Overview & Scope
+The Small & Marginal Farmers Direct Income Support (PM-DIS) initiative provides supplementary financial security to eligible landholding farming families to assist with farm input procu
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_003] (Chars: 500, Tokens: 97, Offset: 840-1340) ---
+ecurity to eligible landholding farming families to assist with farm input procurement, seasonal seed purchasing, and agricultural machinery rental expenses.
+
+### 2.2 Eligibility Criteria
+To qualify under PM-DIS, applicant households must meet each of the following mandatory conditions:
+- The farmer must possess cultivable agricultural land up to a maximum holding limit of 2.0 hectares (5.0 acres) as per official State land revenue records.
+- The applicant must hold an active Aadhaar card linked
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_004] (Chars: 500, Tokens: 101, Offset: 1260-1760) ---
+te land revenue records.
+- The applicant must hold an active Aadhaar card linked to a valid bank account enabled for Direct Benefit Transfer (DBT) via Aadhaar Payment Bridge (APB).
+- The applicant's household must not have any member serving as a constitutional post holder, government employee, or registered income-tax payer in previous assessment years.
+
+### 2.3 Financial Entitlements & Disbursement Schedule
+Eligible beneficiaries receive an annual financial benefit of Rs 6,000 payable in three
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_005] (Chars: 500, Tokens: 106, Offset: 1680-2180) ---
+e beneficiaries receive an annual financial benefit of Rs 6,000 payable in three equal four-monthly installments of Rs 2,000 each:
+- Installment 1: Transferred directly in April for Kharif season sowing preparations.
+- Installment 2: Transferred directly in August for mid-season cultivation and fertilizer support.
+- Installment 3: Transferred directly in December for Rabi season harvesting and crop rotation.
+
+### 2.4 Exclusion Criteria
+The following categories are explicitly disqualified from re
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_006] (Chars: 500, Tokens: 87, Offset: 2100-2600) ---
+ Exclusion Criteria
+The following categories are explicitly disqualified from receiving benefits under PM-DIS regardless of land size:
+- Institutional landholders and corporate agricultural enterprises.
+- Current and former members of Parliament, State Legislative Assemblies, and Municipal Corporations.
+- Retired individuals receiving a monthly pension exceeding Rs 10,000 per month (excluding multi-tasking staff / Class IV employees).
+- Professionals including doctors, engineers, lawyers, and ch
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_007] (Chars: 500, Tokens: 102, Offset: 2520-3020) ---
+ass IV employees).
+- Professionals including doctors, engineers, lawyers, and chartered accountants registered with recognized professional councils.
+
+## 3. Scheme Component B: Universal Senior Citizen Health Coverage (USC-HC)
+### 3.1 Health Insurance Coverage & Benefits
+The Universal Senior Citizen Health Coverage (USC-HC) provides cashless tertiary and secondary healthcare hospitalization benefits up to Rs 5,00,000 per eligible family per year on a family floater basis across all empanelled pu
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_008] (Chars: 500, Tokens: 98, Offset: 2940-3440) ---
+ per eligible family per year on a family floater basis across all empanelled public and private healthcare facilities nationwide.
+
+### 3.2 Medical Eligibility & Age Limits
+- Primary beneficiary must be an Indian citizen aged 60 years or older on the date of policy enrollment.
+- Total gross annual household income must not exceed Rs 3,00,000 as certified by the competent revenue authority.
+- Pre-existing medical conditions, including cardiovascular disorders, diabetes, and oncology treatments, a
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_009] (Chars: 500, Tokens: 97, Offset: 3360-3860) ---
+itions, including cardiovascular disorders, diabetes, and oncology treatments, are covered from day one with zero waiting period.
+
+### 3.3 Empanelled Hospital Network & Claim Settlement
+Beneficiaries can access care at over 28,000 empanelled hospitals across India using their digital Golden Health Card. Claims are processed via a paperless automated adjudication portal with pre-authorization granted within 60 minutes for emergency hospitalizations and 4 hours for planned elective surgeries.
+
+## 
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_010] (Chars: 500, Tokens: 98, Offset: 3780-4280) ---
+ for emergency hospitalizations and 4 hours for planned elective surgeries.
+
+## 4. Application, Verification & Documentation Workflow
+### 4.1 Application Submission Channels
+Eligible citizens may submit applications through two official mechanisms:
+1. Online Self-Registration: Citizens can log in to the national welfare portal (https://welfare.gov.in) using Aadhaar-based OTP authentication.
+2. Common Service Centers (CSC): Rural citizens without internet access can register at nearby Gram Pancha
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_011] (Chars: 500, Tokens: 108, Offset: 4200-4700) ---
+(CSC): Rural citizens without internet access can register at nearby Gram Panchayat CSC kiosks with biometric verification for a fixed nominal processing fee of Rs 20.
+
+### 4.2 Mandatory Documentation Checklist
+Applicants must upload or submit certified photocopies of the following credentials:
+- Valid Aadhaar Card (with updated demographic details).
+- Proof of Land Ownership / Record of Rights (RoR / Khasra-Khatauni extract).
+- Bank Account Passbook copy showing IFSC code, account number, and D
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_012] (Chars: 500, Tokens: 118, Offset: 4620-5120) ---
+ extract).
+- Bank Account Passbook copy showing IFSC code, account number, and DBT-seeding stamp.
+- Income Certificate issued by Sub-Divisional Magistrate (SDM) or Tehsildar within the last 12 months.
+- Age Verification Proof (Voter ID, School Leaving Certificate, or Aadhaar).
+
+### 4.3 Three-Tier Verification & Approval Process
+Applications proceed through a structured three-tier administrative review:
+- Tier 1 (Village Level): Gram Panchayat Patwari/Talati conducts on-site land physical verific
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_013] (Chars: 500, Tokens: 120, Offset: 5040-5540) ---
+age Level): Gram Panchayat Patwari/Talati conducts on-site land physical verification and biometric matching within 7 working days.
+- Tier 2 (Tehsil Level): Sub-Divisional Magistrate (SDM) audits documentation for income exclusions and tax payer overlaps within 5 working days.
+- Tier 3 (District Level): District Nodal Officer sanctions final inclusion and generates the beneficiary entitlement order.
+
+## 5. Grievance Redressal, SLA & Escalation Mechanism
+### 5.1 Helpdesk & Communication Channels
+
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_014] (Chars: 500, Tokens: 121, Offset: 5460-5960) ---
+Redressal, SLA & Escalation Mechanism
+### 5.1 Helpdesk & Communication Channels
+Citizens can track application progress, report delayed installments, or file complaints through:
+- National Toll-Free Helpline: 1800-111-5555 (Operates 24/7 in 12 regional languages).
+- Centralized Public Grievance Redress and Monitoring System (CPGRAMS) web portal.
+- District Welfare Officer Helpdesk located at every District Collectorate office.
+
+### 5.2 Service Level Agreement (SLA) Resolution Timelines
+- Missing
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_015] (Chars: 424, Tokens: 81, Offset: 5880-6304) ---
+te office.
+
+### 5.2 Service Level Agreement (SLA) Resolution Timelines
+- Missing or delayed direct installment transfer disputes: Mandatory resolution within 15 working days from complaint receipt.
+- Emergency hospital pre-authorization rejections: Escalation review and medical committee ruling within 48 hours.
+- General eligibility dispute appeal: Final hearing and decision by District Magistrate within 30 working days.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_fixed_016] (Chars: 4, Tokens: 2, Offset: 6300-6304) ---
+ays.
+--------------------------------------------------------------------------------
+
+
+################################################################################
+### STRATEGY: Paragraph-Based (Natural paragraph breaks)
+### Total Chunks: 14 | Avg Size: 448.4 chars
+################################################################################
+
+--- [CHUNK: sample_doc.md_para_001] (Chars: 97, Tokens: 20, Offset: 0-97) ---
+# Knowledge Base Document: Government Welfare Schemes Policy & Operational Guidelines (2026-2027)
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_para_002] (Chars: 527, Tokens: 82, Offset: 99-626) ---
+## 1. Executive Summary & Policy Objectives
+The National Welfare Assistance Framework establishes comprehensive social security, direct income support, and healthcare enablement for economically vulnerable citizens, smallholder agriculturalists, and senior citizens. The primary objective is to eliminate administrative intermediaries through direct benefit transfer (DBT), ensure universal access to tertiary healthcare, and streamline citizen-centric grievance resolution across all union territories and state jurisdictions.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_para_003] (Chars: 369, Tokens: 72, Offset: 628-997) ---
+## 2. Scheme Component A: Small & Marginal Farmers Direct Income Support (PM-DIS)
+### 2.1 Overview & Scope
+The Small & Marginal Farmers Direct Income Support (PM-DIS) initiative provides supplementary financial security to eligible landholding farming families to assist with farm input procurement, seasonal seed purchasing, and agricultural machinery rental expenses.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_para_004] (Chars: 617, Tokens: 126, Offset: 999-1616) ---
+### 2.2 Eligibility Criteria
+To qualify under PM-DIS, applicant households must meet each of the following mandatory conditions:
+- The farmer must possess cultivable agricultural land up to a maximum holding limit of 2.0 hectares (5.0 acres) as per official State land revenue records.
+- The applicant must hold an active Aadhaar card linked to a valid bank account enabled for Direct Benefit Transfer (DBT) via Aadhaar Payment Bridge (APB).
+- The applicant's household must not have any member serving as a constitutional post holder, government employee, or registered income-tax payer in previous assessment years.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_para_005] (Chars: 473, Tokens: 105, Offset: 1618-2091) ---
+### 2.3 Financial Entitlements & Disbursement Schedule
+Eligible beneficiaries receive an annual financial benefit of Rs 6,000 payable in three equal four-monthly installments of Rs 2,000 each:
+- Installment 1: Transferred directly in April for Kharif season sowing preparations.
+- Installment 2: Transferred directly in August for mid-season cultivation and fertilizer support.
+- Installment 3: Transferred directly in December for Rabi season harvesting and crop rotation.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_para_006] (Chars: 576, Tokens: 101, Offset: 2093-2669) ---
+### 2.4 Exclusion Criteria
+The following categories are explicitly disqualified from receiving benefits under PM-DIS regardless of land size:
+- Institutional landholders and corporate agricultural enterprises.
+- Current and former members of Parliament, State Legislative Assemblies, and Municipal Corporations.
+- Retired individuals receiving a monthly pension exceeding Rs 10,000 per month (excluding multi-tasking staff / Class IV employees).
+- Professionals including doctors, engineers, lawyers, and chartered accountants registered with recognized professional councils.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_para_007] (Chars: 399, Tokens: 84, Offset: 2671-3070) ---
+## 3. Scheme Component B: Universal Senior Citizen Health Coverage (USC-HC)
+### 3.1 Health Insurance Coverage & Benefits
+The Universal Senior Citizen Health Coverage (USC-HC) provides cashless tertiary and secondary healthcare hospitalization benefits up to Rs 5,00,000 per eligible family per year on a family floater basis across all empanelled public and private healthcare facilities nationwide.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_para_008] (Chars: 417, Tokens: 84, Offset: 3072-3489) ---
+### 3.2 Medical Eligibility & Age Limits
+- Primary beneficiary must be an Indian citizen aged 60 years or older on the date of policy enrollment.
+- Total gross annual household income must not exceed Rs 3,00,000 as certified by the competent revenue authority.
+- Pre-existing medical conditions, including cardiovascular disorders, diabetes, and oncology treatments, are covered from day one with zero waiting period.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_para_009] (Chars: 364, Tokens: 72, Offset: 3491-3855) ---
+### 3.3 Empanelled Hospital Network & Claim Settlement
+Beneficiaries can access care at over 28,000 empanelled hospitals across India using their digital Golden Health Card. Claims are processed via a paperless automated adjudication portal with pre-authorization granted within 60 minutes for emergency hospitalizations and 4 hours for planned elective surgeries.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_para_010] (Chars: 510, Tokens: 105, Offset: 3857-4367) ---
+## 4. Application, Verification & Documentation Workflow
+### 4.1 Application Submission Channels
+Eligible citizens may submit applications through two official mechanisms:
+1. Online Self-Registration: Citizens can log in to the national welfare portal (https://welfare.gov.in) using Aadhaar-based OTP authentication.
+2. Common Service Centers (CSC): Rural citizens without internet access can register at nearby Gram Panchayat CSC kiosks with biometric verification for a fixed nominal processing fee of Rs 20.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_para_011] (Chars: 528, Tokens: 122, Offset: 4369-4897) ---
+### 4.2 Mandatory Documentation Checklist
+Applicants must upload or submit certified photocopies of the following credentials:
+- Valid Aadhaar Card (with updated demographic details).
+- Proof of Land Ownership / Record of Rights (RoR / Khasra-Khatauni extract).
+- Bank Account Passbook copy showing IFSC code, account number, and DBT-seeding stamp.
+- Income Certificate issued by Sub-Divisional Magistrate (SDM) or Tehsildar within the last 12 months.
+- Age Verification Proof (Voter ID, School Leaving Certificate, or Aadhaar).
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_para_012] (Chars: 543, Tokens: 118, Offset: 4899-5442) ---
+### 4.3 Three-Tier Verification & Approval Process
+Applications proceed through a structured three-tier administrative review:
+- Tier 1 (Village Level): Gram Panchayat Patwari/Talati conducts on-site land physical verification and biometric matching within 7 working days.
+- Tier 2 (Tehsil Level): Sub-Divisional Magistrate (SDM) audits documentation for income exclusions and tax payer overlaps within 5 working days.
+- Tier 3 (District Level): District Nodal Officer sanctions final inclusion and generates the beneficiary entitlement order.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_para_013] (Chars: 446, Tokens: 110, Offset: 5444-5890) ---
+## 5. Grievance Redressal, SLA & Escalation Mechanism
+### 5.1 Helpdesk & Communication Channels
+Citizens can track application progress, report delayed installments, or file complaints through:
+- National Toll-Free Helpline: 1800-111-5555 (Operates 24/7 in 12 regional languages).
+- Centralized Public Grievance Redress and Monitoring System (CPGRAMS) web portal.
+- District Welfare Officer Helpdesk located at every District Collectorate office.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_para_014] (Chars: 412, Tokens: 78, Offset: 5892-6304) ---
+### 5.2 Service Level Agreement (SLA) Resolution Timelines
+- Missing or delayed direct installment transfer disputes: Mandatory resolution within 15 working days from complaint receipt.
+- Emergency hospital pre-authorization rejections: Escalation review and medical committee ruling within 48 hours.
+- General eligibility dispute appeal: Final hearing and decision by District Magistrate within 30 working days.
+--------------------------------------------------------------------------------
+
+
+################################################################################
+### STRATEGY: Sentence-Based (600 char max, 1 sentence overlap)
+### Total Chunks: 18 | Avg Size: 476.3 chars
+################################################################################
+
+--- [CHUNK: sample_doc.md_sent_001] (Chars: 365, Tokens: 63, Offset: 0-365) ---
+# Knowledge Base Document: Government Welfare Schemes Policy & Operational Guidelines (2026-2027)
+
+## 1. Executive Summary & Policy Objectives
+The National Welfare Assistance Framework establishes comprehensive social security, direct income support, and healthcare enablement for economically vulnerable citizens, smallholder agriculturalists, and senior citizens.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_002] (Chars: 527, Tokens: 82, Offset: 105-633) ---
+Executive Summary & Policy Objectives
+The National Welfare Assistance Framework establishes comprehensive social security, direct income support, and healthcare enablement for economically vulnerable citizens, smallholder agriculturalists, and senior citizens. The primary objective is to eliminate administrative intermediaries through direct benefit transfer (DBT), ensure universal access to tertiary healthcare, and streamline citizen-centric grievance resolution across all union territories and state jurisdictions. ## 2.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_003] (Chars: 369, Tokens: 72, Offset: 628-997) ---
+## 2. Scheme Component A: Small & Marginal Farmers Direct Income Support (PM-DIS)
+### 2.1 Overview & Scope
+The Small & Marginal Farmers Direct Income Support (PM-DIS) initiative provides supplementary financial security to eligible landholding farming families to assist with farm input procurement, seasonal seed purchasing, and agricultural machinery rental expenses.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_004] (Chars: 363, Tokens: 68, Offset: 634-997) ---
+Scheme Component A: Small & Marginal Farmers Direct Income Support (PM-DIS)
+### 2.1 Overview & Scope
+The Small & Marginal Farmers Direct Income Support (PM-DIS) initiative provides supplementary financial security to eligible landholding farming families to assist with farm input procurement, seasonal seed purchasing, and agricultural machinery rental expenses.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_005] (Chars: 441, Tokens: 96, Offset: 999-1440) ---
+### 2.2 Eligibility Criteria
+To qualify under PM-DIS, applicant households must meet each of the following mandatory conditions:
+- The farmer must possess cultivable agricultural land up to a maximum holding limit of 2.0 hectares (5.0 acres) as per official State land revenue records. - The applicant must hold an active Aadhaar card linked to a valid bank account enabled for Direct Benefit Transfer (DBT) via Aadhaar Payment Bridge (APB).
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_006] (Chars: 331, Tokens: 64, Offset: 1285-1616) ---
+- The applicant must hold an active Aadhaar card linked to a valid bank account enabled for Direct Benefit Transfer (DBT) via Aadhaar Payment Bridge (APB). - The applicant's household must not have any member serving as a constitutional post holder, government employee, or registered income-tax payer in previous assessment years.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_007] (Chars: 553, Tokens: 115, Offset: 1441-1995) ---
+- The applicant's household must not have any member serving as a constitutional post holder, government employee, or registered income-tax payer in previous assessment years. ### 2.3 Financial Entitlements & Disbursement Schedule
+Eligible beneficiaries receive an annual financial benefit of Rs 6,000 payable in three equal four-monthly installments of Rs 2,000 each:
+- Installment 1: Transferred directly in April for Kharif season sowing preparations. - Installment 2: Transferred directly in August for mid-season cultivation and fertilizer support.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_008] (Chars: 506, Tokens: 93, Offset: 1897-2404) ---
+- Installment 2: Transferred directly in August for mid-season cultivation and fertilizer support. - Installment 3: Transferred directly in December for Rabi season harvesting and crop rotation. ### 2.4 Exclusion Criteria
+The following categories are explicitly disqualified from receiving benefits under PM-DIS regardless of land size:
+- Institutional landholders and corporate agricultural enterprises. - Current and former members of Parliament, State Legislative Assemblies, and Municipal Corporations.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_009] (Chars: 372, Tokens: 69, Offset: 2303-2676) ---
+- Current and former members of Parliament, State Legislative Assemblies, and Municipal Corporations. - Retired individuals receiving a monthly pension exceeding Rs 10,000 per month (excluding multi-tasking staff / Class IV employees). - Professionals including doctors, engineers, lawyers, and chartered accountants registered with recognized professional councils. ## 3.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_010] (Chars: 545, Tokens: 117, Offset: 2671-3217) ---
+## 3. Scheme Component B: Universal Senior Citizen Health Coverage (USC-HC)
+### 3.1 Health Insurance Coverage & Benefits
+The Universal Senior Citizen Health Coverage (USC-HC) provides cashless tertiary and secondary healthcare hospitalization benefits up to Rs 5,00,000 per eligible family per year on a family floater basis across all empanelled public and private healthcare facilities nationwide. ### 3.2 Medical Eligibility & Age Limits
+- Primary beneficiary must be an Indian citizen aged 60 years or older on the date of policy enrollment.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_011] (Chars: 591, Tokens: 123, Offset: 3072-3664) ---
+### 3.2 Medical Eligibility & Age Limits
+- Primary beneficiary must be an Indian citizen aged 60 years or older on the date of policy enrollment. - Total gross annual household income must not exceed Rs 3,00,000 as certified by the competent revenue authority. - Pre-existing medical conditions, including cardiovascular disorders, diabetes, and oncology treatments, are covered from day one with zero waiting period. ### 3.3 Empanelled Hospital Network & Claim Settlement
+Beneficiaries can access care at over 28,000 empanelled hospitals across India using their digital Golden Health Card.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_012] (Chars: 539, Tokens: 106, Offset: 3491-4031) ---
+### 3.3 Empanelled Hospital Network & Claim Settlement
+Beneficiaries can access care at over 28,000 empanelled hospitals across India using their digital Golden Health Card. Claims are processed via a paperless automated adjudication portal with pre-authorization granted within 60 minutes for emergency hospitalizations and 4 hours for planned elective surgeries. ## 4. Application, Verification & Documentation Workflow
+### 4.1 Application Submission Channels
+Eligible citizens may submit applications through two official mechanisms:
+1.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_013] (Chars: 504, Tokens: 102, Offset: 3863-4367) ---
+Application, Verification & Documentation Workflow
+### 4.1 Application Submission Channels
+Eligible citizens may submit applications through two official mechanisms:
+1. Online Self-Registration: Citizens can log in to the national welfare portal (https://welfare.gov.in) using Aadhaar-based OTP authentication. 2. Common Service Centers (CSC): Rural citizens without internet access can register at nearby Gram Panchayat CSC kiosks with biometric verification for a fixed nominal processing fee of Rs 20.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_014] (Chars: 539, Tokens: 117, Offset: 4177-4717) ---
+Common Service Centers (CSC): Rural citizens without internet access can register at nearby Gram Panchayat CSC kiosks with biometric verification for a fixed nominal processing fee of Rs 20. ### 4.2 Mandatory Documentation Checklist
+Applicants must upload or submit certified photocopies of the following credentials:
+- Valid Aadhaar Card (with updated demographic details). - Proof of Land Ownership / Record of Rights (RoR / Khasra-Khatauni extract). - Bank Account Passbook copy showing IFSC code, account number, and DBT-seeding stamp.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_015] (Chars: 539, Tokens: 125, Offset: 4631-5171) ---
+- Bank Account Passbook copy showing IFSC code, account number, and DBT-seeding stamp. - Income Certificate issued by Sub-Divisional Magistrate (SDM) or Tehsildar within the last 12 months. - Age Verification Proof (Voter ID, School Leaving Certificate, or Aadhaar). ### 4.3 Three-Tier Verification & Approval Process
+Applications proceed through a structured three-tier administrative review:
+- Tier 1 (Village Level): Gram Panchayat Patwari/Talati conducts on-site land physical verification and biometric matching within 7 working days.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_016] (Chars: 549, Tokens: 122, Offset: 4899-5449) ---
+### 4.3 Three-Tier Verification & Approval Process
+Applications proceed through a structured three-tier administrative review:
+- Tier 1 (Village Level): Gram Panchayat Patwari/Talati conducts on-site land physical verification and biometric matching within 7 working days. - Tier 2 (Tehsil Level): Sub-Divisional Magistrate (SDM) audits documentation for income exclusions and tax payer overlaps within 5 working days. - Tier 3 (District Level): District Nodal Officer sanctions final inclusion and generates the beneficiary entitlement order. ## 5.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_017] (Chars: 446, Tokens: 110, Offset: 5444-5890) ---
+## 5. Grievance Redressal, SLA & Escalation Mechanism
+### 5.1 Helpdesk & Communication Channels
+Citizens can track application progress, report delayed installments, or file complaints through:
+- National Toll-Free Helpline: 1800-111-5555 (Operates 24/7 in 12 regional languages). - Centralized Public Grievance Redress and Monitoring System (CPGRAMS) web portal. - District Welfare Officer Helpdesk located at every District Collectorate office.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_sent_018] (Chars: 495, Tokens: 92, Offset: 5808-6304) ---
+- District Welfare Officer Helpdesk located at every District Collectorate office. ### 5.2 Service Level Agreement (SLA) Resolution Timelines
+- Missing or delayed direct installment transfer disputes: Mandatory resolution within 15 working days from complaint receipt. - Emergency hospital pre-authorization rejections: Escalation review and medical committee ruling within 48 hours. - General eligibility dispute appeal: Final hearing and decision by District Magistrate within 30 working days.
+--------------------------------------------------------------------------------
+
+
+################################################################################
+### STRATEGY: Recursive Character (500 chars, 80 char overlap)
+### Total Chunks: 16 | Avg Size: 400.3 chars
+################################################################################
+
+--- [CHUNK: sample_doc.md_rec_001] (Chars: 142, Tokens: 30, Offset: 0-142) ---
+# Knowledge Base Document: Government Welfare Schemes Policy & Operational Guidelines (2026-2027)
+
+## 1. Executive Summary & Policy Objectives
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_rec_002] (Chars: 527, Tokens: 82, Offset: 99-626) ---
+## 1. Executive Summary & Policy Objectives
+The National Welfare Assistance Framework establishes comprehensive social security, direct income support, and healthcare enablement for economically vulnerable citizens, smallholder agriculturalists, and senior citizens. The primary objective is to eliminate administrative intermediaries through direct benefit transfer (DBT), ensure universal access to tertiary healthcare, and streamline citizen-centric grievance resolution across all union territories and state jurisdictions.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_rec_003] (Chars: 499, Tokens: 99, Offset: 628-1127) ---
+## 2. Scheme Component A: Small & Marginal Farmers Direct Income Support (PM-DIS)
+### 2.1 Overview & Scope
+The Small & Marginal Farmers Direct Income Support (PM-DIS) initiative provides supplementary financial security to eligible landholding farming families to assist with farm input procurement, seasonal seed purchasing, and agricultural machinery rental expenses.
+
+### 2.2 Eligibility Criteria
+To qualify under PM-DIS, applicant households must meet each of the following mandatory conditions:
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_rec_004] (Chars: 488, Tokens: 99, Offset: 1128-1616) ---
+- The farmer must possess cultivable agricultural land up to a maximum holding limit of 2.0 hectares (5.0 acres) as per official State land revenue records.
+- The applicant must hold an active Aadhaar card linked to a valid bank account enabled for Direct Benefit Transfer (DBT) via Aadhaar Payment Bridge (APB).
+- The applicant's household must not have any member serving as a constitutional post holder, government employee, or registered income-tax payer in previous assessment years.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_rec_005] (Chars: 473, Tokens: 105, Offset: 1618-2091) ---
+### 2.3 Financial Entitlements & Disbursement Schedule
+Eligible beneficiaries receive an annual financial benefit of Rs 6,000 payable in three equal four-monthly installments of Rs 2,000 each:
+- Installment 1: Transferred directly in April for Kharif season sowing preparations.
+- Installment 2: Transferred directly in August for mid-season cultivation and fertilizer support.
+- Installment 3: Transferred directly in December for Rabi season harvesting and crop rotation.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_rec_006] (Chars: 445, Tokens: 81, Offset: 2093-2538) ---
+### 2.4 Exclusion Criteria
+The following categories are explicitly disqualified from receiving benefits under PM-DIS regardless of land size:
+- Institutional landholders and corporate agricultural enterprises.
+- Current and former members of Parliament, State Legislative Assemblies, and Municipal Corporations.
+- Retired individuals receiving a monthly pension exceeding Rs 10,000 per month (excluding multi-tasking staff / Class IV employees).
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_rec_007] (Chars: 130, Tokens: 20, Offset: 2539-2669) ---
+- Professionals including doctors, engineers, lawyers, and chartered accountants registered with recognized professional councils.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_rec_008] (Chars: 399, Tokens: 84, Offset: 2671-3070) ---
+## 3. Scheme Component B: Universal Senior Citizen Health Coverage (USC-HC)
+### 3.1 Health Insurance Coverage & Benefits
+The Universal Senior Citizen Health Coverage (USC-HC) provides cashless tertiary and secondary healthcare hospitalization benefits up to Rs 5,00,000 per eligible family per year on a family floater basis across all empanelled public and private healthcare facilities nationwide.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_rec_009] (Chars: 417, Tokens: 84, Offset: 3072-3489) ---
+### 3.2 Medical Eligibility & Age Limits
+- Primary beneficiary must be an Indian citizen aged 60 years or older on the date of policy enrollment.
+- Total gross annual household income must not exceed Rs 3,00,000 as certified by the competent revenue authority.
+- Pre-existing medical conditions, including cardiovascular disorders, diabetes, and oncology treatments, are covered from day one with zero waiting period.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_rec_010] (Chars: 462, Tokens: 91, Offset: 3491-3953) ---
+### 3.3 Empanelled Hospital Network & Claim Settlement
+Beneficiaries can access care at over 28,000 empanelled hospitals across India using their digital Golden Health Card. Claims are processed via a paperless automated adjudication portal with pre-authorization granted within 60 minutes for emergency hospitalizations and 4 hours for planned elective surgeries.
+
+## 4. Application, Verification & Documentation Workflow
+### 4.1 Application Submission Channels
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_rec_011] (Chars: 495, Tokens: 102, Offset: 3491-3986) ---
+### 4.1 Application Submission Channels
+Eligible citizens may submit applications through two official mechanisms:
+1. Online Self-Registration: Citizens can log in to the national welfare portal (https://welfare.gov.in) using Aadhaar-based OTP authentication.
+2. Common Service Centers (CSC): Rural citizens without internet access can register at nearby Gram Panchayat CSC kiosks with biometric verification for a fixed nominal processing fee of Rs 20.
+### 4.2 Mandatory Documentation Checklist
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_rec_012] (Chars: 451, Tokens: 105, Offset: 4369-4820) ---
+### 4.2 Mandatory Documentation Checklist
+Applicants must upload or submit certified photocopies of the following credentials:
+- Valid Aadhaar Card (with updated demographic details).
+- Proof of Land Ownership / Record of Rights (RoR / Khasra-Khatauni extract).
+- Bank Account Passbook copy showing IFSC code, account number, and DBT-seeding stamp.
+- Income Certificate issued by Sub-Divisional Magistrate (SDM) or Tehsildar within the last 12 months.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_rec_013] (Chars: 495, Tokens: 113, Offset: 4369-4864) ---
+- Age Verification Proof (Voter ID, School Leaving Certificate, or Aadhaar).
+### 4.3 Three-Tier Verification & Approval Process
+Applications proceed through a structured three-tier administrative review:
+- Tier 1 (Village Level): Gram Panchayat Patwari/Talati conducts on-site land physical verification and biometric matching within 7 working days.
+- Tier 2 (Tehsil Level): Sub-Divisional Magistrate (SDM) audits documentation for income exclusions and tax payer overlaps within 5 working days.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_rec_014] (Chars: 124, Tokens: 22, Offset: 5318-5442) ---
+- Tier 3 (District Level): District Nodal Officer sanctions final inclusion and generates the beneficiary entitlement order.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_rec_015] (Chars: 446, Tokens: 110, Offset: 5444-5890) ---
+## 5. Grievance Redressal, SLA & Escalation Mechanism
+### 5.1 Helpdesk & Communication Channels
+Citizens can track application progress, report delayed installments, or file complaints through:
+- National Toll-Free Helpline: 1800-111-5555 (Operates 24/7 in 12 regional languages).
+- Centralized Public Grievance Redress and Monitoring System (CPGRAMS) web portal.
+- District Welfare Officer Helpdesk located at every District Collectorate office.
+--------------------------------------------------------------------------------
+
+--- [CHUNK: sample_doc.md_rec_016] (Chars: 412, Tokens: 78, Offset: 5892-6304) ---
+### 5.2 Service Level Agreement (SLA) Resolution Timelines
+- Missing or delayed direct installment transfer disputes: Mandatory resolution within 15 working days from complaint receipt.
+- Emergency hospital pre-authorization rejections: Escalation review and medical committee ruling within 48 hours.
+- General eligibility dispute appeal: Final hearing and decision by District Magistrate within 30 working days.
+--------------------------------------------------------------------------------
+

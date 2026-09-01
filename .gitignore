@@ -32,14 +32,6 @@ outputs/*
 !outputs/chunking_comparison_results.txt
 !outputs/sample_chunks.json
 !outputs/sample_chunks.txt
-!outputs/sample_chunks_metadata.json
-!outputs/token_chunks_sample.json
-!outputs/chunk_traceability_demo.log
-!outputs/overlap_boundary_comparison.txt
-!outputs/ingestion_validation_summary.json
-!outputs/ingestion_validation_summary.txt
-!outputs/sample_validated_chunks.json
-!outputs/ingestion_manifest.json
 
 # Vector Stores & Databases
 chroma_db/

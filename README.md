@@ -273,88 +273,83 @@ When recording your screen-share submission, follow this structured walkthrough:
 
 ---
 
-## 📚 Corpus Preparation & Ingestion Validation (3.24)
+## 🧩 Document Chunking Strategies & Boundary Optimization (3.21)
 
-A RAG assistant is only as reliable as the corpus it actually ingests. Silent document drops (unparseable PDFs, corrupt HTML, or encoding errors) create invisible blind spots where the assistant cannot answer questions without any error log explaining why.
+In production RAG systems, embedding a 40-page policy document as a single blob exceeds context limits, dilutes vector matches, and inflates inference costs. Embedding word-by-word strips all semantic context. 
 
-SchemeAssist unifies the ingestion lifecycle (**Load $\rightarrow$ Clean $\rightarrow$ Chunk $\rightarrow$ Tag**) into an observable, resilient pipeline in [`src/corpus_pipeline.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/src/corpus_pipeline.py) with mathematical completeness verification.
+SchemeAssist implements a **multi-strategy chunking engine**, **boundary analysis suite**, and **chunk-level retriever** in [`src/chunking.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/src/chunking.py).
 
-### 🏗️ Ingestion Pipeline Architecture
+### 🏗️ Chunking Architecture & Pipeline
 
 ```mermaid
 flowchart TD
-    A["Corpus Directory (data/)"] --> B["Stage 1: Recursive File Discovery (pathlib.Path.rglob)"]
+    A["Raw Document Corpus (data/sample_doc.md)"] --> B[Cleaning & Normalization Pipeline]
+    B --> C[Cleaned Structured Markdown]
     
-    subgraph Pipeline["Ingestion Pipeline (src/corpus_pipeline.py)"]
-        B --> C["Stage 2: Format-Specific Extraction (MD, TXT, HTML, PDF)"]
-        C -- Error / Bad Format --> D["Record IngestionFailure (Error Class + Message)"]
-        C -- Raw Text Extracted --> E["Stage 3: Text Sanitization (clean_text)"]
-        
-        E --> F["Stage 4: Token-Aware Chunking (chunk_document_by_tokens)"]
-        F --> G["Stage 5: Metadata Tagging & SHA-256 Hashing (tag_chunks)"]
-    end
+    C --> D1["Strategy 1: Fixed-Size Naive (500 chars, no overlap)"]
+    C --> D2["Strategy 2: Fixed-Size Overlap (500 chars, 80 overlap)"]
+    C --> D3["Strategy 3: Paragraph-Based (Natural double newlines)"]
+    C --> D4["Strategy 4: Sentence-Based (600 chars, 1 sent overlap)"]
+    C --> D5["Strategy 5: Recursive Character (500 chars, 80 overlap)"]
     
-    G --> H["Ingested Documents & Validated Chunks"]
-    D --> I["Recorded Failures List"]
+    D1 & D2 & D3 & D4 & D5 --> E[Statistical Comparison & Boundary Analysis Engine]
+    E --> F["Outputs: outputs/chunking_comparison_results.txt"]
+    E --> G["Sample Chunks: outputs/sample_chunks.txt & .json"]
     
-    H & I --> J{"Stage 6: Completeness Reconciliation Engine"}
-    J -->|Total Files == Docs + Failures| K["✅ Completeness Verified (Zero Silent Drops)"]
-    J -->|Discrepancy Detected| L["❌ Assertion Error (Silent Drop Detected)"]
-    
-    K --> M["Persist Manifest: outputs/ingestion_manifest.json"]
-    K --> N["Persist Audit Summary: outputs/ingestion_validation_summary.json & .txt"]
+    D5 -- Selected Optimal Strategy --> H["Ingestion Pipeline (src/ingestion.py)"]
+    H --> I["Chunk-Level Vector/Keyword Retriever (src/retrieval.py)"]
+    I --> J["Grounded LLM Prompt Context"]
 ```
 
-### 📊 Ingestion Audit Summary & Corpus Metrics
+### 📊 Strategy Comparison & Benchmark Statistics
 
-Ran on the full government welfare scheme corpus in [`data/`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/data/):
+Ran on [`data/sample_doc.md`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/data/sample_doc.md) (Government Welfare Schemes Policy & Operational Guidelines — 6,305 characters, 859 words):
 
-| Metric Name | Value | Description |
-| :--- | :---: | :--- |
-| **Total Source Files Discovered** | **7** | Total files discovered on disk |
-| **Successfully Ingested Documents** | **6** | Validated documents loaded, cleaned, chunked, and tagged |
-| **Total Chunks Created** | **12** | Token-aware chunks (250 token target, 50 token overlap) |
-| **Recorded Failures / Skipped** | **1** | Unsupported test file (`unsupported_file.xyz`) |
-| **Total Corpus Tokens** | **1,955** | Total BPE tokens across all ingested documents |
-| **Average Chunk Size** | **188.75 tokens** | Uniform semantic size optimized for prompt context |
-| **Completeness Status** | **PASSED** | $\mathbf{7\text{ (Files)}} == \mathbf{6\text{ (Docs)}} + \mathbf{1\text{ (Failures)}}$ (Zero Silent Drops) |
+| Strategy Name | Total Chunks | Avg Size (Chars) | Min-Max Chars | Avg Tokens | Mid-Sentence Cuts | Cut Rate (%) | Boundary Quality |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Fixed-Size (Naive)** | 13 | 484.9 | 304 – 500 | 99.9 | 10 / 13 | 76.9% | ❌ Arbitrary mid-word/clause breaks |
+| **Fixed-Size (Overlap)** | 16 | 464.2 | 4 – 500 | 94.8 | 13 / 16 | 81.2% | ⚠️ Sliding window retains context |
+| **Paragraph-Based** | 14 | 448.4 | 97 – 617 | 91.4 | 1 / 14 | 7.1% | ✅ Highly cohesive policy sections |
+| **Sentence-Based** | 18 | 476.3 | 331 – 591 | 96.4 | 0 / 18 | 0.0% | ✅ Grammatically complete units |
+| **Recursive Character** | **16** | **400.3** | **124 – 527** | **81.6** | **3 / 16** | **18.8%** | ⭐ **Optimal size & semantic bounds** |
 
-### 🧮 Mathematical Completeness Proof
-$$\text{Total Files Discovered (7)} = \text{Successfully Ingested Docs (6)} + \text{Recorded Failures (1)}$$
+### 🎯 Strategy Justification for Welfare Schemes Corpus
+- **Structural Integrity**: Government policy guidelines are hierarchical (Headings $\rightarrow$ Sections $\rightarrow$ Eligibility Bullet Points $\rightarrow$ Exclusion Criteria). Recursive character chunking preserves section headers with their clause lists.
+- **Context Window Budget**: At ~400 characters (~82 tokens) per chunk, retrieving **Top-3 chunks** consumes only **~246 tokens** ($<0.2\%$ of `gpt-4o-mini` 128k context), leaving maximum budget for system instructions and conversation history.
+- **Zero Hallucination Risk**: Complete policy conditions prevent the model from misidentifying an ineligible applicant as qualified due to severed exclusion clauses.
 
 ---
 
-### 🧪 Run Ingestion Pipeline & Validation Tests
+### 🧪 Run Chunking Suite & Tests
 
-1. **Run End-to-End Pipeline & Generate Summary Artifacts**:
+1. **Run the Full Chunking Benchmark & Boundary Inspection**:
    ```bash
-   python src/corpus_pipeline.py
+   python src/chunking_experiment.py
    ```
-2. **Run Completeness & Metadata Audit Script**:
+2. **Run Chunking Unit Tests**:
    ```bash
-   python tests/verify_ingestion_completeness.py
+   python -m unittest tests/test_chunking.py
    ```
-3. **Run Ingestion Pipeline Unit Tests**:
+3. **Run End-to-End RAG Verification with Chunk Retrieval**:
    ```bash
-   python -m unittest tests/test_ingestion_pipeline.py
+   python src/main.py
    ```
 
-### 📁 Generated Ingestion Artifacts:
-- **Comprehensive Documentation**: [`docs/corpus_preparation_ingestion_validation.md`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/docs/corpus_preparation_ingestion_validation.md)
-- **Ingestion Audit Summary Report**: [`outputs/ingestion_validation_summary.txt`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/ingestion_validation_summary.txt)
-- **Machine-Readable Summary JSON**: [`outputs/ingestion_validation_summary.json`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/ingestion_validation_summary.json)
-- **Resumable Ingestion Manifest**: [`outputs/ingestion_manifest.json`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/ingestion_manifest.json)
-- **Sample Validated Chunks**: [`outputs/sample_validated_chunks.json`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/sample_validated_chunks.json)
+### 📁 Generated Artifacts & Reports:
+- **Comprehensive Documentation**: [`docs/document_chunking_strategies.md`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/docs/document_chunking_strategies.md)
+- **Detailed Statistical Report**: [`outputs/chunking_comparison_results.txt`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/chunking_comparison_results.txt)
+- **Human-Readable Sample Chunks**: [`outputs/sample_chunks.txt`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/sample_chunks.txt)
+- **Machine-Readable Chunks JSON**: [`outputs/sample_chunks.json`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/sample_chunks.json)
 
 ---
 
 ### 🎥 Video Walkthrough Script (3–5 Minutes)
 
-1. **Introduction & The Silent Killer in RAG (0:00 – 0:45)**: Explain silent document drops and why mathematical completeness verification is essential.
-2. **The 4 Pipeline Stages (0:45 – 1:30)**: Walk through Load $\rightarrow$ Clean $\rightarrow$ Chunk $\rightarrow$ Tag in [`src/corpus_pipeline.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/src/corpus_pipeline.py).
-3. **Running the Pipeline & Proving Completeness (1:30 – 2:30)**: Run `python tests/verify_ingestion_completeness.py` and show $7\text{ files} == 6\text{ docs} + 1\text{ failure}$.
-4. **Inspecting Failures & Chunk Metadata (2:30 – 3:15)**: Review [`outputs/ingestion_validation_summary.txt`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/ingestion_validation_summary.txt) and [`outputs/sample_validated_chunks.json`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/sample_validated_chunks.json).
-5. **Follow-Up: Scaling to 4,000+ Documents (3:15 – 4:15)**: Explain resumable manifest tracking, multiprocessing, chunk batching (500 units/batch), and dead-letter queues.
+1. **Why Chunking is Mandatory in RAG (0:00 – 0:50)**: Explain vector dilution and context window constraints when embedding full policy documents.
+2. **Trade-offs: Small vs. Large Chunks (0:50 – 1:40)**: Precision vs. context completeness balance.
+3. **Strategy Comparison & Empirical Stats (1:40 – 2:45)**: Walk through the 5 strategies and review the statistics table in `outputs/chunking_comparison_results.txt`.
+4. **Boundary Integrity & Answer Quality (2:45 – 3:30)**: Demonstrate how fixed-size slicing fractures eligibility clauses while recursive splitting preserves complete premises.
+5. **Follow-Up: Chunk Size vs. Context Window Relation (3:30 – 4:30)**: Explain the budget formula $\text{Total Tokens} = \text{System Prompt} + \text{History} + \text{Query} + (K \times \text{Chunk Size}) + \text{Output}$, showing how our 82-token chunks allow fast, cost-effective Top-K retrieval.
 
 
 

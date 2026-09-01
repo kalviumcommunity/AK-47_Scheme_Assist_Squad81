@@ -1,13 +1,18 @@
 import os
-import sys
-import re
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any
 
-# Ensure package imports resolve correctly when run directly
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+try:
+    from bs4 import BeautifulSoup
+    _BS4_AVAILABLE = True
+except ImportError:
+    _BS4_AVAILABLE = False
 
-from bs4 import BeautifulSoup
-from pypdf import PdfReader
+try:
+    from pypdf import PdfReader
+    _PYPDF_AVAILABLE = True
+except ImportError:
+    _PYPDF_AVAILABLE = False
+
 from src.cleaning import clean_text
 from src.token_counter import get_tokenizer
 
@@ -113,52 +118,8 @@ def chunk_document_by_tokens(
         char_start = len(encoding.decode(tokens[:t_start]))
         char_end = len(encoding.decode(tokens[:t_end]))
 
-        section_name = get_section_for_offset(sections, char_start)
 
-        page_num = 1
-        if page_numbers:
-            for p_num, p_start in page_numbers:
-                if char_start >= p_start:
-                    page_num = p_num
-
-        chunk_metadata = {
-            "source": filename,
-            "chunk_index": idx,
-            "position": f"Chunk {idx + 1} of {total_chunks} (tokens {t_start}-{t_end})",
-            "section": section_name,
-            "page": page_num,
-            "token_count": len(slice_tokens),
-            "total_chunks": total_chunks,
-            "char_start": char_start,
-            "char_end": char_end,
-            "overlap_tokens": overlap_tokens if idx > 0 else 0
-        }
-
-        chunks.append({
-            "text": chunk_text,
-            "metadata": chunk_metadata
-        })
-
-    return chunks
-
-
-def chunk_document(
-    doc: Dict[str, Any],
-    chunk_size: int = 350,
-    overlap: int = 50
-) -> List[Dict[str, Any]]:
-    """
-    Splits a cleaned document into text chunks based on character count with overlap.
-    (Kept for backwards compatibility; token-based chunking is preferred for RAG).
-    """
-    return chunk_document_by_tokens(
-        doc,
-        chunk_size_tokens=250,
-        overlap_tokens=50
-    )
-
-
-def load_documents_from_data_dir(data_dir: str = "data") -> List[Dict[str, Any]]:
+def load_documents_from_data_dir(data_dir: str = "data") -> List[Dict[str, str]]:
     """
     Ingests PDF, HTML, Markdown, and TXT documents from the specified data directory.
     Cleans raw extracted text of boilerplate, normalizes spaces/encoding, and skips unsupported formats.
@@ -174,7 +135,7 @@ def load_documents_from_data_dir(data_dir: str = "data") -> List[Dict[str, Any]]
             continue
 
         _, ext = os.path.splitext(filename.lower())
-        
+
         # Supported format check
         if ext not in [".txt", ".md", ".html", ".htm", ".pdf"]:
             print(f"[INGESTION WARNING] Skipping unsupported file format: '{filename}'")
@@ -192,15 +153,22 @@ def load_documents_from_data_dir(data_dir: str = "data") -> List[Dict[str, Any]]
                 # HTML loading and text extraction
                 with open(filepath, "r", encoding="utf-8") as f:
                     html_content = f.read()
-                soup = BeautifulSoup(html_content, "html.parser")
-                # Remove script and style elements to avoid extracting code/css
-                for script_or_style in soup(["script", "style"]):
-                    script_or_style.decompose()
-                # Get text with newline separators to preserve line structure for boilerplate cleaning
-                content = soup.get_text(separator="\n").strip()
+                if _BS4_AVAILABLE:
+                    soup = BeautifulSoup(html_content, "html.parser")
+                    # Remove script and style elements to avoid extracting code/css
+                    for script_or_style in soup(["script", "style"]):
+                        script_or_style.decompose()
+                    # Get text with newline separators to preserve line structure for boilerplate cleaning
+                    content = soup.get_text(separator="\n").strip()
+                else:
+                    import re
+                    # Fallback basic tag stripper
+                    content = re.sub(r"<[^>]+>", " ", html_content).strip()
 
             elif ext == ".pdf":
-                # PDF loading and page-level extraction
+                # PDF loading and extraction
+                if not _PYPDF_AVAILABLE:
+                    raise ImportError("pypdf is required to extract text from PDF files.")
                 reader = PdfReader(filepath)
                 text_parts = []
                 page_numbers = []
@@ -225,7 +193,7 @@ def load_documents_from_data_dir(data_dir: str = "data") -> List[Dict[str, Any]]
                 "content": cleaned_content,
                 "page_numbers": page_numbers
             })
-            
+
             # Confirm intake with length and preview
             preview = cleaned_content[:200].replace("\n", " ")
             if len(cleaned_content) > 200:
@@ -239,73 +207,47 @@ def load_documents_from_data_dir(data_dir: str = "data") -> List[Dict[str, Any]]
     return documents
 
 
-def load_and_chunk_documents(
+def ingest_and_chunk_documents(
     data_dir: str = "data",
-    chunk_size_tokens: int = 250,
-    overlap_tokens: int = 50
+    strategy: str = "recursive",
+    chunk_size: int = 500,
+    chunk_overlap: int = 80
 ) -> List[Dict[str, Any]]:
     """
-    Ingests all supported documents from data_dir and splits them into token-aware chunks with attached metadata.
+    Ingests documents from data directory and splits them into chunks
+    using the specified chunking strategy ('recursive', 'paragraph', 'sentence', 'fixed', 'fixed_overlap').
     """
-    raw_docs = load_documents_from_data_dir(data_dir)
+    from src.chunking import (
+        fixed_size_chunks,
+        fixed_size_overlap_chunks,
+        paragraph_chunks,
+        sentence_chunks,
+        recursive_character_chunks,
+    )
+
+    documents = load_documents_from_data_dir(data_dir)
     all_chunks = []
-    for doc in raw_docs:
-        doc_chunks = chunk_document_by_tokens(
-            doc,
-            chunk_size_tokens=chunk_size_tokens,
-            overlap_tokens=overlap_tokens
-        )
-        all_chunks.extend(doc_chunks)
-    print(f"[INGESTION LOG] Generated {len(all_chunks)} token-aware chunks across {len(raw_docs)} document(s).")
+
+    for doc in documents:
+        filename = doc.get("filename", "unknown_doc")
+        content = doc.get("content", "")
+
+        if strategy == "fixed":
+            chunks = fixed_size_chunks(content, size=chunk_size, overlap=0, source_doc=filename)
+        elif strategy == "fixed_overlap":
+            chunks = fixed_size_overlap_chunks(content, size=chunk_size, overlap=chunk_overlap, source_doc=filename)
+        elif strategy == "paragraph":
+            chunks = paragraph_chunks(content, max_size=chunk_size * 2, source_doc=filename)
+        elif strategy == "sentence":
+            chunks = sentence_chunks(content, max_size=chunk_size, overlap_sentences=1, source_doc=filename)
+        else:  # default recursive
+            chunks = recursive_character_chunks(content, chunk_size=chunk_size, chunk_overlap=chunk_overlap, source_doc=filename)
+
+        for c in chunks:
+            chunk_dict = c.to_dict()
+            # Also provide 'content' key for backward compatibility with SimpleRetriever
+            chunk_dict["content"] = c.text
+            all_chunks.append(chunk_dict)
+
+    print(f"[CHUNKING LOG] Generated {len(all_chunks)} total chunks using '{strategy}' strategy across {len(documents)} document(s).")
     return all_chunks
-
-
-def load_and_chunk_documents_by_tokens(
-    data_dir: str = "data",
-    chunk_size_tokens: int = 250,
-    overlap_tokens: int = 50
-) -> List[Dict[str, Any]]:
-    """
-    Alias for load_and_chunk_documents explicitly highlighting token-based chunking.
-    """
-    return load_and_chunk_documents(
-        data_dir=data_dir,
-        chunk_size_tokens=chunk_size_tokens,
-        overlap_tokens=overlap_tokens
-    )
-
-
-def validate_corpus_ingestion(
-    data_dir: str = "data",
-    chunk_size_tokens: int = 250,
-    overlap_tokens: int = 50
-) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
-    """
-    Executes the validated corpus ingestion pipeline with strict completeness reconciliation.
-    Returns (all_chunks, summary_dict).
-    """
-    from src.corpus_pipeline import run_corpus_ingestion, persist_pipeline_artifacts
-    files, docs, chunks, failures, summary = run_corpus_ingestion(
-        data_dir=data_dir,
-        chunk_size_tokens=chunk_size_tokens,
-        overlap_tokens=overlap_tokens
-    )
-    persist_pipeline_artifacts(summary, chunks)
-    return chunks, summary.to_dict()
-
-
-if __name__ == "__main__":
-    print("=" * 60)
-    print("  [INGESTION MODULE] Running token-aware ingestion & chunking test...")
-    print("=" * 60)
-    chunks = load_and_chunk_documents_by_tokens("data", chunk_size_tokens=250, overlap_tokens=50)
-    print("-" * 60)
-    print(f"Total token chunks created: {len(chunks)}")
-    if chunks:
-        print("\n[SAMPLE TOKEN CHUNK METADATA]:")
-        import json
-        print(json.dumps(chunks[0], indent=2))
-    print("=" * 60)
-
-
-
