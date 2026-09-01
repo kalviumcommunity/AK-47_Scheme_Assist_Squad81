@@ -404,9 +404,9 @@ class StrategyStats:
 
 def count_mid_sentence_cuts(chunks: List[Chunk]) -> int:
     """
-    Heuristic to detect unnatural chunk boundaries:
-    A chunk cuts mid-sentence if it does not end with terminal punctuation
-    (. ! ? : ; \" ' ) or markdown headers, and the next chunk starts in lowercase or mid-clause.
+    Heuristic to detect potentially unnatural chunk boundaries.
+    Counts a cut when a chunk does not end with terminal punctuation (e.g. . ! ? : quotes) or '#'.
+    Note: this does not inspect the next chunk; it's a per-chunk end-marker check.
     """
     cuts = 0
     terminal_punct = {".", "!", "?", ":", "\"", "'", "}", "]", "#"}
