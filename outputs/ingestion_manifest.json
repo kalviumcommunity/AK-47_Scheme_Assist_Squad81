@@ -1,0 +1,62 @@
+{
+  "manifest_version": "1.0",
+  "last_updated": "2026-09-01T10:49:05.661078+00:00",
+  "total_files": 7,
+  "processed_documents": {
+    "ayushman_bharat_healthcare.md": {
+      "filepath": "data\\ayushman_bharat_healthcare.md",
+      "format": ".md",
+      "content_hash": "d405c13b695d250b",
+      "chunks_count": 2,
+      "tokens": 425,
+      "status": "SUCCESS"
+    },
+    "housing_welfare_guidelines.html": {
+      "filepath": "data\\housing_welfare_guidelines.html",
+      "format": ".html",
+      "content_hash": "8aa4b9768132b2e5",
+      "chunks_count": 2,
+      "tokens": 353,
+      "status": "SUCCESS"
+    },
+    "pmkisan_scheme_doc.md": {
+      "filepath": "data\\pmkisan_scheme_doc.md",
+      "format": ".md",
+      "content_hash": "7a0df3d80029d2c4",
+      "chunks_count": 3,
+      "tokens": 460,
+      "status": "SUCCESS"
+    },
+    "sample_doc.md": {
+      "filepath": "data\\sample_doc.md",
+      "format": ".md",
+      "content_hash": "961852bff450c131",
+      "chunks_count": 1,
+      "tokens": 96,
+      "status": "SUCCESS"
+    },
+    "scholarship_welfare_circular.md": {
+      "filepath": "data\\scholarship_welfare_circular.md",
+      "format": ".md",
+      "content_hash": "421810e99839dd26",
+      "chunks_count": 2,
+      "tokens": 291,
+      "status": "SUCCESS"
+    },
+    "senior_citizen_pension_scheme.txt": {
+      "filepath": "data\\senior_citizen_pension_scheme.txt",
+      "format": ".txt",
+      "content_hash": "661fb5304cb2a6f1",
+      "chunks_count": 2,
+      "tokens": 330,
+      "status": "SUCCESS"
+    }
+  },
+  "failed_files": {
+    "unsupported_file.xyz": {
+      "filepath": "data\\unsupported_file.xyz",
+      "error_type": "ValueError",
+      "error_message": "Unsupported file extension: '.xyz' (Expected .txt, .md, .html, .pdf)"
+    }
+  }
+}

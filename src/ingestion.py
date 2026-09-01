@@ -1,7 +1,7 @@
 import os
 import sys
 import re
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 
 # Ensure package imports resolve correctly when run directly
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -273,6 +273,25 @@ def load_and_chunk_documents_by_tokens(
         chunk_size_tokens=chunk_size_tokens,
         overlap_tokens=overlap_tokens
     )
+
+
+def validate_corpus_ingestion(
+    data_dir: str = "data",
+    chunk_size_tokens: int = 250,
+    overlap_tokens: int = 50
+) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    """
+    Executes the validated corpus ingestion pipeline with strict completeness reconciliation.
+    Returns (all_chunks, summary_dict).
+    """
+    from src.corpus_pipeline import run_corpus_ingestion, persist_pipeline_artifacts
+    files, docs, chunks, failures, summary = run_corpus_ingestion(
+        data_dir=data_dir,
+        chunk_size_tokens=chunk_size_tokens,
+        overlap_tokens=overlap_tokens
+    )
+    persist_pipeline_artifacts(summary, chunks)
+    return chunks, summary.to_dict()
 
 
 if __name__ == "__main__":
