@@ -30,6 +30,8 @@ class SimpleRetriever:
             enriched_item["retrieval_score"] = score
             scored_items.append((score, enriched_item))
 
-        # Sort descending by score
+        scored_items = [pair for pair in scored_items if pair[0] > 0]
+        if not scored_items:
+            return []
         scored_items.sort(key=lambda x: x[0], reverse=True)
         return [item for score, item in scored_items[:top_k]]
