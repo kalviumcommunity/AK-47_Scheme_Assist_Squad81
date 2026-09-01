@@ -1,0 +1,53 @@
+================================================================================
+  SCHEMEASSIST RAG - CORPUS INGESTION & VALIDATION AUDIT REPORT
+================================================================================
+
+Timestamp (UTC)            : 2026-09-01T10:49:05.661078+00:00
+Total Source Files on Disk : 7
+Successfully Ingested Docs : 6
+Total Chunks Generated     : 12
+Total Failures / Skipped   : 1
+Total Corpus Tokens        : 1955
+Average Chunk Tokens       : 187.92 tokens
+Completeness Status        : PASSED (Zero Silent Drops)
+Reconciliation Proof       : 7 (Discovered Files) == 6 (Ingested Docs) + 1 (Recorded Failures)
+
+FORMATS BREAKDOWN:
+----------------------------------------
+  • .html      : 1 file(s)
+  • .md        : 4 file(s)
+  • .txt       : 1 file(s)
+  • .xyz       : 1 file(s)
+
+SUCCESSFULLY INGESTED DOCUMENTS:
+--------------------------------------------------------------------------------
+1. ayushman_bharat_healthcare.md [.md] - 1909 chars | 425 tokens | 2 chunks (Hash: d405c13b695d250b)
+2. housing_welfare_guidelines.html [.html] - 1526 chars | 353 tokens | 2 chunks (Hash: 8aa4b9768132b2e5)
+3. pmkisan_scheme_doc.md [.md] - 2159 chars | 460 tokens | 3 chunks (Hash: 7a0df3d80029d2c4)
+4. sample_doc.md [.md] - 596 chars | 96 tokens | 1 chunks (Hash: 961852bff450c131)
+5. scholarship_welfare_circular.md [.md] - 1357 chars | 291 tokens | 2 chunks (Hash: 421810e99839dd26)
+6. senior_citizen_pension_scheme.txt [.txt] - 1522 chars | 330 tokens | 2 chunks (Hash: 661fb5304cb2a6f1)
+
+RECORDED INGESTION FAILURES & SKIPPED FILES:
+--------------------------------------------------------------------------------
+1. unsupported_file.xyz [.xyz] -> [ValueError]: Unsupported file extension: '.xyz' (Expected .txt, .md, .html, .pdf)
+
+================================================================================
+SAMPLE CHUNK METADATA AUDIT (FIRST 2 CHUNKS):
+================================================================================
+
+--- [SAMPLE CHUNK #1] ---
+Source Document : ayushman_bharat_healthcare.md
+Section Heading : Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (AB-PMJAY) Policy Document
+Chunk Position  : Chunk 1 of 2 (tokens 0-250)
+Token Count     : 250
+Char Offsets    : 0..1148
+Content Preview : "# Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (AB-PMJAY) Policy Document  ## 1. Executive Summary Ayushman Bharat PM-JAY is the world's largest g..."
+
+--- [SAMPLE CHUNK #2] ---
+Source Document : ayushman_bharat_healthcare.md
+Section Heading : 3. Beneficiary Identification & Eligibility Criteria
+Chunk Position  : Chunk 2 of 2 (tokens 200-425)
+Token Count     : 225
+Char Offsets    : 933..1909
+Content Preview : "- Identified based on the deprivation and occupational criteria of Socio-Economic and Caste Census 2011 (SECC 2011) for rural and urban areas respecti..."

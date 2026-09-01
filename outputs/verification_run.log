@@ -1,16 +1,16 @@
 Verification Run Successful.
 Model: gpt-4o-mini
-Chunks Generated: 4
+Chunks Generated: 12
 Sample Retrieved Chunk Metadata:
 {
-  "source": "sample_pdf.pdf",
+  "source": "sample_doc.md",
   "chunk_index": 0,
-  "position": "Chunk 1 of 1 (tokens 0-43)",
-  "section": "General Overview",
+  "position": "Chunk 1 of 1 (tokens 0-96)",
+  "section": "Knowledge Base Document: Government Welfare Schemes Overview",
   "page": 1,
-  "token_count": 43,
+  "token_count": 96,
   "total_chunks": 1,
   "char_start": 0,
-  "char_end": 213,
+  "char_end": 596,
   "overlap_tokens": 0
 }

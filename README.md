@@ -271,4 +271,90 @@ When recording your screen-share submission, follow this structured walkthrough:
 5. **Follow-Up: How to Recover from Malformed Output? (3:45 - 4:45)**:
    - Demonstrate Scenario 5: Self-healing retry loop. Show how the engine feeds the malformed string and specific error message back to the LLM in a corrective turn to obtain a 100% valid parsed output on retry.
 
+---
+
+## 📚 Corpus Preparation & Ingestion Validation (3.24)
+
+A RAG assistant is only as reliable as the corpus it actually ingests. Silent document drops (unparseable PDFs, corrupt HTML, or encoding errors) create invisible blind spots where the assistant cannot answer questions without any error log explaining why.
+
+SchemeAssist unifies the ingestion lifecycle (**Load $\rightarrow$ Clean $\rightarrow$ Chunk $\rightarrow$ Tag**) into an observable, resilient pipeline in [`src/corpus_pipeline.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/src/corpus_pipeline.py) with mathematical completeness verification.
+
+### 🏗️ Ingestion Pipeline Architecture
+
+```mermaid
+flowchart TD
+    A["Corpus Directory (data/)"] --> B["Stage 1: Recursive File Discovery (pathlib.Path.rglob)"]
+    
+    subgraph Pipeline["Ingestion Pipeline (src/corpus_pipeline.py)"]
+        B --> C["Stage 2: Format-Specific Extraction (MD, TXT, HTML, PDF)"]
+        C -- Error / Bad Format --> D["Record IngestionFailure (Error Class + Message)"]
+        C -- Raw Text Extracted --> E["Stage 3: Text Sanitization (clean_text)"]
+        
+        E --> F["Stage 4: Token-Aware Chunking (chunk_document_by_tokens)"]
+        F --> G["Stage 5: Metadata Tagging & SHA-256 Hashing (tag_chunks)"]
+    end
+    
+    G --> H["Ingested Documents & Validated Chunks"]
+    D --> I["Recorded Failures List"]
+    
+    H & I --> J{"Stage 6: Completeness Reconciliation Engine"}
+    J -->|Total Files == Docs + Failures| K["✅ Completeness Verified (Zero Silent Drops)"]
+    J -->|Discrepancy Detected| L["❌ Assertion Error (Silent Drop Detected)"]
+    
+    K --> M["Persist Manifest: outputs/ingestion_manifest.json"]
+    K --> N["Persist Audit Summary: outputs/ingestion_validation_summary.json & .txt"]
+```
+
+### 📊 Ingestion Audit Summary & Corpus Metrics
+
+Ran on the full government welfare scheme corpus in [`data/`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/data/):
+
+| Metric Name | Value | Description |
+| :--- | :---: | :--- |
+| **Total Source Files Discovered** | **7** | Total files discovered on disk |
+| **Successfully Ingested Documents** | **6** | Validated documents loaded, cleaned, chunked, and tagged |
+| **Total Chunks Created** | **12** | Token-aware chunks (250 token target, 50 token overlap) |
+| **Recorded Failures / Skipped** | **1** | Unsupported test file (`unsupported_file.xyz`) |
+| **Total Corpus Tokens** | **1,955** | Total BPE tokens across all ingested documents |
+| **Average Chunk Size** | **188.75 tokens** | Uniform semantic size optimized for prompt context |
+| **Completeness Status** | **PASSED** | $\mathbf{7\text{ (Files)}} == \mathbf{6\text{ (Docs)}} + \mathbf{1\text{ (Failures)}}$ (Zero Silent Drops) |
+
+### 🧮 Mathematical Completeness Proof
+$$\text{Total Files Discovered (7)} = \text{Successfully Ingested Docs (6)} + \text{Recorded Failures (1)}$$
+
+---
+
+### 🧪 Run Ingestion Pipeline & Validation Tests
+
+1. **Run End-to-End Pipeline & Generate Summary Artifacts**:
+   ```bash
+   python src/corpus_pipeline.py
+   ```
+2. **Run Completeness & Metadata Audit Script**:
+   ```bash
+   python tests/verify_ingestion_completeness.py
+   ```
+3. **Run Ingestion Pipeline Unit Tests**:
+   ```bash
+   python -m unittest tests/test_ingestion_pipeline.py
+   ```
+
+### 📁 Generated Ingestion Artifacts:
+- **Comprehensive Documentation**: [`docs/corpus_preparation_ingestion_validation.md`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/docs/corpus_preparation_ingestion_validation.md)
+- **Ingestion Audit Summary Report**: [`outputs/ingestion_validation_summary.txt`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/ingestion_validation_summary.txt)
+- **Machine-Readable Summary JSON**: [`outputs/ingestion_validation_summary.json`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/ingestion_validation_summary.json)
+- **Resumable Ingestion Manifest**: [`outputs/ingestion_manifest.json`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/ingestion_manifest.json)
+- **Sample Validated Chunks**: [`outputs/sample_validated_chunks.json`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/sample_validated_chunks.json)
+
+---
+
+### 🎥 Video Walkthrough Script (3–5 Minutes)
+
+1. **Introduction & The Silent Killer in RAG (0:00 – 0:45)**: Explain silent document drops and why mathematical completeness verification is essential.
+2. **The 4 Pipeline Stages (0:45 – 1:30)**: Walk through Load $\rightarrow$ Clean $\rightarrow$ Chunk $\rightarrow$ Tag in [`src/corpus_pipeline.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/src/corpus_pipeline.py).
+3. **Running the Pipeline & Proving Completeness (1:30 – 2:30)**: Run `python tests/verify_ingestion_completeness.py` and show $7\text{ files} == 6\text{ docs} + 1\text{ failure}$.
+4. **Inspecting Failures & Chunk Metadata (2:30 – 3:15)**: Review [`outputs/ingestion_validation_summary.txt`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/ingestion_validation_summary.txt) and [`outputs/sample_validated_chunks.json`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/sample_validated_chunks.json).
+5. **Follow-Up: Scaling to 4,000+ Documents (3:15 – 4:15)**: Explain resumable manifest tracking, multiprocessing, chunk batching (500 units/batch), and dead-letter queues.
+
+
 

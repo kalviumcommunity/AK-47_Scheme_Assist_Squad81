@@ -1,0 +1,95 @@
+{
+  "total_files_discovered": 7,
+  "total_documents_ingested": 6,
+  "total_chunks_created": 12,
+  "total_failures": 1,
+  "total_corpus_tokens": 1955,
+  "avg_chunk_tokens": 187.92,
+  "formats_breakdown": {
+    ".md": 4,
+    ".html": 1,
+    ".txt": 1,
+    ".xyz": 1
+  },
+  "completeness_reconciled": true,
+  "reconciliation_equation": "7 (Discovered Files) == 6 (Ingested Docs) + 1 (Recorded Failures)",
+  "ingestion_timestamp": "2026-09-01T10:49:05.661078+00:00",
+  "ingested_documents": [
+    {
+      "filename": "ayushman_bharat_healthcare.md",
+      "filepath": "data\\ayushman_bharat_healthcare.md",
+      "format": ".md",
+      "raw_chars": 1910,
+      "cleaned_chars": 1909,
+      "total_tokens": 425,
+      "chunks_created": 2,
+      "content_hash": "d405c13b695d250b",
+      "status": "SUCCESS"
+    },
+    {
+      "filename": "housing_welfare_guidelines.html",
+      "filepath": "data\\housing_welfare_guidelines.html",
+      "format": ".html",
+      "raw_chars": 1556,
+      "cleaned_chars": 1526,
+      "total_tokens": 353,
+      "chunks_created": 2,
+      "content_hash": "8aa4b9768132b2e5",
+      "status": "SUCCESS"
+    },
+    {
+      "filename": "pmkisan_scheme_doc.md",
+      "filepath": "data\\pmkisan_scheme_doc.md",
+      "format": ".md",
+      "raw_chars": 2172,
+      "cleaned_chars": 2159,
+      "total_tokens": 460,
+      "chunks_created": 3,
+      "content_hash": "7a0df3d80029d2c4",
+      "status": "SUCCESS"
+    },
+    {
+      "filename": "sample_doc.md",
+      "filepath": "data\\sample_doc.md",
+      "format": ".md",
+      "raw_chars": 597,
+      "cleaned_chars": 596,
+      "total_tokens": 96,
+      "chunks_created": 1,
+      "content_hash": "961852bff450c131",
+      "status": "SUCCESS"
+    },
+    {
+      "filename": "scholarship_welfare_circular.md",
+      "filepath": "data\\scholarship_welfare_circular.md",
+      "format": ".md",
+      "raw_chars": 1358,
+      "cleaned_chars": 1357,
+      "total_tokens": 291,
+      "chunks_created": 2,
+      "content_hash": "421810e99839dd26",
+      "status": "SUCCESS"
+    },
+    {
+      "filename": "senior_citizen_pension_scheme.txt",
+      "filepath": "data\\senior_citizen_pension_scheme.txt",
+      "format": ".txt",
+      "raw_chars": 1523,
+      "cleaned_chars": 1522,
+      "total_tokens": 330,
+      "chunks_created": 2,
+      "content_hash": "661fb5304cb2a6f1",
+      "status": "SUCCESS"
+    }
+  ],
+  "failures": [
+    {
+      "filename": "unsupported_file.xyz",
+      "filepath": "data\\unsupported_file.xyz",
+      "format": ".xyz",
+      "error_type": "ValueError",
+      "error_message": "Unsupported file extension: '.xyz' (Expected .txt, .md, .html, .pdf)",
+      "timestamp": "2026-09-01T10:49:05.661078+00:00"
+    }
+  ]
+}
