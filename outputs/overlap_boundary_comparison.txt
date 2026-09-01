@@ -1,0 +1,53 @@
+TOKEN-AWARE CHUNKING & OVERLAP BOUNDARY COMPARISON REPORT
+======================================================================
+
+Model: gpt-4o-mini
+Document Tested: sample_doc.md (96 tokens)
+
+JUSTIFICATION FOR TOKEN SIZE & OVERLAP SETTINGS:
+--------------------------------------------------
+1. Token Size (250 tokens):
+   - Fits gpt-4o-mini's 128k context window effortlessly while reserving prompt space.
+   - 250 tokens (~1000 chars) represents a coherent semantic unit (1-2 paragraphs).
+   - Balances cost: allows retrieving top 4-5 relevant chunks in ~1,200 input tokens.
+
+2. Controlled Overlap (50 tokens / 20%):
+   - Guarantees that key eligibility criteria and full sentences sitting on boundaries
+     appear fully intact in at least one chunk.
+   - Prevents loss of context during vector search and LLM context synthesis.
+
+COMPARISON: WITHOUT OVERLAP vs WITH OVERLAP
+======================================================================
+
+A. WITHOUT OVERLAP (Chunk: 60 tokens, Overlap: 0 tokens):
+--- Chunk #1 (Chunk 1 of 2 (tokens 0-60)) ---
+# Knowledge Base Document: Government Welfare Schemes Overview
+
+## Overview
+This knowledge base contains official notifications, circulars, and guidelines regarding government welfare assistance programs across departments.
+
+## Primary Objectives
+- Discoverability: Enable citizens and helpdesk executives to search and identify applicable welfare schemes.
+- Eligibility Guidance:
+
+--- Chunk #2 (Chunk 2 of 2 (tokens 60-96)) ---
+Explain specific age, income, occupation, category, and demographic qualifications.
+- Application Enablement: Provide clear documentation checklists, step-by-step application instructions, and official portal links.
+
+
+B. WITH CONTROLLED OVERLAP (Chunk: 60 tokens, Overlap: 20 tokens):
+--- Chunk #1 (Chunk 1 of 2 (tokens 0-60)) ---
+# Knowledge Base Document: Government Welfare Schemes Overview
+
+## Overview
+This knowledge base contains official notifications, circulars, and guidelines regarding government welfare assistance programs across departments.
+
+## Primary Objectives
+- Discoverability: Enable citizens and helpdesk executives to search and identify applicable welfare schemes.
+- Eligibility Guidance:
+
+--- Chunk #2 (Chunk 2 of 2 (tokens 40-96)) ---
+ability: Enable citizens and helpdesk executives to search and identify applicable welfare schemes.
+- Eligibility Guidance: Explain specific age, income, occupation, category, and demographic qualifications.
+- Application Enablement: Provide clear documentation checklists, step-by-step application instructions, and official portal links.
+
