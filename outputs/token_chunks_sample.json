@@ -1,0 +1,17 @@
+[
+  {
+    "text": "# Knowledge Base Document: Government Welfare Schemes Overview\n\n## Overview\nThis knowledge base contains official notifications, circulars, and guidelines regarding government welfare assistance programs across departments.\n\n## Primary Objectives\n- Discoverability: Enable citizens and helpdesk executives to search and identify applicable welfare schemes.\n- Eligibility Guidance: Explain specific age, income, occupation, category, and demographic qualifications.\n- Application Enablement: Provide clear documentation checklists, step-by-step application instructions, and official portal links.",
+    "metadata": {
+      "source": "sample_doc.md",
+      "chunk_index": 0,
+      "position": "Chunk 1 of 1 (tokens 0-96)",
+      "section": "Knowledge Base Document: Government Welfare Schemes Overview",
+      "page": 1,
+      "token_count": 96,
+      "total_chunks": 1,
+      "char_start": 0,
+      "char_end": 596,
+      "overlap_tokens": 0
+    }
+  }
+]

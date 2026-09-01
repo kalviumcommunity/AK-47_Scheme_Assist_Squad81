@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from bs4 import BeautifulSoup
 from pypdf import PdfReader
 from src.cleaning import clean_text
+from src.token_counter import get_tokenizer
 
 
 def detect_sections(text: str) -> List[Dict[str, Any]]:
@@ -62,58 +63,58 @@ def get_section_for_offset(sections: List[Dict[str, Any]], char_offset: int) -> 
     return sections[-1]["section"] if sections else "General Overview"
 
 
-def chunk_document(
+def chunk_document_by_tokens(
     doc: Dict[str, Any],
-    chunk_size: int = 350,
-    overlap: int = 50
+    chunk_size_tokens: int = 250,
+    overlap_tokens: int = 50,
+    model_name: str = "gpt-4o-mini"
 ) -> List[Dict[str, Any]]:
     """
-    Splits a cleaned document into overlapping text chunks, attaching consistent
-    metadata (source, section, position, page, etc.) to every chunk.
+    Splits a cleaned document into chunks sized strictly by token count using tiktoken,
+    incorporating controlled token overlap to preserve boundary context.
     """
     filename = doc.get("filename", "unknown_source")
     content = doc.get("content", "")
-    page_numbers = doc.get("page_numbers", None)  # List of (page_num, char_offset) for PDFs
+    page_numbers = doc.get("page_numbers", None)
 
     if not content:
         return []
 
+    encoding = get_tokenizer(model_name)
+    tokens = encoding.encode(content)
+    total_tokens = len(tokens)
+
+    if total_tokens == 0:
+        return []
+
     sections = detect_sections(content)
     chunks = []
-    content_len = len(content)
+    
+    step = chunk_size_tokens - overlap_tokens if chunk_size_tokens > overlap_tokens else chunk_size_tokens
+    
+    start_token_idx = 0
+    token_slices = []
 
-    start = 0
-    raw_chunks = []
-
-    # Sliding window chunking
-    while start < content_len:
-        end = min(start + chunk_size, content_len)
+    while start_token_idx < total_tokens:
+        end_token_idx = min(start_token_idx + chunk_size_tokens, total_tokens)
+        slice_tokens = tokens[start_token_idx:end_token_idx]
+        token_slices.append((start_token_idx, end_token_idx, slice_tokens))
         
-        # Try to break at a sentence or word boundary if not at end of text
-        if end < content_len:
-            boundary = content.rfind(". ", start + chunk_size // 2, end)
-            if boundary != -1:
-                end = boundary + 1
-            else:
-                space_boundary = content.rfind(" ", start + chunk_size // 2, end)
-                if space_boundary != -1:
-                    end = space_boundary
-
-        chunk_text = content[start:end].strip()
-        if chunk_text:
-            raw_chunks.append((chunk_text, start, end))
-
-        if end >= content_len:
+        if end_token_idx >= total_tokens:
             break
-        start = max(end - overlap, start + 1)
+        start_token_idx += step
 
-    total_chunks = len(raw_chunks)
+    total_chunks = len(token_slices)
 
-    for idx, (text_chunk, char_start, char_end) in enumerate(raw_chunks):
-        # Determine section metadata
+    for idx, (t_start, t_end, slice_tokens) in enumerate(token_slices):
+        chunk_text = encoding.decode(slice_tokens).strip()
+        
+        # Calculate character offsets by decoding prefix
+        char_start = len(encoding.decode(tokens[:t_start]))
+        char_end = len(encoding.decode(tokens[:t_end]))
+
         section_name = get_section_for_offset(sections, char_start)
 
-        # Determine page metadata (if page_numbers available, e.g. for PDFs)
         page_num = 1
         if page_numbers:
             for p_num, p_start in page_numbers:
@@ -123,20 +124,38 @@ def chunk_document(
         chunk_metadata = {
             "source": filename,
             "chunk_index": idx,
-            "position": f"Chunk {idx + 1} of {total_chunks} (chars {char_start}-{char_end})",
+            "position": f"Chunk {idx + 1} of {total_chunks} (tokens {t_start}-{t_end})",
             "section": section_name,
             "page": page_num,
+            "token_count": len(slice_tokens),
             "total_chunks": total_chunks,
             "char_start": char_start,
-            "char_end": char_end
+            "char_end": char_end,
+            "overlap_tokens": overlap_tokens if idx > 0 else 0
         }
 
         chunks.append({
-            "text": text_chunk,
+            "text": chunk_text,
             "metadata": chunk_metadata
         })
 
     return chunks
+
+
+def chunk_document(
+    doc: Dict[str, Any],
+    chunk_size: int = 350,
+    overlap: int = 50
+) -> List[Dict[str, Any]]:
+    """
+    Splits a cleaned document into text chunks based on character count with overlap.
+    (Kept for backwards compatibility; token-based chunking is preferred for RAG).
+    """
+    return chunk_document_by_tokens(
+        doc,
+        chunk_size_tokens=250,
+        overlap_tokens=50
+    )
 
 
 def load_documents_from_data_dir(data_dir: str = "data") -> List[Dict[str, Any]]:
@@ -220,31 +239,54 @@ def load_documents_from_data_dir(data_dir: str = "data") -> List[Dict[str, Any]]
     return documents
 
 
-def load_and_chunk_documents(data_dir: str = "data", chunk_size: int = 350, overlap: int = 50) -> List[Dict[str, Any]]:
+def load_and_chunk_documents(
+    data_dir: str = "data",
+    chunk_size_tokens: int = 250,
+    overlap_tokens: int = 50
+) -> List[Dict[str, Any]]:
     """
-    Ingests all supported documents from data_dir and splits them into chunks with attached metadata.
+    Ingests all supported documents from data_dir and splits them into token-aware chunks with attached metadata.
     """
     raw_docs = load_documents_from_data_dir(data_dir)
     all_chunks = []
     for doc in raw_docs:
-        doc_chunks = chunk_document(doc, chunk_size=chunk_size, overlap=overlap)
+        doc_chunks = chunk_document_by_tokens(
+            doc,
+            chunk_size_tokens=chunk_size_tokens,
+            overlap_tokens=overlap_tokens
+        )
         all_chunks.extend(doc_chunks)
-    print(f"[INGESTION LOG] Generated {len(all_chunks)} chunks across {len(raw_docs)} document(s).")
+    print(f"[INGESTION LOG] Generated {len(all_chunks)} token-aware chunks across {len(raw_docs)} document(s).")
     return all_chunks
+
+
+def load_and_chunk_documents_by_tokens(
+    data_dir: str = "data",
+    chunk_size_tokens: int = 250,
+    overlap_tokens: int = 50
+) -> List[Dict[str, Any]]:
+    """
+    Alias for load_and_chunk_documents explicitly highlighting token-based chunking.
+    """
+    return load_and_chunk_documents(
+        data_dir=data_dir,
+        chunk_size_tokens=chunk_size_tokens,
+        overlap_tokens=overlap_tokens
+    )
 
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("  [INGESTION MODULE] Running direct file ingestion & chunking test...")
+    print("  [INGESTION MODULE] Running token-aware ingestion & chunking test...")
     print("=" * 60)
-    # Run ingestion & chunking from standard data directory
-    chunks = load_and_chunk_documents("data")
+    chunks = load_and_chunk_documents_by_tokens("data", chunk_size_tokens=250, overlap_tokens=50)
     print("-" * 60)
-    print(f"Total chunks created: {len(chunks)}")
+    print(f"Total token chunks created: {len(chunks)}")
     if chunks:
-        print("\n[SAMPLE CHUNK METADATA STRUCTURE]:")
+        print("\n[SAMPLE TOKEN CHUNK METADATA]:")
         import json
         print(json.dumps(chunks[0], indent=2))
     print("=" * 60)
+
 
 
