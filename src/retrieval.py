@@ -1,20 +1,24 @@
-from typing import List, Dict
+from typing import List, Dict, Any
 
 class SimpleRetriever:
     """
-    Lightweight document retriever for RAG application demonstration.
+    Lightweight document and chunk retriever for RAG application demonstration.
+    Supports searching over text chunks tagged with source metadata.
     """
-    def __init__(self, documents: List[Dict[str, str]]):
-        self.documents = documents
+    def __init__(self, items: List[Dict[str, Any]]):
+        self.items = items
 
-    def search(self, query: str, top_k: int = 2) -> List[Dict[str, str]]:
+    def search(self, query: str, top_k: int = 2) -> List[Dict[str, Any]]:
         query_words = set(query.lower().split())
-        scored_docs = []
+        scored_items = []
         
-        for doc in self.documents:
-            doc_words = set(doc["content"].lower().split())
-            score = len(query_words.intersection(doc_words))
-            scored_docs.append((score, doc))
+        for item in self.items:
+            # Handle both chunk dicts (item['text']) and legacy doc dicts (item['content'])
+            content_text = item.get("text", item.get("content", ""))
+            item_words = set(content_text.lower().split())
+            score = len(query_words.intersection(item_words))
+            scored_items.append((score, item))
         
-        scored_docs.sort(key=lambda x: x[0], reverse=True)
-        return [doc for score, doc in scored_docs[:top_k]]
+        scored_items.sort(key=lambda x: x[0], reverse=True)
+        return [item for score, item in scored_items[:top_k]]
+
