@@ -35,7 +35,7 @@ flowchart LR
 
 ## 🔬 Evaluated Chunking Strategies
 
-SchemeAssist implements and benchmarks five distinct chunking strategies in [`src/chunking.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/src/chunking.py):
+SchemeAssist implements and benchmarks five distinct chunking strategies in [`src/chunking.py`](../src/chunking.py):
 
 ### 1. Fixed-Size Naive (No Overlap)
 - **Mechanism**: Splits text strictly at character index multiples (`text[i:i+size]`, `i += size`).
