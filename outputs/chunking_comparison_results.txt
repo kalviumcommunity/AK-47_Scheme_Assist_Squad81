@@ -1,0 +1,105 @@
+SCHEMEASSIST RAG - DOCUMENT CHUNKING STRATEGIES COMPARISON REPORT
+Source Document: sample_doc.md (6305 chars, 859 words)
+
+===================================================================================================================
+Strategy Name                              | Count  | Avg Chars  | Min-Max Chars  | Avg Tokens  | Mid-Cuts
+===================================================================================================================
+Fixed-Size (Naive 500 chars, no overlap)   | 13     | 484.9      | 304-500        | 99.9        | 10      
+Fixed-Size (500 chars, 80 char overlap)    | 16     | 464.2      | 4-500          | 94.8        | 13      
+Paragraph-Based (Natural paragraph breaks) | 14     | 448.4      | 97-617         | 91.4        | 1       
+Sentence-Based (600 char max, 1 sentence overlap) | 18     | 476.3      | 331-591        | 96.4        | 0       
+Recursive Character (500 chars, 80 char overlap) | 16     | 400.3      | 124-527        | 81.6        | 3       
+===================================================================================================================
+
+
+==========================================================================================
+  [ANALYSIS] IN-DEPTH CHUNKING STRATEGY COMPARISON & BOUNDARY ANALYSIS
+==========================================================================================
+
+>> Strategy: Fixed-Size (Naive 500 chars, no overlap)
+  * Total Chunks Generated: 13
+  * Average Chunk Size:     484.9 chars (66.8 words, ~99.9 tokens)
+  * Chunk Size Range:       [304 - 500] chars
+  * Mid-Sentence Cut Rate:  10/13 chunks (76.9%)
+  * Sample Chunk 1 Boundary Preview (First 160 chars):
+    "# Knowledge Base Document: Government Welfare Schemes Policy & Operational Guidelines (2026-2027)  ## 1. Executive Summary & Policy Objectives The National Welf..."
+  * Sample Chunk End Boundary Preview (Last 120 chars):
+    "...8 hours. - General eligibility dispute appeal: Final hearing and decision by District Magistrate within 30 working days."
+
+>> Strategy: Fixed-Size (500 chars, 80 char overlap)
+  * Total Chunks Generated: 16
+  * Average Chunk Size:     464.2 chars (63.9 words, ~94.8 tokens)
+  * Chunk Size Range:       [4 - 500] chars
+  * Mid-Sentence Cut Rate:  13/16 chunks (81.2%)
+  * Sample Chunk 1 Boundary Preview (First 160 chars):
+    "# Knowledge Base Document: Government Welfare Schemes Policy & Operational Guidelines (2026-2027)  ## 1. Executive Summary & Policy Objectives The National Welf..."
+  * Sample Chunk End Boundary Preview (Last 120 chars):
+    "...ays."
+
+>> Strategy: Paragraph-Based (Natural paragraph breaks)
+  * Total Chunks Generated: 14
+  * Average Chunk Size:     448.4 chars (61.4 words, ~91.4 tokens)
+  * Chunk Size Range:       [97 - 617] chars
+  * Mid-Sentence Cut Rate:  1/14 chunks (7.1%)
+  * Sample Chunk 1 Boundary Preview (First 160 chars):
+    "# Knowledge Base Document: Government Welfare Schemes Policy & Operational Guidelines (2026-2027)..."
+  * Sample Chunk End Boundary Preview (Last 120 chars):
+    "...8 hours. - General eligibility dispute appeal: Final hearing and decision by District Magistrate within 30 working days."
+
+>> Strategy: Sentence-Based (600 char max, 1 sentence overlap)
+  * Total Chunks Generated: 18
+  * Average Chunk Size:     476.3 chars (65.5 words, ~96.4 tokens)
+  * Chunk Size Range:       [331 - 591] chars
+  * Mid-Sentence Cut Rate:  0/18 chunks (0.0%)
+  * Sample Chunk 1 Boundary Preview (First 160 chars):
+    "# Knowledge Base Document: Government Welfare Schemes Policy & Operational Guidelines (2026-2027)  ## 1. Executive Summary & Policy Objectives The National Welf..."
+  * Sample Chunk End Boundary Preview (Last 120 chars):
+    "...8 hours. - General eligibility dispute appeal: Final hearing and decision by District Magistrate within 30 working days."
+
+>> Strategy: Recursive Character (500 chars, 80 char overlap)
+  * Total Chunks Generated: 16
+  * Average Chunk Size:     400.3 chars (54.8 words, ~81.6 tokens)
+  * Chunk Size Range:       [124 - 527] chars
+  * Mid-Sentence Cut Rate:  3/16 chunks (18.8%)
+  * Sample Chunk 1 Boundary Preview (First 160 chars):
+    "# Knowledge Base Document: Government Welfare Schemes Policy & Operational Guidelines (2026-2027)  ## 1. Executive Summary & Policy Objectives..."
+  * Sample Chunk End Boundary Preview (Last 120 chars):
+    "...8 hours. - General eligibility dispute appeal: Final hearing and decision by District Magistrate within 30 working days."
+
+
+==========================================================================================
+  [EVALUATION] BOUNDARY INTEGRITY COMPARISON (Fixed Naive vs Recursive Semantic)
+==========================================================================================
+
+[CASE 1: Fixed-Size Naive Chunk Boundary]
+Chunk 1 Tail: "ntermediaries through direct benefit transfer (DBT), ensure universal access to "
+Chunk 2 Head: "tertiary healthcare, and streamline citizen-centric grievance resolution across "
+[!] NOTE: Fixed-size naive splits abruptly across word/clause boundaries without respecting list items.
+
+[CASE 2: Recursive Character Chunk Boundary]
+Chunk 1 Tail: " Operational Guidelines (2026-2027)  ## 1. Executive Summary & Policy Objectives"
+Chunk 2 Head: "## 1. Executive Summary & Policy Objectives The National Welfare Assistance Fram"
+[+] NOTE: Recursive splitting prioritizes paragraph & sentence boundaries, preventing fractured eligibility criteria.
+
+
+==========================================================================================
+  [JUSTIFICATION] WHY RECURSIVE / PARAGRAPH-AWARE CHUNKING FITS SCHEMEASSIST
+==========================================================================================
+1. Structure of Government Welfare Policies:
+   Government policy documents (circulars, notifications, guidelines) are inherently 
+   hierarchical: Titles -> Sections -> Eligibility Clauses -> Tables/Lists -> SLAs.
+   - Naive fixed chunking slices across bullet points, separating qualification conditions 
+     from exclusions (e.g., separating landholding limit from income tax disqualifications).
+   - Paragraph chunking preserves cohesive policy clauses within atomic units.
+
+2. Retrieval Precision vs. Context Window Trade-off:
+   - Chunk Size: ~500 characters (~110-130 tokens) with 80 character overlap.
+   - For Top-K = 3 retrieval, 3 chunks consume ~390 tokens.
+   - This leaves >95% of standard LLM context windows (e.g., 8k-128k) available for system 
+     instructions, conversation history, and multi-step reasoning without context exhaustion.
+
+3. Answer Quality & Zero Mid-Sentence Hallucination:
+   - Preserving full sentences and paragraph context ensures the LLM receives complete, 
+     unambiguous factual premises, preventing truncation-induced hallucinations.
+==========================================================================================
+

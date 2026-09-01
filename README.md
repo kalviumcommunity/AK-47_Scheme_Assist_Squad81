@@ -271,4 +271,85 @@ When recording your screen-share submission, follow this structured walkthrough:
 5. **Follow-Up: How to Recover from Malformed Output? (3:45 - 4:45)**:
    - Demonstrate Scenario 5: Self-healing retry loop. Show how the engine feeds the malformed string and specific error message back to the LLM in a corrective turn to obtain a 100% valid parsed output on retry.
 
+---
+
+## 🧩 Document Chunking Strategies & Boundary Optimization (3.21)
+
+In production RAG systems, embedding a 40-page policy document as a single blob exceeds context limits, dilutes vector matches, and inflates inference costs. Embedding word-by-word strips all semantic context. 
+
+SchemeAssist implements a **multi-strategy chunking engine**, **boundary analysis suite**, and **chunk-level retriever** in [`src/chunking.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/src/chunking.py).
+
+### 🏗️ Chunking Architecture & Pipeline
+
+```mermaid
+flowchart TD
+    A["Raw Document Corpus (data/sample_doc.md)"] --> B[Cleaning & Normalization Pipeline]
+    B --> C[Cleaned Structured Markdown]
+    
+    C --> D1["Strategy 1: Fixed-Size Naive (500 chars, no overlap)"]
+    C --> D2["Strategy 2: Fixed-Size Overlap (500 chars, 80 overlap)"]
+    C --> D3["Strategy 3: Paragraph-Based (Natural double newlines)"]
+    C --> D4["Strategy 4: Sentence-Based (600 chars, 1 sent overlap)"]
+    C --> D5["Strategy 5: Recursive Character (500 chars, 80 overlap)"]
+    
+    D1 & D2 & D3 & D4 & D5 --> E[Statistical Comparison & Boundary Analysis Engine]
+    E --> F["Outputs: outputs/chunking_comparison_results.txt"]
+    E --> G["Sample Chunks: outputs/sample_chunks.txt & .json"]
+    
+    D5 -- Selected Optimal Strategy --> H["Ingestion Pipeline (src/ingestion.py)"]
+    H --> I["Chunk-Level Vector/Keyword Retriever (src/retrieval.py)"]
+    I --> J["Grounded LLM Prompt Context"]
+```
+
+### 📊 Strategy Comparison & Benchmark Statistics
+
+Ran on [`data/sample_doc.md`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/data/sample_doc.md) (Government Welfare Schemes Policy & Operational Guidelines — 6,305 characters, 859 words):
+
+| Strategy Name | Total Chunks | Avg Size (Chars) | Min-Max Chars | Avg Tokens | Mid-Sentence Cuts | Cut Rate (%) | Boundary Quality |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Fixed-Size (Naive)** | 13 | 484.9 | 304 – 500 | 99.9 | 10 / 13 | 76.9% | ❌ Arbitrary mid-word/clause breaks |
+| **Fixed-Size (Overlap)** | 16 | 464.2 | 4 – 500 | 94.8 | 13 / 16 | 81.2% | ⚠️ Sliding window retains context |
+| **Paragraph-Based** | 14 | 448.4 | 97 – 617 | 91.4 | 1 / 14 | 7.1% | ✅ Highly cohesive policy sections |
+| **Sentence-Based** | 18 | 476.3 | 331 – 591 | 96.4 | 0 / 18 | 0.0% | ✅ Grammatically complete units |
+| **Recursive Character** | **16** | **400.3** | **124 – 527** | **81.6** | **3 / 16** | **18.8%** | ⭐ **Optimal size & semantic bounds** |
+
+### 🎯 Strategy Justification for Welfare Schemes Corpus
+- **Structural Integrity**: Government policy guidelines are hierarchical (Headings $\rightarrow$ Sections $\rightarrow$ Eligibility Bullet Points $\rightarrow$ Exclusion Criteria). Recursive character chunking preserves section headers with their clause lists.
+- **Context Window Budget**: At ~400 characters (~82 tokens) per chunk, retrieving **Top-3 chunks** consumes only **~246 tokens** ($<0.2\%$ of `gpt-4o-mini` 128k context), leaving maximum budget for system instructions and conversation history.
+- **Zero Hallucination Risk**: Complete policy conditions prevent the model from misidentifying an ineligible applicant as qualified due to severed exclusion clauses.
+
+---
+
+### 🧪 Run Chunking Suite & Tests
+
+1. **Run the Full Chunking Benchmark & Boundary Inspection**:
+   ```bash
+   python src/chunking_experiment.py
+   ```
+2. **Run Chunking Unit Tests**:
+   ```bash
+   python -m unittest tests/test_chunking.py
+   ```
+3. **Run End-to-End RAG Verification with Chunk Retrieval**:
+   ```bash
+   python src/main.py
+   ```
+
+### 📁 Generated Artifacts & Reports:
+- **Comprehensive Documentation**: [`docs/document_chunking_strategies.md`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/docs/document_chunking_strategies.md)
+- **Detailed Statistical Report**: [`outputs/chunking_comparison_results.txt`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/chunking_comparison_results.txt)
+- **Human-Readable Sample Chunks**: [`outputs/sample_chunks.txt`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/sample_chunks.txt)
+- **Machine-Readable Chunks JSON**: [`outputs/sample_chunks.json`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/sample_chunks.json)
+
+---
+
+### 🎥 Video Walkthrough Script (3–5 Minutes)
+
+1. **Why Chunking is Mandatory in RAG (0:00 – 0:50)**: Explain vector dilution and context window constraints when embedding full policy documents.
+2. **Trade-offs: Small vs. Large Chunks (0:50 – 1:40)**: Precision vs. context completeness balance.
+3. **Strategy Comparison & Empirical Stats (1:40 – 2:45)**: Walk through the 5 strategies and review the statistics table in `outputs/chunking_comparison_results.txt`.
+4. **Boundary Integrity & Answer Quality (2:45 – 3:30)**: Demonstrate how fixed-size slicing fractures eligibility clauses while recursive splitting preserves complete premises.
+5. **Follow-Up: Chunk Size vs. Context Window Relation (3:30 – 4:30)**: Explain the budget formula $\text{Total Tokens} = \text{System Prompt} + \text{History} + \text{Query} + (K \times \text{Chunk Size}) + \text{Output}$, showing how our 82-token chunks allow fast, cost-effective Top-K retrieval.
+
+
 

@@ -23,6 +23,9 @@ outputs/*
 !outputs/structured_output_results.txt
 !outputs/prompt_template_renders.txt
 !outputs/prompt_template_renders.json
+!outputs/chunking_comparison_results.txt
+!outputs/sample_chunks.json
+!outputs/sample_chunks.txt
 
 # Vector Stores & Databases
 chroma_db/
