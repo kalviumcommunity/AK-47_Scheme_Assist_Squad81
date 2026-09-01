@@ -14,6 +14,109 @@ except ImportError:
     _PYPDF_AVAILABLE = False
 
 from src.cleaning import clean_text
+from src.token_counter import get_tokenizer
+
+
+def detect_sections(text: str) -> List[Dict[str, Any]]:
+    """
+    Detects section headers (e.g., Markdown headers '#', '##', HTML tags, or title-like lines)
+    and returns a list of section metadata with character offset ranges.
+    """
+    lines = text.splitlines(keepends=True)
+    sections = []
+    current_section = "General Overview"
+    current_start = 0
+    pos = 0
+
+    section_header_pattern = re.compile(
+        r"^(?:#{1,6}\s+(.+)|([A-Z][A-Za-z0-9\s—–\-]{2,50}:)|(?:[0-9]+\.\s+([A-Z][A-Za-z0-9\s]{2,40})))$"
+    )
+
+    for line in lines:
+        match = section_header_pattern.match(line.strip())
+        if match:
+            # New section header found
+            section_title = match.group(1) or match.group(2) or match.group(3)
+            if section_title:
+                section_title = section_title.strip().rstrip(":")
+                if pos > current_start:
+                    sections.append({
+                        "section": current_section,
+                        "start": current_start,
+                        "end": pos
+                    })
+                current_section = section_title
+                current_start = pos
+        pos += len(line)
+
+    sections.append({
+        "section": current_section,
+        "start": current_start,
+        "end": pos
+    })
+
+    return sections
+
+
+def get_section_for_offset(sections: List[Dict[str, Any]], char_offset: int) -> str:
+    """
+    Finds the section title covering a given character offset.
+    """
+    for sec in sections:
+        if sec["start"] <= char_offset < sec["end"]:
+            return sec["section"]
+    return sections[-1]["section"] if sections else "General Overview"
+
+
+def chunk_document_by_tokens(
+    doc: Dict[str, Any],
+    chunk_size_tokens: int = 250,
+    overlap_tokens: int = 50,
+    model_name: str = "gpt-4o-mini"
+) -> List[Dict[str, Any]]:
+    """
+    Splits a cleaned document into chunks sized strictly by token count using tiktoken,
+    incorporating controlled token overlap to preserve boundary context.
+    """
+    filename = doc.get("filename", "unknown_source")
+    content = doc.get("content", "")
+    page_numbers = doc.get("page_numbers", None)
+
+    if not content:
+        return []
+
+    encoding = get_tokenizer(model_name)
+    tokens = encoding.encode(content)
+    total_tokens = len(tokens)
+
+    if total_tokens == 0:
+        return []
+
+    sections = detect_sections(content)
+    chunks = []
+    
+    step = chunk_size_tokens - overlap_tokens if chunk_size_tokens > overlap_tokens else chunk_size_tokens
+    
+    start_token_idx = 0
+    token_slices = []
+
+    while start_token_idx < total_tokens:
+        end_token_idx = min(start_token_idx + chunk_size_tokens, total_tokens)
+        slice_tokens = tokens[start_token_idx:end_token_idx]
+        token_slices.append((start_token_idx, end_token_idx, slice_tokens))
+        
+        if end_token_idx >= total_tokens:
+            break
+        start_token_idx += step
+
+    total_chunks = len(token_slices)
+
+    for idx, (t_start, t_end, slice_tokens) in enumerate(token_slices):
+        chunk_text = encoding.decode(slice_tokens).strip()
+        
+        # Calculate character offsets by decoding prefix
+        char_start = len(encoding.decode(tokens[:t_start]))
+        char_end = len(encoding.decode(tokens[:t_end]))
 
 
 def load_documents_from_data_dir(data_dir: str = "data") -> List[Dict[str, str]]:
@@ -40,6 +143,8 @@ def load_documents_from_data_dir(data_dir: str = "data") -> List[Dict[str, str]]
 
         try:
             content = ""
+            page_numbers = None
+
             if ext in [".txt", ".md"]:
                 # Text/Markdown loading
                 with open(filepath, "r", encoding="utf-8") as f:
@@ -66,10 +171,15 @@ def load_documents_from_data_dir(data_dir: str = "data") -> List[Dict[str, str]]
                     raise ImportError("pypdf is required to extract text from PDF files.")
                 reader = PdfReader(filepath)
                 text_parts = []
-                for page in reader.pages:
+                page_numbers = []
+                current_offset = 0
+                for p_idx, page in enumerate(reader.pages, start=1):
                     page_text = page.extract_text()
                     if page_text:
-                        text_parts.append(page_text)
+                        cleaned_page_text = page_text.strip()
+                        page_numbers.append((p_idx, current_offset))
+                        text_parts.append(cleaned_page_text)
+                        current_offset += len(cleaned_page_text) + 1
                 content = "\n".join(text_parts).strip()
                 if not content:
                     raise ValueError("Extracted PDF text content is empty or unreadable.")
@@ -77,10 +187,11 @@ def load_documents_from_data_dir(data_dir: str = "data") -> List[Dict[str, str]]
             # Sanitize raw text through the cleaning pipeline
             cleaned_content = clean_text(content)
 
-            # Record document and preserve source filename/identity
+            # Record document metadata and preserve source filename/identity
             documents.append({
                 "filename": filename,
-                "content": cleaned_content
+                "content": cleaned_content,
+                "page_numbers": page_numbers
             })
 
             # Confirm intake with length and preview

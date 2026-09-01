@@ -1,0 +1,58 @@
+CHUNK METADATA & SOURCE TRACKING DEMONSTRATION LOG
+============================================================
+
+Total Chunks Processed: 12
+Sources Tagged: ayushman_bharat_healthcare.md, housing_welfare_guidelines.html, pmkisan_scheme_doc.md, sample_doc.md, scholarship_welfare_circular.md, senior_citizen_pension_scheme.txt
+
+Sample Retrieved Chunks with Traceable Metadata:
+
+Result 1:
+{
+  "text": "Pradhan Mantri Awas Yojana (PMAY-U / PMAY-G) Operational Guidelines\n\nPradhan Mantri Awas Yojana (PMAY) Housing Guidelines\n\n1. Mission Objective\n\nPradhan Mantri Awas Yojana addresses urban and rural housing shortages among Economically Weaker Sections (EWS), Low Income Groups (LIG), and rural homeless households by ensuring a pucca house with basic amenities to all eligible families.\n\n2. Eligibility Criteria\n\nThe beneficiary family should not own a pucca house anywhere in India.\n\nEconomically Weaker Section (EWS) annual household income up to Rs 3,00,000.\n\nLow Income Group (LIG) annual household income between Rs 3,00,001 and Rs 6,00,000.\n\nMiddle Income Group (MIG-I & MIG-II) income bands as notified by the Ministry of Housing and Urban Affairs.\n\n3. Subsidy and Financial Assistance\n\nCredit Linked Subsidy Scheme (CLSS) provides upfront interest subsidy of up to 6.5% on home loans up to Rs 6,00,000 for a tenure of 20 years. Rural beneficiaries under PMAY-G receive direct construction assistance of Rs 1,20,",
+  "metadata": {
+    "source": "housing_welfare_guidelines.html",
+    "chunk_index": 0,
+    "position": "Chunk 1 of 2 (tokens 0-250)",
+    "section": "General Overview",
+    "page": 1,
+    "token_count": 250,
+    "total_chunks": 2,
+    "char_start": 0,
+    "char_end": 1018,
+    "overlap_tokens": 0
+  }
+}
+
+Result 2:
+{
+  "text": "# Pradhan Mantri Kisan Samman Nidhi (PM-KISAN) Operational Guidelines\n\n## 1. Scheme Overview\nThe PM-KISAN scheme is a Central Sector Scheme to provide income support to all landholding farmers' families across the country to enable them to take care of expenses related to agriculture and allied activities as well as domestic needs.\n\n## 2. Eligibility & Entitlements\n- Under the Scheme, an amount of Rs 6,000/- per year is released in three 4-monthly installments of Rs 2,000/- each directly into the bank accounts of the beneficiaries.\n- All landholding farmer families who have cultivable landholding in their names are eligible to get benefits under the scheme.\n- State Government and UT administration will identify the farmer families which are eligible for support as per scheme guidelines.\n\n## 3. Exclusion Categories\nThe following categories of beneficiaries of higher economic status shall not be eligible for benefit under the scheme:\n- All Institutional Landholders.\n- Farmer families in which one or more of its members belong to the following categories:\n- Former and present holders of constitutional posts.\n- Former and present Ministers, State Ministers, Mayors of Municipal Corporations, Chairpersons of District Panchayats",
+  "metadata": {
+    "source": "pmkisan_scheme_doc.md",
+    "chunk_index": 0,
+    "position": "Chunk 1 of 3 (tokens 0-250)",
+    "section": "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN) Operational Guidelines",
+    "page": 1,
+    "token_count": 250,
+    "total_chunks": 3,
+    "char_start": 0,
+    "char_end": 1241,
+    "overlap_tokens": 0
+  }
+}
+
+Result 3:
+{
+  "text": "NATIONAL SOCIAL ASSISTANCE PROGRAMME (NSAP)\nINDIRA GANDHI NATIONAL OLD AGE PENSION SCHEME (IGNOAPS) GUIDELINES\n\n1. Background and Purpose:\nThe Indira Gandhi National Old Age Pension Scheme (IGNOAPS) is a non-contributory pension scheme under the Ministry of Rural Development aimed at providing monthly financial assistance to senior citizens living Below Poverty Line (BPL).\n\n2. Eligibility Conditions:\n- The age of the applicant must be 60 years or higher.\n- The applicant must belong to a household living Below Poverty Line (BPL) according to criteria prescribed by the Government of India.\n- Permanent residence certificate and active bank account seeded with Aadhaar are mandatory.\n\n3. Scale of Financial Assistance:\n- For persons aged 60 to 79 years: Central assistance of Rs 200 per month per beneficiary (States supplement this with an additional state share, making the total pension between Rs 1,000 to Rs 2,500 per month).\n- For persons aged 80 years and above: Central assistance of Rs 500 per month per beneficiary.\n\n4. Application and Verification:\n- Applications can be submitted online via the NSAP portal (https://nsap.nic.in) or offline through",
+  "metadata": {
+    "source": "senior_citizen_pension_scheme.txt",
+    "chunk_index": 0,
+    "position": "Chunk 1 of 2 (tokens 0-250)",
+    "section": "General Overview",
+    "page": 1,
+    "token_count": 250,
+    "total_chunks": 2,
+    "char_start": 0,
+    "char_end": 1163,
+    "overlap_tokens": 0
+  }
+}

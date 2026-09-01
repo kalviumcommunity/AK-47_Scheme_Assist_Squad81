@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 
 # Ensure package imports resolve correctly
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -19,7 +20,7 @@ def load_system_prompt() -> str:
 
 def main():
     print("=" * 65)
-    print("  [RAG App] SchemeAssist - Workspace Verification Test")
+    print("  [RAG App] SchemeAssist - Metadata-Tagged Chunk Retrieval Test")
     print("=" * 65)
     
     # 1. Validate Environment & Secrets
@@ -39,7 +40,7 @@ def main():
     system_prompt = load_system_prompt()
     print(f"[PROMPT LOG] Loaded system prompt ({len(system_prompt)} chars).")
 
-    # 4. Perform Verification Query
+    # 4. Perform Verification Query & Trace Source Metadata
     test_query = "welfare schemes eligibility guidance"
     print(f"\n[QUERY]: '{test_query}'")
     
@@ -63,9 +64,10 @@ def main():
     
     print(f"\n[OUTPUT LOG] Verification run logged to '{output_log_path}'.")
     print("=" * 65)
-    print("  [SUCCESS] WORKSPACE REPRODUCIBILITY TEST PASSED SUCCESSFULLY!")
+    print("  [SUCCESS] METADATA TAGGING & SOURCE TRACKING PASSED SUCCESSFULLY!")
     print("=" * 65)
 
 
 if __name__ == "__main__":
     main()
+

@@ -14,6 +14,12 @@ env/
 data/*
 !data/.gitkeep
 !data/sample_doc.md
+!data/pmkisan_scheme_doc.md
+!data/ayushman_bharat_healthcare.md
+!data/senior_citizen_pension_scheme.txt
+!data/housing_welfare_guidelines.html
+!data/scholarship_welfare_circular.md
+!data/unsupported_file.xyz
 
 outputs/*
 !outputs/.gitkeep
