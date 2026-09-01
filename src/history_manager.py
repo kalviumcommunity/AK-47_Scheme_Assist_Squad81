@@ -6,7 +6,7 @@ from typing import List, Dict, Callable
 # Ensure imports resolve correctly
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.config import OPENAI_API_KEY, CHAT_MODEL
+from src.config import OPENAI_API_KEY, CHAT_MODEL, OPENAI_BASE_URL
 
 class ChatHistoryManager:
     def __init__(self, system_prompt: str, token_budget: int = 300, model: str = "gpt-4o-mini", strategy: str = "trim", logger: Callable[[str], None] = print):

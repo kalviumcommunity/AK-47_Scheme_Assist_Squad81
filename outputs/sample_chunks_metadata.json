@@ -1,0 +1,67 @@
+[
+  {
+    "text": "# Knowledge Base Document: Government Welfare Schemes Overview\n\n## Overview\nThis knowledge base contains official notifications, circulars, and guidelines regarding government welfare assistance programs across departments.\n\n## Primary Objectives\n- Discoverability: Enable citizens and helpdesk executives to search and identify applicable welfare",
+    "metadata": {
+      "source": "sample_doc.md",
+      "chunk_index": 0,
+      "position": "Chunk 1 of 2 (chars 0-347)",
+      "section": "Knowledge Base Document: Government Welfare Schemes Overview",
+      "page": 1,
+      "total_chunks": 2,
+      "char_start": 0,
+      "char_end": 347
+    }
+  },
+  {
+    "text": "ecutives to search and identify applicable welfare schemes.\n- Eligibility Guidance: Explain specific age, income, occupation, category, and demographic qualifications.\n- Application Enablement: Provide clear documentation checklists, step-by-step application instructions, and official portal links.",
+    "metadata": {
+      "source": "sample_doc.md",
+      "chunk_index": 1,
+      "position": "Chunk 2 of 2 (chars 297-596)",
+      "section": "Primary Objectives",
+      "page": 1,
+      "total_chunks": 2,
+      "char_start": 297,
+      "char_end": 596
+    }
+  },
+  {
+    "text": "Welfare Scheme Guidelines\n\nNational Healthcare Support Scheme (NHSS)\n\nThis is a sample\nHTML \"document\"\nrepresenting healthcare guidelines.\n\nEligibility Criteria\n\nMust be a resident / citizen.\n\nAnnual family income under $50,000.\n\n\u00a9 2026 SchemeAssist Squad81. All Rights Reserved.",
+    "metadata": {
+      "source": "sample_html.html",
+      "chunk_index": 0,
+      "position": "Chunk 1 of 1 (chars 0-279)",
+      "section": "General Overview",
+      "page": 1,
+      "total_chunks": 1,
+      "char_start": 0,
+      "char_end": 279
+    }
+  },
+  {
+    "text": "SchemeAssist PDF Ingest Sample\nFormat: PDF Document\nEligibility guidance for national welfare schemes is detailed here.\n1. Citizenship: Must be a legal resident.\n2. Income restriction: Family income should be low.",
+    "metadata": {
+      "source": "sample_pdf.pdf",
+      "chunk_index": 0,
+      "position": "Chunk 1 of 1 (chars 0-213)",
+      "section": "General Overview",
+      "page": 1,
+      "total_chunks": 1,
+      "char_start": 0,
+      "char_end": 213
+    }
+  },
+  {
+    "text": "==================================================\nSchemeAssist Document Ingest Sample\nFile: sample_text.txt\nFormat: Plain Text\n\nAbout the Welfare Schemes:\nThis document contains general plain text information about national \"welfare schemes\".\nEligibility:\n1. Subject to citizen status (e.g. resident guidelines).\n2.",
+    "metadata": {
+      "source": "sample_text.txt",
+      "chunk_index": 0,
+      "position": "Chunk 1 of 2 (chars 0-316)",
+      "section": "General Overview",
+      "page": 1,
+      "total_chunks": 2,
+      "char_start": 0,
+      "char_end": 316
+    }
+  }
+]

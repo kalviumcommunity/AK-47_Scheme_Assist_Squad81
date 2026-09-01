@@ -1,0 +1,14 @@
+Verification Run Successful.
+Model: gpt-4o-mini
+Chunks Generated: 6
+Sample Retrieved Chunk Metadata:
+{
+  "source": "sample_pdf.pdf",
+  "chunk_index": 0,
+  "position": "Chunk 1 of 1 (chars 0-213)",
+  "section": "General Overview",
+  "page": 1,
+  "total_chunks": 1,
+  "char_start": 0,
+  "char_end": 213
+}
