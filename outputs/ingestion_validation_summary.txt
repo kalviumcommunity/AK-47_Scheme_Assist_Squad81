@@ -2,13 +2,13 @@
   SCHEMEASSIST RAG - CORPUS INGESTION & VALIDATION AUDIT REPORT
 ================================================================================
 
-Timestamp (UTC)            : 2026-09-01T10:49:05.661078+00:00
+Timestamp (UTC)            : 2026-09-03T08:13:03.855067+00:00
 Total Source Files on Disk : 7
 Successfully Ingested Docs : 6
-Total Chunks Generated     : 12
+Total Chunks Generated     : 18
 Total Failures / Skipped   : 1
-Total Corpus Tokens        : 1955
-Average Chunk Tokens       : 187.92 tokens
+Total Corpus Tokens        : 3110
+Average Chunk Tokens       : 206.11 tokens
 Completeness Status        : PASSED (Zero Silent Drops)
 Reconciliation Proof       : 7 (Discovered Files) == 6 (Ingested Docs) + 1 (Recorded Failures)
 
@@ -24,7 +24,7 @@ SUCCESSFULLY INGESTED DOCUMENTS:
 1. ayushman_bharat_healthcare.md [.md] - 1909 chars | 425 tokens | 2 chunks (Hash: d405c13b695d250b)
 2. housing_welfare_guidelines.html [.html] - 1526 chars | 353 tokens | 2 chunks (Hash: 8aa4b9768132b2e5)
 3. pmkisan_scheme_doc.md [.md] - 2159 chars | 460 tokens | 3 chunks (Hash: 7a0df3d80029d2c4)
-4. sample_doc.md [.md] - 596 chars | 96 tokens | 1 chunks (Hash: 961852bff450c131)
+4. sample_doc.md [.md] - 6304 chars | 1251 tokens | 7 chunks (Hash: 8c7d4203474df14e)
 5. scholarship_welfare_circular.md [.md] - 1357 chars | 291 tokens | 2 chunks (Hash: 421810e99839dd26)
 6. senior_citizen_pension_scheme.txt [.txt] - 1522 chars | 330 tokens | 2 chunks (Hash: 661fb5304cb2a6f1)
 

@@ -14,7 +14,7 @@
       "overlap_tokens": 0,
       "content_hash": "d405c13b695d250b",
       "doc_format": ".md",
-      "ingestion_time": "2026-09-01T10:49:05.656256+00:00"
+      "ingestion_time": "2026-09-03T08:13:03.845783+00:00"
     },
     "content": "# Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (AB-PMJAY) Policy Document\n\n## 1. Executive Summary\nAyushman Bharat PM-JAY is the world's largest government funded healthcare assurance scheme, providing a health cover of Rs 5 Lakhs per family per year for secondary and tertiary care hospitalization to over 12 Crore poor and vulnerable families.\n\n## 2. Coverage & Benefit Package\n- Cashless and paperless access to healthcare services for the beneficiary at the point of service (in empanelled hospitals).\n- Cover includes 3 days of pre-hospitalization and 15 days of post-hospitalization expenses such as diagnostics and medicines.\n- No restriction on family size, age, or gender.\n- All pre-existing conditions are covered from day one.\n- Benefits of the scheme are portable across the country (a beneficiary can visit any empanelled public or private hospital in India).\n\n## 3. Beneficiary Identification & Eligibility Criteria\n- Identified based on the deprivation and occupational criteria of Socio-Economic and Caste Census 2011 (SECC 2011) for rural and urban areas respectively.\n- Rural Criteria: Households living in one room with kucha"
   },
@@ -33,7 +33,7 @@
       "overlap_tokens": 50,
       "content_hash": "d405c13b695d250b",
       "doc_format": ".md",
-      "ingestion_time": "2026-09-01T10:49:05.656256+00:00"
+      "ingestion_time": "2026-09-03T08:13:03.845783+00:00"
     },
     "content": "- Identified based on the deprivation and occupational criteria of Socio-Economic and Caste Census 2011 (SECC 2011) for rural and urban areas respectively.\n- Rural Criteria: Households living in one room with kucha walls/roof, female-headed households with no adult male member aged 16-59, disabled members, SC/ST households, landless manual casual labor.\n- Urban Criteria: 11 defined occupational categories (ragpickers, domestic workers, street vendors, transport workers, construction workers, etc.).\n\n## 4. Hospital Network & Empanelled Procedures\n- Covers approximately 1,949 treatment procedures across 27 specialties including oncology, neurosurgery, cardiology, and orthopaedics.\n- Over 29,000 public and private hospitals empanelled nationwide.\n- Digital Golden Card issuance via Ayushman Mitra helpdesks at hospital premises.\n\n## 5. Contact Information & Support\n- Toll-Free National Helpline: 14555 / 1800-111-565\n- Grievance Portal: https://grievance.pmjay.gov.in"
   },
@@ -52,7 +52,7 @@
       "overlap_tokens": 0,
       "content_hash": "8aa4b9768132b2e5",
       "doc_format": ".html",
-      "ingestion_time": "2026-09-01T10:49:05.661078+00:00"
+      "ingestion_time": "2026-09-03T08:13:03.847629+00:00"
     },
     "content": "Pradhan Mantri Awas Yojana (PMAY-U / PMAY-G) Operational Guidelines\n\nPradhan Mantri Awas Yojana (PMAY) Housing Guidelines\n\n1. Mission Objective\n\nPradhan Mantri Awas Yojana addresses urban and rural housing shortages among Economically Weaker Sections (EWS), Low Income Groups (LIG), and rural homeless households by ensuring a pucca house with basic amenities to all eligible families.\n\n2. Eligibility Criteria\n\nThe beneficiary family should not own a pucca house anywhere in India.\n\nEconomically Weaker Section (EWS) annual household income up to Rs 3,00,000.\n\nLow Income Group (LIG) annual household income between Rs 3,00,001 and Rs 6,00,000.\n\nMiddle Income Group (MIG-I & MIG-II) income bands as notified by the Ministry of Housing and Urban Affairs.\n\n3. Subsidy and Financial Assistance\n\nCredit Linked Subsidy Scheme (CLSS) provides upfront interest subsidy of up to 6.5% on home loans up to Rs 6,00,000 for a tenure of 20 years. Rural beneficiaries under PMAY-G receive direct construction assistance of Rs 1,20,"
   },
@@ -71,7 +71,7 @@
       "overlap_tokens": 50,
       "content_hash": "8aa4b9768132b2e5",
       "doc_format": ".html",
-      "ingestion_time": "2026-09-01T10:49:05.661078+00:00"
+      "ingestion_time": "2026-09-03T08:13:03.847629+00:00"
     },
     "content": ") provides upfront interest subsidy of up to 6.5% on home loans up to Rs 6,00,000 for a tenure of 20 years. Rural beneficiaries under PMAY-G receive direct construction assistance of Rs 1,20,000 in plain areas and Rs 1,30,000 in hilly/difficult states.\n\n4. Mandatory House Features\n\nMinimum carpet area of 25 square meters with hygienic cooking space.\n\nMandatory toilet construction under Swachh Bharat Mission convergence.\n\nElectricity connection under Saubhagya and LPG connection under Ujjwala Scheme.\n\n5. Implementation and Monitoring\n\nGeo-tagging of construction stages via the AwaasApp mobile application. Direct Benefit Transfer into Aadhaar-seeded bank accounts across four milestone stages."
   },
@@ -90,7 +90,7 @@
       "overlap_tokens": 0,
       "content_hash": "7a0df3d80029d2c4",
       "doc_format": ".md",
-      "ingestion_time": "2026-09-01T10:49:05.661078+00:00"
+      "ingestion_time": "2026-09-03T08:13:03.848270+00:00"
     },
     "content": "# Pradhan Mantri Kisan Samman Nidhi (PM-KISAN) Operational Guidelines\n\n## 1. Scheme Overview\nThe PM-KISAN scheme is a Central Sector Scheme to provide income support to all landholding farmers' families across the country to enable them to take care of expenses related to agriculture and allied activities as well as domestic needs.\n\n## 2. Eligibility & Entitlements\n- Under the Scheme, an amount of Rs 6,000/- per year is released in three 4-monthly installments of Rs 2,000/- each directly into the bank accounts of the beneficiaries.\n- All landholding farmer families who have cultivable landholding in their names are eligible to get benefits under the scheme.\n- State Government and UT administration will identify the farmer families which are eligible for support as per scheme guidelines.\n\n## 3. Exclusion Categories\nThe following categories of beneficiaries of higher economic status shall not be eligible for benefit under the scheme:\n- All Institutional Landholders.\n- Farmer families in which one or more of its members belong to the following categories:\n- Former and present holders of constitutional posts.\n- Former and present Ministers, State Ministers, Mayors of Municipal Corporations, Chairpersons of District Panchayats"
   },
@@ -109,7 +109,7 @@
       "overlap_tokens": 50,
       "content_hash": "7a0df3d80029d2c4",
       "doc_format": ".md",
-      "ingestion_time": "2026-09-01T10:49:05.661078+00:00"
+      "ingestion_time": "2026-09-03T08:13:03.848270+00:00"
     },
     "content": ".\n- Farmer families in which one or more of its members belong to the following categories:\n- Former and present holders of constitutional posts.\n- Former and present Ministers, State Ministers, Mayors of Municipal Corporations, Chairpersons of District Panchayats.\n- All serving or retired officers and employees of Central/State Government Ministries, Departments, and Public Sector Undertakings.\n- All superannuated/retired pensioners whose monthly pension is Rs 10,000/- or more.\n- All persons who paid Income Tax in the last assessment year.\n- Professionals like Doctors, Engineers, Lawyers, Chartered Accountants, and Architects.\n\n## 4. Mandatory Verification & KYC Process\n- e-KYC is mandatory for PM-KISAN registered farmers via OTP authentication or biometric verification at CSC centers.\n- Bank accounts must be seeded with Aadhaar and enabled for Direct Benefit Transfer (DBT).\n- Land records must be verified by District Revenue Authorities (Patwari / Tehsildar).\n\n## 5. Grievance Redressal & Portal Support\n- Official Portal: https://pmkisan.gov.in\n- PM-KISAN Helpline Toll Free: 155261 / 011-24300606\n- Grievance resolution"
   },
@@ -128,27 +128,27 @@
       "overlap_tokens": 50,
       "content_hash": "7a0df3d80029d2c4",
       "doc_format": ".md",
-      "ingestion_time": "2026-09-01T10:49:05.661078+00:00"
+      "ingestion_time": "2026-09-03T08:13:03.848270+00:00"
     },
     "content": "5. Grievance Redressal & Portal Support\n- Official Portal: https://pmkisan.gov.in\n- PM-KISAN Helpline Toll Free: 155261 / 011-24300606\n- Grievance resolution SLA: 15 working days from ticket generation."
   },
   {
-    "text": "# Knowledge Base Document: Government Welfare Schemes Overview\n\n## Overview\nThis knowledge base contains official notifications, circulars, and guidelines regarding government welfare assistance programs across departments.\n\n## Primary Objectives\n- Discoverability: Enable citizens and helpdesk executives to search and identify applicable welfare schemes.\n- Eligibility Guidance: Explain specific age, income, occupation, category, and demographic qualifications.\n- Application Enablement: Provide clear documentation checklists, step-by-step application instructions, and official portal links.",
+    "text": "# Knowledge Base Document: Government Welfare Schemes Policy & Operational Guidelines (2026-2027)\n\n## 1. Executive Summary & Policy Objectives\nThe National Welfare Assistance Framework establishes comprehensive social security, direct income support, and healthcare enablement for economically vulnerable citizens, smallholder agriculturalists, and senior citizens. The primary objective is to eliminate administrative intermediaries through direct benefit transfer (DBT), ensure universal access to tertiary healthcare, and streamline citizen-centric grievance resolution across all union territories and state jurisdictions.\n\n## 2. Scheme Component A: Small & Marginal Farmers Direct Income Support (PM-DIS)\n### 2.1 Overview & Scope\nThe Small & Marginal Farmers Direct Income Support (PM-DIS) initiative provides supplementary financial security to eligible landholding farming families to assist with farm input procurement, seasonal seed purchasing, and agricultural machinery rental expenses.\n\n### 2.2 Eligibility Criteria\nTo qualify under PM-DIS, applicant households must meet each of the following mandatory conditions:\n- The farmer must possess cultivable agricultural land up to a maximum holding limit of 2.0 hectares (5.0 acres) as per official State land revenue records.\n- The applicant must hold an active Aadhaar card linked to a valid bank account enabled",
     "metadata": {
       "source": "sample_doc.md",
       "chunk_index": 0,
-      "position": "Chunk 1 of 1 (tokens 0-96)",
-      "section": "Knowledge Base Document: Government Welfare Schemes Overview",
+      "position": "Chunk 1 of 7 (tokens 0-250)",
+      "section": "Knowledge Base Document: Government Welfare Schemes Policy & Operational Guidelines (2026-2027)",
       "page": 1,
-      "token_count": 96,
-      "total_chunks": 1,
+      "token_count": 250,
+      "total_chunks": 7,
       "char_start": 0,
-      "char_end": 596,
+      "char_end": 1372,
       "overlap_tokens": 0,
-      "content_hash": "961852bff450c131",
+      "content_hash": "8c7d4203474df14e",
       "doc_format": ".md",
-      "ingestion_time": "2026-09-01T10:49:05.661078+00:00"
+      "ingestion_time": "2026-09-03T08:13:03.853421+00:00"
     },
-    "content": "# Knowledge Base Document: Government Welfare Schemes Overview\n\n## Overview\nThis knowledge base contains official notifications, circulars, and guidelines regarding government welfare assistance programs across departments.\n\n## Primary Objectives\n- Discoverability: Enable citizens and helpdesk executives to search and identify applicable welfare schemes.\n- Eligibility Guidance: Explain specific age, income, occupation, category, and demographic qualifications.\n- Application Enablement: Provide clear documentation checklists, step-by-step application instructions, and official portal links."
+    "content": "# Knowledge Base Document: Government Welfare Schemes Policy & Operational Guidelines (2026-2027)\n\n## 1. Executive Summary & Policy Objectives\nThe National Welfare Assistance Framework establishes comprehensive social security, direct income support, and healthcare enablement for economically vulnerable citizens, smallholder agriculturalists, and senior citizens. The primary objective is to eliminate administrative intermediaries through direct benefit transfer (DBT), ensure universal access to tertiary healthcare, and streamline citizen-centric grievance resolution across all union territories and state jurisdictions.\n\n## 2. Scheme Component A: Small & Marginal Farmers Direct Income Support (PM-DIS)\n### 2.1 Overview & Scope\nThe Small & Marginal Farmers Direct Income Support (PM-DIS) initiative provides supplementary financial security to eligible landholding farming families to assist with farm input procurement, seasonal seed purchasing, and agricultural machinery rental expenses.\n\n### 2.2 Eligibility Criteria\nTo qualify under PM-DIS, applicant households must meet each of the following mandatory conditions:\n- The farmer must possess cultivable agricultural land up to a maximum holding limit of 2.0 hectares (5.0 acres) as per official State land revenue records.\n- The applicant must hold an active Aadhaar card linked to a valid bank account enabled"
   }
 ]

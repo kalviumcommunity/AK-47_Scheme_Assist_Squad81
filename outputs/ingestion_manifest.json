@@ -1,6 +1,6 @@
 {
   "manifest_version": "1.0",
-  "last_updated": "2026-09-01T10:49:05.661078+00:00",
+  "last_updated": "2026-09-03T08:13:03.855067+00:00",
   "total_files": 7,
   "processed_documents": {
     "ayushman_bharat_healthcare.md": {
@@ -30,9 +30,9 @@
     "sample_doc.md": {
       "filepath": "data\\sample_doc.md",
       "format": ".md",
-      "content_hash": "961852bff450c131",
-      "chunks_count": 1,
-      "tokens": 96,
+      "content_hash": "8c7d4203474df14e",
+      "chunks_count": 7,
+      "tokens": 1251,
       "status": "SUCCESS"
     },
     "scholarship_welfare_circular.md": {
