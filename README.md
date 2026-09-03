@@ -143,6 +143,15 @@ To support robust RAG operation, we have added three core utilities evaluating t
   python src/model_parameter_experiment.py
   ```
 
+### 4. Embedding Similarity & Distance Metrics
+- **Script**: `src/similarity_experiment.py`
+- **Output Report**: `outputs/similarity_ranking_results.txt`
+- **Purpose**: Ranks precomputed chunk embeddings against a query embedding with cosine similarity. Higher scores indicate closer vector direction; they do not guarantee factual correctness.
+- **Execution**:
+  ```bash
+  python src/similarity_experiment.py
+  ```
+
 ---
 
 ## 🔒 Security & Secret Management
