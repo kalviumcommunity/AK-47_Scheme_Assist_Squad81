@@ -1,10 +1,10 @@
 {
   "total_files_discovered": 7,
   "total_documents_ingested": 6,
-  "total_chunks_created": 12,
+  "total_chunks_created": 18,
   "total_failures": 1,
-  "total_corpus_tokens": 1955,
-  "avg_chunk_tokens": 187.92,
+  "total_corpus_tokens": 3110,
+  "avg_chunk_tokens": 206.11,
   "formats_breakdown": {
     ".md": 4,
     ".html": 1,
@@ -13,7 +13,7 @@
   },
   "completeness_reconciled": true,
   "reconciliation_equation": "7 (Discovered Files) == 6 (Ingested Docs) + 1 (Recorded Failures)",
-  "ingestion_timestamp": "2026-09-01T10:49:05.661078+00:00",
+  "ingestion_timestamp": "2026-09-03T08:13:03.855067+00:00",
   "ingested_documents": [
     {
       "filename": "ayushman_bharat_healthcare.md",
@@ -52,11 +52,11 @@
       "filename": "sample_doc.md",
       "filepath": "data\\sample_doc.md",
       "format": ".md",
-      "raw_chars": 597,
-      "cleaned_chars": 596,
-      "total_tokens": 96,
-      "chunks_created": 1,
-      "content_hash": "961852bff450c131",
+      "raw_chars": 6305,
+      "cleaned_chars": 6304,
+      "total_tokens": 1251,
+      "chunks_created": 7,
+      "content_hash": "8c7d4203474df14e",
       "status": "SUCCESS"
     },
     {
@@ -89,7 +89,7 @@
       "format": ".xyz",
       "error_type": "ValueError",
       "error_message": "Unsupported file extension: '.xyz' (Expected .txt, .md, .html, .pdf)",
-      "timestamp": "2026-09-01T10:49:05.661078+00:00"
+      "timestamp": "2026-09-03T08:13:03.855067+00:00"
     }
   ]
 }

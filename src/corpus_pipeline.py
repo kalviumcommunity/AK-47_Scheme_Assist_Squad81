@@ -3,6 +3,7 @@ import sys
 import json
 import hashlib
 import datetime
+import re
 from pathlib import Path
 from dataclasses import dataclass, asdict, field
 from typing import List, Dict, Any, Tuple, Optional

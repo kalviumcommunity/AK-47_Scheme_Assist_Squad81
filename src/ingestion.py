@@ -1,5 +1,6 @@
 import os
-from typing import List, Dict, Any
+import re
+from typing import List, Dict, Any, Tuple
 
 try:
     from bs4 import BeautifulSoup
@@ -117,6 +118,34 @@ def chunk_document_by_tokens(
         # Calculate character offsets by decoding prefix
         char_start = len(encoding.decode(tokens[:t_start]))
         char_end = len(encoding.decode(tokens[:t_end]))
+
+        section_name = get_section_for_offset(sections, char_start)
+
+        page_num = 1
+        if page_numbers:
+            for p_num, p_start in page_numbers:
+                if char_start >= p_start:
+                    page_num = p_num
+
+        chunk_metadata = {
+            "source": filename,
+            "chunk_index": idx,
+            "position": f"Chunk {idx + 1} of {total_chunks} (tokens {t_start}-{t_end})",
+            "section": section_name,
+            "page": page_num,
+            "token_count": len(slice_tokens),
+            "total_chunks": total_chunks,
+            "char_start": char_start,
+            "char_end": char_end,
+            "overlap_tokens": overlap_tokens if idx > 0 else 0
+        }
+
+        chunks.append({
+            "text": chunk_text,
+            "metadata": chunk_metadata
+        })
+
+    return chunks
 
 
 def load_documents_from_data_dir(data_dir: str = "data") -> List[Dict[str, str]]:
@@ -251,3 +280,22 @@ def ingest_and_chunk_documents(
 
     print(f"[CHUNKING LOG] Generated {len(all_chunks)} total chunks using '{strategy}' strategy across {len(documents)} document(s).")
     return all_chunks
+
+
+def validate_corpus_ingestion(
+    data_dir: str = "data",
+    chunk_size_tokens: int = 250,
+    overlap_tokens: int = 50
+) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    """
+    Executes the validated corpus ingestion pipeline with strict completeness reconciliation.
+    Returns (all_chunks, summary_dict).
+    """
+    from src.corpus_pipeline import run_corpus_ingestion, persist_pipeline_artifacts
+    files, docs, chunks, failures, summary = run_corpus_ingestion(
+        data_dir=data_dir,
+        chunk_size_tokens=chunk_size_tokens,
+        overlap_tokens=overlap_tokens
+    )
+    persist_pipeline_artifacts(summary, chunks)
+    return chunks, summary.to_dict()
