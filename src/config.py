@@ -9,9 +9,17 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-4o-mini")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "text-embedding-3-small")
 
+# Vector Database Settings (ChromaDB)
+VECTOR_DB_TYPE = os.getenv("VECTOR_DB_TYPE", "chroma")
+CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", "chroma_db")
+COLLECTION_NAME = os.getenv("COLLECTION_NAME", "schemeassist_chunks")
+VECTOR_DIMENSION = int(os.getenv("VECTOR_DIMENSION", "1536"))
+SIMILARITY_METRIC = os.getenv("SIMILARITY_METRIC", "cosine")
+
 def validate_environment():
     """Validates that environment configuration is present."""
     if not OPENAI_API_KEY:
         print("[CONFIG WARNING] OPENAI_API_KEY is not set in .env. Running in mock/offline mode.")
     else:
         print(f"[CONFIG LOG] Loaded model: {CHAT_MODEL} | Base URL: {OPENAI_BASE_URL}")
+    print(f"[CONFIG LOG] Vector DB: {VECTOR_DB_TYPE} | Collection: {COLLECTION_NAME} (dim={VECTOR_DIMENSION}, metric={SIMILARITY_METRIC})")

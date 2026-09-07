@@ -34,6 +34,8 @@ outputs/*
 !outputs/sample_chunks.txt
 !outputs/embedding_sanity_report.json
 !outputs/embedding_sanity_report.txt
+!outputs/vector_db_readback_results.json
+!outputs/vector_db_readback_results.txt
 
 # Vector Stores & Databases
 chroma_db/

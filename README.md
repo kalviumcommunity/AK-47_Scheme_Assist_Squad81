@@ -476,6 +476,147 @@ When recording your submission walkthrough, follow this structured agenda:
      2. **RAG Triad & RAGAS Metrics**: Evaluate **Context Relevance** (ratio of retrieved sentences directly answering the query), **Groundedness / Faithfulness**, and **Answer Relevance**.
      3. **Continuous Retrieval Evaluation**: Monitor query latency, embedding drift over time, and user feedback (thumbs up/down on retrieved sources).
 
+---
+
+## 🗄️ 3.30 Vector Database Setup & Collection Design
+
+### 📌 Overview & Rationale
+Embeddings need a purpose-built storage and indexing engine. While traditional relational databases excel at exact keyword lookups and $B$-tree filtering, a vector database answers a fundamentally different question: **which stored vectors are closest to this query vector?**
+
+In this milestone, SchemeAssist integrates **ChromaDB** to persist embedding vectors together with original chunk text and metadata, and enforces strict schema and dimensional validation.
+
+```mermaid
+flowchart TD
+    subgraph Storage["Vector Database Storage Schema"]
+        A["Record ID: pmkisan_scheme_doc.md:chunk_0"]
+        B["Vector: 1536-dim float array"]
+        C["Text: Original policy chunk content"]
+        D["Metadata: {source, chunk_index, section, page, category}"]
+    end
+    subgraph ChromaDB["ChromaDB Collection (schemeassist_chunks)"]
+        A & B & C & D --> E["HNSW Index (Metric: Cosine)"]
+        E --> F["ANN Nearest-Neighbor Retrieval"]
+        E --> G["Metadata Pre/Post Filtering"]
+    end
+```
+
+---
+
+### 📐 Collection Design & Schema Integrity
+
+1. **Dimensional Alignment (1536 Dimensions)**:
+   - Collection dimensionality must match the embedding model (`text-embedding-3-small` outputs length 1536).
+   - Incompatible dimensions (e.g. 768 or 384) are caught early by `validate_vector_dimension()` and rejected before entering the index.
+2. **Unified Record Schema**:
+   - `id`: Stable chunk identifier (`<filename>:<chunk_index>`).
+   - `vector`: Unit-normalized float list of length 1536.
+   - `text`: Human-readable chunk text (used by the LLM for grounded answer generation).
+   - `metadata`: Provenance attributes (`source`, `chunk_index`, `section`, `page`, `category`).
+
+---
+
+### 🔬 Readback Verification Output
+
+Ran via [`src/verify_vector_store.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/src/verify_vector_store.py):
+
+```text
+================================================================================
+  SCHEMEASSIST: 3.30 VECTOR DATABASE SETUP & COLLECTION DESIGN VERIFICATION
+================================================================================
+
+[TASK 1] Connecting to vector database...
+  • DB Type      : chroma
+  • Persist Dir  : chroma_db (in_memory=False)
+  [OK] Connection established successfully to ChromaDB.
+
+[TASK 2] Configuring collection...
+  • Collection Name   : schemeassist_chunks
+  • Vector Dimension  : 1536 (matches text-embedding-3-small)
+  • Similarity Metric : cosine (HNSW space: cosine)
+  [OK] Collection 'schemeassist_chunks' initialized with dimension 1536.
+
+[TASK 3] Constructing test record with unified RAG schema...
+  • Schema Fields : id, vector, text, metadata
+  • Target ID     : pmkisan_scheme_doc.md:chunk_0
+  • Vector Dim    : 1536 floats
+  • Metadata Keys : ['source', 'chunk_index', 'section', 'page', 'token_count', 'category']
+
+[TASK 4] Upserting record and reading back from vector database...
+  [OK] Record 'pmkisan_scheme_doc.md:chunk_0' successfully upserted.
+
+--- READBACK VERIFICATION ---
+  readback id   : pmkisan_scheme_doc.md:chunk_0
+  vector length : 1536
+  text preview  : Pradhan Mantri Kisan Samman Nidhi (PM-KISAN) provides income support of Rs 6,000...
+  metadata      : {'section': '1. Scheme Overview & Direct Benefit Transfer', 'source': 'pmkisan_scheme_doc.md', 'token_count': 48, 'page': 1, 'category': 'agriculture_income_support', 'chunk_index': 0}
+
+--- SCHEMA INTEGRITY CHECKS ---
+  • ID Match               : [PASSED]
+  • Vector Length Match    : [PASSED]
+  • Text Integrity Match   : [PASSED]
+  • Metadata Fields Match  : [PASSED]
+
+[RETRIEVAL TEST] Running semantic similarity query...
+  • Query        : "How much money do farmers receive in installments under PM-KISAN?"
+  • Top Match ID : pmkisan_scheme_doc.md:chunk_0
+  • Score (Cos)  : 0.1404
+  • Distance     : 0.8596
+  • Source File  : pmkisan_scheme_doc.md
+  [OK] Nearest-neighbor search operational and verified.
+
+[SAFETY TEST] Validating dimension mismatch rejection...
+  [OK] Successfully rejected invalid vector dimension (768 vs 1536)
+
+[ARTIFACTS PERSISTED]
+  • JSON Audit Report : outputs/vector_db_readback_results.json
+  • Text Audit Report : outputs/vector_db_readback_results.txt
+================================================================================
+```
+
+---
+
+### 🚀 Verification Commands
+
+1. **Run Vector Store Setup & Readback Verification**:
+   ```bash
+   python src/verify_vector_store.py
+   ```
+2. **Run Dedicated Vector Store Unit Tests**:
+   ```bash
+   python -m unittest tests/test_vector_store.py -v
+   ```
+3. **Run Entire Repository Test Suite**:
+   ```bash
+   python -m unittest discover tests -v
+   ```
+
+### 📁 Generated Artifacts:
+- **Comprehensive Documentation**: [`docs/vector_database_setup_collection_design.md`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/docs/vector_database_setup_collection_design.md)
+- **Machine-Readable Audit Report**: [`outputs/vector_db_readback_results.json`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/vector_db_readback_results.json)
+- **Human-Readable Text Report**: [`outputs/vector_db_readback_results.txt`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/vector_db_readback_results.txt)
+
+---
+
+### 🎥 Video Walkthrough Guide (3–5 Minutes)
+
+When recording your submission video, cover these 5 core topics:
+
+1. **Vector DB vs. Traditional DB (0:00 – 0:50)**:
+   - Relational/NoSQL databases do exact keyword lookups and $B$-tree filtering.
+   - Vector databases solve nearest-neighbor semantic search (HNSW index) finding concepts with similar meaning regardless of exact wording.
+2. **Why Collection Dimension Must Match Embedding Model (0:50 – 1:40)**:
+   - Our embedding model (`text-embedding-3-small`) outputs 1536 numbers.
+   - Vectors of different lengths cannot undergo dot products or cosine distance calculations. Show how `validate_vector_dimension()` rejects invalid dimensions early.
+3. **Collection Schema Walkthrough (1:40 – 2:30)**:
+   - Open `src/vector_store.py` and explain the 4 fields: `id` (unique chunk ID), `vector` (1536 floats), `text` (chunk text for prompt context), and `metadata` (provenance for citation and filtering).
+4. **Why Text and Metadata are Stored with the Vector (2:30 – 3:30)**:
+   - The generative LLM needs plain text to formulate answers; vectors alone are unreadable numbers.
+   - Metadata (`source`, `section`, `page`) enables direct citations and metadata filtering (e.g. querying only agricultural schemes).
+5. **Follow-Up: Choosing a Vector Database for Production (3:30 – 4:30)**:
+   - Explain the 6 evaluation criteria: scale, latency, metadata filtering needs, hosting model (embedded vs cloud SaaS), operational cost, and team familiarity.
+   - Contrast ChromaDB (ideal for local/edge/embedded python) with Qdrant/Pinecone/pgvector (for multi-node horizontal scale and distributed production traffic).
+
+
 
 
 
