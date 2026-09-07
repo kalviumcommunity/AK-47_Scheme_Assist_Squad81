@@ -2,7 +2,7 @@
   SCHEMEASSIST RAG - CORPUS INGESTION & VALIDATION AUDIT REPORT
 ================================================================================
 
-Timestamp (UTC)            : 2026-09-03T08:13:03.855067+00:00
+Timestamp (UTC)            : 2026-09-07T05:45:05.600580+00:00
 Total Source Files on Disk : 7
 Successfully Ingested Docs : 6
 Total Chunks Generated     : 18
