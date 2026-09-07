@@ -676,7 +676,102 @@ When recording your submission video, cover these 5 core topics:
    - Explain the 6 evaluation criteria: scale, latency, metadata filtering needs, hosting model (embedded vs cloud SaaS), operational cost, and team familiarity.
    - Contrast ChromaDB (ideal for local/edge/embedded python) with Qdrant/Pinecone/pgvector (for multi-node horizontal scale and distributed production traffic).
 
+---
 
+## 3.43 RAG Evaluation & Answer Quality Scoring
 
+Milestone 3.43 benchmarks the complete end-to-end SchemeAssist RAG pipeline across three core evaluation dimensions:
+1. **Correctness**: Measures factual recall against expected key points.
+2. **Grounding**: Confirms claims in answers are supported by retrieved context without hallucination.
+3. **Citation Accuracy**: Validates cited documents against ground-truth source references.
 
+### 📊 Evaluation Scorecard
 
+Running the evaluation harness:
+```bash
+python src/rag_evaluation.py
+```
+
+Outputs the verification matrix:
+```text
+================================================================================
+  SCHEMEASSIST: 3.43 RAG EVALUATION & ANSWER QUALITY SCORING
+================================================================================
+Evaluating 7 test question(s) across Correctness, Grounding, and Citations...
+
+ID         Question                                   Correct  Ground   Cite     Status
+------------------------------------------------------------------------------------
+Q1_PMKISAN_BENEFIT What is the annual financial assistance .. 1.00     1.00     1.00     PASS
+Q2_ABPMJAY_COVERAGE What hospitalisation cover is provided u.. 1.00     1.00     1.00     PASS
+Q3_PMAY_SUBSIDY What interest subsidy is offered under P.. 1.00     1.00     1.00     PASS
+Q4_PENSION_ELIGIBILITY What are the age and assistance criteria.. 1.00     1.00     1.00     PASS
+Q5_SCHOLARSHIP_CRITERIA What are the eligibility conditions for .. 0.33     1.00     0.00     FAIL
+Q6_PMDIS_EXCLUSIONS Which categories are explicitly disquali.. 0.33     1.00     1.00     FAIL
+Q7_OUT_OF_DOMAIN_GUARDRAIL What flight license is required to pilot.. 1.00     1.00     1.00     PASS
+------------------------------------------------------------------------------------
+
+--- OVERALL RAG QUALITY METRICS ---
+  • Total Evaluated Questions : 7
+  • Average Correctness       : 81.0%
+  • Average Grounding         : 100.0%
+  • Average Citation Accuracy : 85.7%
+  • Overall Composite Score   : 88.9%
+  • Perfect Score Pass Rate   : 71.4% (5/7)
+  • Notable Failures Detected : 2
+```
+
+---
+
+### 🚀 Verification Commands
+
+1. **Run Full Evaluation Pipeline**:
+   ```bash
+   python src/rag_evaluation.py
+   ```
+2. **Run Dedicated RAG Evaluation Unit Tests (13 tests)**:
+   ```bash
+   python -m unittest tests/test_rag_evaluation.py -v
+   ```
+3. **Run Entire Repository Test Suite (95 tests)**:
+   ```bash
+   python -m unittest discover tests -v
+   ```
+
+### 📁 Generated Artifacts:
+- **Evaluation Pipeline**: [`src/rag_evaluation.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/src/rag_evaluation.py)
+- **Unit Test Suite**: [`tests/test_rag_evaluation.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/tests/test_rag_evaluation.py)
+- **Full Architecture & Math Guide**: [`docs/rag_evaluation_answer_quality_scoring.md`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/docs/rag_evaluation_answer_quality_scoring.md)
+- **Machine-Readable Results**: [`outputs/rag_evaluation_results.json`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/rag_evaluation_results.json)
+- **Human-Readable Summary**: [`outputs/rag_evaluation_summary.txt`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/rag_evaluation_summary.txt)
+
+---
+
+### 🎥 Video Walkthrough Guide (3–5 Minutes)
+
+When recording your submission video, cover these 5 core topics:
+
+1. **Dimensions a RAG Answer Should Be Scored On (0:00 – 0:50)**:
+   - Retrieval quality alone does not guarantee a good answer.
+   - We must score three distinct dimensions:
+     1. *Correctness*: Does the answer cover the expected factual points?
+     2. *Grounding*: Are the claims supported by the retrieved context, or does it hallucinate?
+     3. *Citation Accuracy*: Do citations point to the sources that actually support the claims?
+2. **How You Built the Test Set (0:50 – 1:40)**:
+   - Walk through `DEFAULT_TEST_SET` in [`src/rag_evaluation.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/src/rag_evaluation.py).
+   - Point out that it includes both domain-specific factual questions (PM-KISAN, Ayushman Bharat, PMAY, Senior Citizen Pension, Scholarship, Disqualifications) and an out-of-domain edge case (commercial supersonic jet flight licensing) to verify fallback guardrails.
+   - Each test case defines `expected_points` and `expected_sources`.
+3. **How You Judged Grounding and Citation Accuracy (1:40 – 2:30)**:
+   - Explain `judge_grounding()`: It breaks the answer into factual statements and verifies whether the terms and numbers are attested in the retrieved text. Fallback refusals receive 1.0 because they make no hallucinated claims.
+   - Explain `check_citations()`: It calculates the F1 score between cited sources and expected sources. For out-of-domain queries, citing anything is penalized (0.0), while correctly refraining from citing unrelated documents scores 1.0.
+4. **One Failure Case and Its Likely Cause (2:30 – 3:30)**:
+   - Highlight **Q5 (Scholarship Eligibility Criteria)** from the output:
+     - Question: *"What are the eligibility conditions for pre-matric scholarship assistance?"*
+     - Scores: Correctness = 0.33, Grounding = 1.0, Citation Accuracy = 0.0.
+     - Root Cause: **Weak retrieval ranking**. The vector similarity score for `ayushman_bharat_healthcare.md` was 0.1856, slightly higher than `scholarship_welfare_circular.md` (0.1731) due to general welfare keywords. Because Ayushman Bharat was ranked first, the answer cited the wrong scheme.
+5. **Follow-Up: How Would You Improve the Weakest Dimension? (3:30 – 4:30)**:
+   - If **Correctness or Citations** are the weakest due to retrieval ranking:
+     - Implement **hybrid search with BM25 keyword matching**, putting heavier weight ($\beta = 0.4$ to $0.6$) on exact keywords like "scholarship" to ensure specific policy documents outrank generic health schemes.
+     - Increase top-$k$ depth from $k=3$ to $k=5$.
+   - If **Grounding** is weak:
+     - Enforce zero-shot strict context-only prompting: *"Answer ONLY from the provided context. If the answer is not present, reply with the standard refusal."*
+     - Lower model temperature to $0.0$ to eliminate creative extrapolation.

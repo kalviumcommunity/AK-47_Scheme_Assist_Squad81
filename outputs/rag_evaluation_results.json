@@ -1,0 +1,218 @@
+{
+  "milestone": "3.43 RAG Evaluation & Answer Quality Scoring",
+  "timestamp": "2026-09-07T08:53:48.033360+00:00",
+  "summary": {
+    "questions": 7,
+    "avg_correctness": 0.8095,
+    "avg_grounding": 1.0,
+    "avg_citation_accuracy": 0.8571,
+    "overall_quality_score": 0.8889,
+    "passed_questions": 5,
+    "failed_questions": 2,
+    "pass_rate": 0.7143,
+    "failures": [
+      {
+        "id": "Q5_SCHOLARSHIP_CRITERIA",
+        "question": "What are the eligibility conditions for pre-matric scholarship assistance?",
+        "category": "education_welfare",
+        "answer": "Ayushman Bharat PM-JAY is the world's largest government funded healthcare assurance scheme, providing a health cover of Rs 5 Lakhs per family per year for secondary and tertiary care hospitalization to over 12 Crore poor and vulnerable families. Cover includes 3 days of pre-hospitalization and 15 days of post-hospitalization expenses such as diagnostics and medicines. All pre-existing conditions are covered from day one.",
+        "correctness": 0.3333,
+        "grounding": 1.0,
+        "citation_accuracy": 0.0,
+        "overall_score": 0.4444,
+        "citations": [
+          "ayushman_bharat_healthcare.md"
+        ],
+        "expected_sources": [
+          "scholarship_welfare_circular.md"
+        ],
+        "expected_points": [
+          "not less than 50% marks",
+          "annual family income",
+          "Rs. 1 Lakh"
+        ],
+        "fallback_triggered": false,
+        "diagnosed_causes": [
+          "Incomplete answer: missed one or more required expected points",
+          "Citation mismatch: cited wrong source, missed expected source, or spurious citations"
+        ]
+      },
+      {
+        "id": "Q6_PMDIS_EXCLUSIONS",
+        "question": "Which categories are explicitly disqualified from receiving benefits under PM-DIS?",
+        "category": "welfare_exclusions",
+        "answer": "The following categories are explicitly disqualified from receiving benefits under PM-DIS regardless of land size: Institutional landholders and corporate agricultural enterprises.",
+        "correctness": 0.3333,
+        "grounding": 1.0,
+        "citation_accuracy": 1.0,
+        "overall_score": 0.7778,
+        "citations": [
+          "sample_doc.md"
+        ],
+        "expected_sources": [
+          "sample_doc.md"
+        ],
+        "expected_points": [
+          "Institutional landholders",
+          "members of Parliament",
+          "monthly pension"
+        ],
+        "fallback_triggered": false,
+        "diagnosed_causes": [
+          "Incomplete answer: missed one or more required expected points"
+        ]
+      }
+    ]
+  },
+  "results": [
+    {
+      "id": "Q1_PMKISAN_BENEFIT",
+      "question": "What is the annual financial assistance provided under PM-KISAN?",
+      "category": "agriculture_income_support",
+      "answer": "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN) Operational Guidelines The PM-KISAN scheme is a Central Sector Scheme to provide income support to all landholding farmers' families across the country to enable them to take care of expenses related to agriculture and allied activities as well as domestic needs. Under the Scheme, an amount of Rs 6,000/- per year is released in three 4-monthly installments of Rs 2,000/- each directly into the bank accounts of the beneficiaries.",
+      "correctness": 1.0,
+      "grounding": 1.0,
+      "citation_accuracy": 1.0,
+      "overall_score": 1.0,
+      "citations": [
+        "pmkisan_scheme_doc.md"
+      ],
+      "expected_sources": [
+        "pmkisan_scheme_doc.md"
+      ],
+      "expected_points": [
+        "Rs 6,000",
+        "three installments",
+        "Rs 2,000"
+      ],
+      "fallback_triggered": false
+    },
+    {
+      "id": "Q2_ABPMJAY_COVERAGE",
+      "question": "What hospitalisation cover is provided under Ayushman Bharat PM-JAY?",
+      "category": "healthcare_assurance",
+      "answer": "Ayushman Bharat PM-JAY is the world's largest government funded healthcare assurance scheme, providing a health cover of Rs 5 Lakhs per family per year for secondary and tertiary care hospitalization to over 12 Crore poor and vulnerable families. Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (AB-PMJAY) Policy Document Cover includes 3 days of pre-hospitalization and 15 days of post-hospitalization expenses such as diagnostics and medicines.",
+      "correctness": 1.0,
+      "grounding": 1.0,
+      "citation_accuracy": 1.0,
+      "overall_score": 1.0,
+      "citations": [
+        "ayushman_bharat_healthcare.md"
+      ],
+      "expected_sources": [
+        "ayushman_bharat_healthcare.md"
+      ],
+      "expected_points": [
+        "Rs 5 Lakhs",
+        "per family per year",
+        "secondary and tertiary"
+      ],
+      "fallback_triggered": false
+    },
+    {
+      "id": "Q3_PMAY_SUBSIDY",
+      "question": "What interest subsidy is offered under PMAY Credit Linked Subsidy Scheme?",
+      "category": "housing_welfare",
+      "answer": "Credit Linked Subsidy Scheme (CLSS) provides upfront interest subsidy of up to 6.5% on home loans up to Rs 6,00,000 for a tenure of 20 years. Rural beneficiaries under PMAY-G receive direct construction assistance of Rs 1,20, ) provides upfront interest subsidy of up to 6.5% on home loans up to Rs 6,00,000 for a tenure of 20 years. Rural beneficiaries under PMAY-G receive direct construction assistance of Rs 1,20,000 in plain areas and Rs 1,30,000 in hilly/difficult states. Pradhan Mantri Awas Yojana (PMAY-U / PMAY-G) Operational Guidelines",
+      "correctness": 1.0,
+      "grounding": 1.0,
+      "citation_accuracy": 1.0,
+      "overall_score": 1.0,
+      "citations": [
+        "housing_welfare_guidelines.html"
+      ],
+      "expected_sources": [
+        "housing_welfare_guidelines.html"
+      ],
+      "expected_points": [
+        "6.5%",
+        "up to Rs 6,00,000",
+        "20 years"
+      ],
+      "fallback_triggered": false
+    },
+    {
+      "id": "Q4_PENSION_ELIGIBILITY",
+      "question": "What are the age and assistance criteria under the senior citizen pension scheme?",
+      "category": "social_security_pension",
+      "answer": "The Indira Gandhi National Old Age Pension Scheme (IGNOAPS) is a non-contributory pension scheme under the Ministry of Rural Development aimed at providing monthly financial assistance to senior citizens living Below Poverty Line (BPL). INDIRA GANDHI NATIONAL OLD AGE PENSION SCHEME (IGNOAPS) GUIDELINES For persons aged 60 to 79 years: Central assistance of Rs 200 per month per beneficiary (States supplement this with an additional state share, making the total pension between Rs 1,000 to Rs 2,500 per month).",
+      "correctness": 1.0,
+      "grounding": 1.0,
+      "citation_accuracy": 1.0,
+      "overall_score": 1.0,
+      "citations": [
+        "senior_citizen_pension_scheme.txt"
+      ],
+      "expected_sources": [
+        "senior_citizen_pension_scheme.txt"
+      ],
+      "expected_points": [
+        "60 years and above",
+        "BPL",
+        "Rs 200 per month"
+      ],
+      "fallback_triggered": false
+    },
+    {
+      "id": "Q5_SCHOLARSHIP_CRITERIA",
+      "question": "What are the eligibility conditions for pre-matric scholarship assistance?",
+      "category": "education_welfare",
+      "answer": "Ayushman Bharat PM-JAY is the world's largest government funded healthcare assurance scheme, providing a health cover of Rs 5 Lakhs per family per year for secondary and tertiary care hospitalization to over 12 Crore poor and vulnerable families. Cover includes 3 days of pre-hospitalization and 15 days of post-hospitalization expenses such as diagnostics and medicines. All pre-existing conditions are covered from day one.",
+      "correctness": 0.3333,
+      "grounding": 1.0,
+      "citation_accuracy": 0.0,
+      "overall_score": 0.4444,
+      "citations": [
+        "ayushman_bharat_healthcare.md"
+      ],
+      "expected_sources": [
+        "scholarship_welfare_circular.md"
+      ],
+      "expected_points": [
+        "not less than 50% marks",
+        "annual family income",
+        "Rs. 1 Lakh"
+      ],
+      "fallback_triggered": false
+    },
+    {
+      "id": "Q6_PMDIS_EXCLUSIONS",
+      "question": "Which categories are explicitly disqualified from receiving benefits under PM-DIS?",
+      "category": "welfare_exclusions",
+      "answer": "The following categories are explicitly disqualified from receiving benefits under PM-DIS regardless of land size: Institutional landholders and corporate agricultural enterprises.",
+      "correctness": 0.3333,
+      "grounding": 1.0,
+      "citation_accuracy": 1.0,
+      "overall_score": 0.7778,
+      "citations": [
+        "sample_doc.md"
+      ],
+      "expected_sources": [
+        "sample_doc.md"
+      ],
+      "expected_points": [
+        "Institutional landholders",
+        "members of Parliament",
+        "monthly pension"
+      ],
+      "fallback_triggered": false
+    },
+    {
+      "id": "Q7_OUT_OF_DOMAIN_GUARDRAIL",
+      "question": "What flight license is required to pilot a commercial supersonic jet under SchemeAssist?",
+      "category": "out_of_domain_fallback",
+      "answer": "I do not have sufficient verified information in the official welfare scheme guidelines to answer this question. Please consult the official ministry portal or helpdesk.",
+      "correctness": 1.0,
+      "grounding": 1.0,
+      "citation_accuracy": 1.0,
+      "overall_score": 1.0,
+      "citations": [],
+      "expected_sources": [],
+      "expected_points": [
+        "not have sufficient verified information",
+        "official ministry portal"
+      ],
+      "fallback_triggered": true
+    }
+  ]
+}
