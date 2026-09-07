@@ -1,0 +1,93 @@
+================================================================================
+        SCHEMEASSIST: EMBEDDING QUALITY CHECKS & SANITY REPORT (3.29)
+================================================================================
+
+Timestamp       : 2026-09-07T05:45:04.997351+00:00
+Embedding Model : text-embedding-3-small
+Active Provider : offline
+Corpus Chunks   : 18
+Vector Dimension: 1536
+
+--------------------------------------------------------------------------------
+METRICS SUMMARY:
+  • Known Relevance Tests : 8/8 (100.0%)
+  • Average Separation Margin (Related vs Unrelated) : 0.0575
+  • Edge / Diagnostic Tests : 4
+  • Borderline Cases : 2
+  • Expected Model Mismatch Failures : 1
+--------------------------------------------------------------------------------
+
+INDIVIDUAL TEST RESULTS:
+--------------------------------------------------------------------------------
+[TC-01] [PASSED] What is the annual hospitalisation health cover amount per family under Ayushman Bharat PM-JAY?
+     Expected : ayushman_bharat_healthcare.md
+     Top Rank : ayushman_bharat_healthcare.md (score: 0.2337)
+     Margin   : 0.1227 (best related: 0.2337 vs best unrelated: 0.111)
+     Notes    : Clear, specific query on Ayushman Bharat coverage.
+
+[TC-02] [PASSED] Which treatment procedures and surgical specialties are covered in empanelled hospitals under PM-JAY?
+     Expected : ayushman_bharat_healthcare.md
+     Top Rank : ayushman_bharat_healthcare.md (score: 0.173)
+     Margin   : 0.0432 (best related: 0.173 vs best unrelated: 0.1297)
+     Notes    : Tests procedure & empanelment retrieval.
+
+[TC-03] [PASSED] How much financial assistance is released to landholding farmer families in installments under PM-KISAN?
+     Expected : pmkisan_scheme_doc.md
+     Top Rank : pmkisan_scheme_doc.md (score: 0.2639)
+     Margin   : 0.1058 (best related: 0.2639 vs best unrelated: 0.1581)
+     Notes    : Specific income support query for farmers.
+
+[TC-04] [PASSED] Which farmer categories are in the exclusion list under PM-KISAN for institutional landholders or constitutional post holders?
+     Expected : pmkisan_scheme_doc.md
+     Top Rank : pmkisan_scheme_doc.md (score: 0.3031)
+     Margin   : 0.098 (best related: 0.3031 vs best unrelated: 0.2051)
+     Notes    : Tests negative eligibility / exclusion criteria.
+
+[TC-05] [PASSED] What is the upfront interest subsidy rate on home loans under Credit Linked Subsidy Scheme CLSS for PMAY?
+     Expected : housing_welfare_guidelines.html
+     Top Rank : housing_welfare_guidelines.html (score: 0.2079)
+     Margin   : 0.046 (best related: 0.2079 vs best unrelated: 0.1618)
+     Notes    : Specific housing credit subsidy query.
+
+[TC-06] [PASSED] What is the minimum carpet area and mandatory toilet construction requirement for a pucca house?
+     Expected : housing_welfare_guidelines.html
+     Top Rank : housing_welfare_guidelines.html (score: 0.2197)
+     Margin   : 0.0208 (best related: 0.2197 vs best unrelated: 0.1989)
+     Notes    : Tests mandatory house construction parameters.
+
+[TC-07] [PASSED] What is the monthly pension amount and age qualification for elderly citizens under senior citizen pension?
+     Expected : senior_citizen_pension_scheme.txt
+     Top Rank : senior_citizen_pension_scheme.txt (score: 0.2135)
+     Margin   : 0.0214 (best related: 0.2135 vs best unrelated: 0.1921)
+     Notes    : Specific elderly welfare query.
+
+[TC-08] [PASSED] What are the academic merit conditions and minimum 50% marks requirement for the pre-matric scholarship?
+     Expected : scholarship_welfare_circular.md
+     Top Rank : scholarship_welfare_circular.md (score: 0.2043)
+     Margin   : 0.0024 (best related: 0.2043 vs best unrelated: 0.202)
+     Notes    : Specific student welfare query.
+
+[EDGE-01] [BORDERLINE] What is the toll-free helpline number and portal for registering grievances and tracking support tickets?
+     Expected : pmkisan_scheme_doc.md
+     Top Rank : pmkisan_scheme_doc.md (score: 0.2243)
+     Margin   : 0.0131 (best related: 0.2243 vs best unrelated: 0.2113)
+     Notes    : Surprising/Borderline case: The query lacks scheme-specific terminology. Both 'pmkisan_scheme_doc.md' and 'ayushman_bharat_healthcare.md' share generic helpline and grievance portal boilerplate ('toll-free', 'helpline', 'grievance portal'). Causes tight score separation (borderline margin) or unexpected top rank.
+
+[EDGE-02] [BORDERLINE] Direct benefit transfer DBT funds credited to Aadhaar seeded bank accounts across milestone stages
+     Expected : housing_welfare_guidelines.html
+     Top Rank : housing_welfare_guidelines.html (score: 0.2544)
+     Margin   : 0.0495 (best related: 0.2544 vs best unrelated: 0.2049)
+     Notes    : Borderline case: High cross-scheme conceptual overlap. Both PMAY housing and PM-KISAN agriculture rely on DBT and Aadhaar-seeded accounts. Without scheme context, the embedding space cannot decisively separate the two programs.
+
+[EDGE-03] [EXPECTED_FAILURE] What is the annual hospitalisation health cover amount per family under Ayushman Bharat PM-JAY?
+     Expected : ayushman_bharat_healthcare.md
+     Top Rank : senior_citizen_pension_scheme.txt (score: 0.0536)
+     Margin   : -0.0101 (best related: 0.0435 vs best unrelated: 0.0536)
+     Notes    : Failing case: Simulated model mismatch. Corpus chunks were embedded in Space A, but this query is embedded in an incompatible vector space (Space B / alien model). Even though the query matches Ayushman Bharat perfectly, the vectors are in different spaces, destroying cosine ranking and causing retrieval failure.
+
+[EDGE-04] [FAILED] Who is excluded from receiving welfare benefits due to paying income tax?
+     Expected : pmkisan_scheme_doc.md
+     Top Rank : scholarship_welfare_circular.md (score: 0.1593)
+     Margin   : -0.0749 (best related: 0.0844 vs best unrelated: 0.1593)
+     Notes    : Surprising risk: Generic exclusion query. Because multiple welfare policies (scholarship circular and pension guidelines) heavily mention 'income' ceilings, a query asking about income tax exclusion without specifying agriculture matches income-related educational/housing schemes with comparable similarity.
+

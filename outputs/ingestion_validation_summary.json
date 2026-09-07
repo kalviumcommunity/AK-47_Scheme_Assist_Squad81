@@ -13,7 +13,7 @@
   },
   "completeness_reconciled": true,
   "reconciliation_equation": "7 (Discovered Files) == 6 (Ingested Docs) + 1 (Recorded Failures)",
-  "ingestion_timestamp": "2026-09-03T08:13:03.855067+00:00",
+  "ingestion_timestamp": "2026-09-07T05:45:05.600580+00:00",
   "ingested_documents": [
     {
       "filename": "ayushman_bharat_healthcare.md",
@@ -89,7 +89,7 @@
       "format": ".xyz",
       "error_type": "ValueError",
       "error_message": "Unsupported file extension: '.xyz' (Expected .txt, .md, .html, .pdf)",
-      "timestamp": "2026-09-03T08:13:03.855067+00:00"
+      "timestamp": "2026-09-07T05:45:05.600580+00:00"
     }
   ]
 }
