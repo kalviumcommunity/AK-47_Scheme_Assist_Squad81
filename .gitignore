@@ -34,8 +34,8 @@ outputs/*
 !outputs/sample_chunks.txt
 !outputs/batch_embedding_run_summary.json
 !outputs/top_k_retrieval_results.json
-!outputs/citation_examples.json
-!outputs/guardrail_examples.json
+!outputs/rag_evaluation_results.json
+!outputs/rag_evaluation_summary.txt
 
 # Vector Stores & Databases
 chroma_db/
