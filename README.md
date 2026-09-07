@@ -172,6 +172,16 @@ To support robust RAG operation, we have added three core utilities evaluating t
    ```
 - For application code, `retrieve_from_vector_store()` embeds the query and calls `VectorStore.query_similar()`, while `retrieve_top_k()` provides the same result shape for local chunk records.
 
+### 7. Source Citation & Attribution
+- **Module**: `src/citations.py`
+- **Demo**: `src/citation_experiment.py`
+- **Output Report**: `outputs/citation_examples.json`
+- **Purpose**: Maps answer markers such as `[1]` to retrieved source metadata and original chunk text, verifies citation text against its source chunks, and returns a verified-information fallback when sources or valid citations are unavailable.
+- **Execution**:
+   ```bash
+   python src/citation_experiment.py
+   ```
+
 ---
 
 ## 🔒 Security & Secret Management
