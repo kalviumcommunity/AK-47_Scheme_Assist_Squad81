@@ -36,6 +36,7 @@ outputs/*
 !outputs/top_k_retrieval_results.json
 !outputs/citation_examples.json
 !outputs/guardrail_examples.json
+!outputs/conversational_rag_dialogue.json
 
 # Vector Stores & Databases
 chroma_db/
