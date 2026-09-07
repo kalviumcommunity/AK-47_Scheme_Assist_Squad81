@@ -193,6 +193,16 @@ To support robust RAG operation, we have added three core utilities evaluating t
    python src/guardrails_experiment.py
    ```
 
+### 9. Conversational RAG & Follow-Up Context
+- **Module**: `src/conversational_rag.py`
+- **Demo**: `src/conversational_rag_experiment.py`
+- **Output Report**: `outputs/conversational_rag_dialogue.json`
+- **Purpose**: Maintains a rolling user/assistant history, rewrites follow-up questions into standalone retrieval queries, retrieves with the rewritten query, and applies citation and retrieval guardrails before answering.
+- **Execution**:
+   ```bash
+   python src/conversational_rag_experiment.py
+   ```
+
 ---
 
 ## 🔒 Security & Secret Management
