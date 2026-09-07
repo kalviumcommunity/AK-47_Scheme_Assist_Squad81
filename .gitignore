@@ -32,6 +32,7 @@ outputs/*
 !outputs/chunking_comparison_results.txt
 !outputs/sample_chunks.json
 !outputs/sample_chunks.txt
+!outputs/batch_embedding_run_summary.json
 
 # Vector Stores & Databases
 chroma_db/

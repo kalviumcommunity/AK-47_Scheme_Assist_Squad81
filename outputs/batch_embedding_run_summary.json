@@ -1,0 +1,14 @@
+{
+  "total_chunks": 5,
+  "skipped_existing": 1,
+  "embedded": 4,
+  "failed": 0,
+  "failed_batches": 0,
+  "input_tokens": 812,
+  "api_requests": 4,
+  "retries": 1,
+  "batch_size": 2,
+  "model": "text-embedding-3-small",
+  "estimated_cost_usd": 0.000016,
+  "retry_handling": "Retries HTTP 408, 409, 429, 5xx, connection, and timeout errors with exponential backoff."
+}

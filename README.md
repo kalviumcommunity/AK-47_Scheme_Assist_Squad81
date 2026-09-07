@@ -152,6 +152,16 @@ To support robust RAG operation, we have added three core utilities evaluating t
   python src/similarity_experiment.py
   ```
 
+### 5. Batch Embedding & Resume-Safe Cost Tracking
+- **Script**: `src/batch_embedding.py`
+- **Output Report**: `outputs/batch_embedding_run_summary.json`
+- **Purpose**: Embeds pending chunks in configurable batches, retries transient failures with exponential backoff, checkpoints vectors after every batch, skips existing vectors, and reports estimated input cost.
+- **Execution**:
+  ```bash
+  python -m src.batch_embedding input_chunks.json embedded_chunks.json --batch-size 64
+  ```
+- Input may be a JSON list of chunk records or an object containing a `chunks` list. Each completed record receives an `embedding` field, so rerunning against the checkpoint avoids duplicate requests.
+
 ---
 
 ## 🔒 Security & Secret Management
