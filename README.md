@@ -162,6 +162,16 @@ To support robust RAG operation, we have added three core utilities evaluating t
   ```
 - Input may be a JSON list of chunk records or an object containing a `chunks` list. Each completed record receives an `embedding` field, so rerunning against the checkpoint avoids duplicate requests.
 
+### 6. Similarity Search & Top-K Retrieval
+- **Script**: `src/similarity_experiment.py`
+- **Output Report**: `outputs/top_k_retrieval_results.json`
+- **Purpose**: Embeds a sample query with the same configured embedding model as the document chunks, ranks matches by cosine similarity, and compares `k=1`, `k=3`, and `k=5` results with citation metadata.
+- **Execution**:
+   ```bash
+   python src/similarity_experiment.py
+   ```
+- For application code, `retrieve_from_vector_store()` embeds the query and calls `VectorStore.query_similar()`, while `retrieve_top_k()` provides the same result shape for local chunk records.
+
 ---
 
 ## 🔒 Security & Secret Management
