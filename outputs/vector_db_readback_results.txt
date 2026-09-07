@@ -2,7 +2,7 @@
   SCHEMEASSIST: 3.30 VECTOR DATABASE SETUP & READBACK AUDIT
 ================================================================================
 
-Timestamp           : 2026-09-07T06:00:46.784325+00:00
+Timestamp           : 2026-09-07T06:14:13.593150+00:00
 Vector Database     : CHROMA
 Collection Name     : schemeassist_chunks
 Configured Dimension: 1536
@@ -18,7 +18,7 @@ ID Matched         : True
 Dimension Matched  : True
 Text Matched       : True
 Metadata Matched   : True
-Stored Metadata    : {"section": "1. Scheme Overview & Direct Benefit Transfer", "source": "pmkisan_scheme_doc.md", "token_count": 48, "page": 1, "category": "agriculture_income_support", "chunk_index": 0}
+Stored Metadata    : {"token_count": 48, "category": "agriculture_income_support", "chunk_index": 0, "page": 1, "source": "pmkisan_scheme_doc.md", "section": "1. Scheme Overview & Direct Benefit Transfer"}
 
 --------------------------------------------------------------------------------
 SEMANTIC RETRIEVAL TEST:

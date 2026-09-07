@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-07T06:00:46.784325+00:00",
+  "timestamp": "2026-09-07T06:14:13.593150+00:00",
   "database": {
     "type": "chroma",
     "persist_directory": "chroma_db",
@@ -17,12 +17,12 @@
     "text_matched": true,
     "metadata_matched": true,
     "stored_metadata": {
-      "section": "1. Scheme Overview & Direct Benefit Transfer",
-      "source": "pmkisan_scheme_doc.md",
       "token_count": 48,
-      "page": 1,
       "category": "agriculture_income_support",
-      "chunk_index": 0
+      "chunk_index": 0,
+      "page": 1,
+      "source": "pmkisan_scheme_doc.md",
+      "section": "1. Scheme Overview & Direct Benefit Transfer"
     }
   },
   "retrieval_test": {
