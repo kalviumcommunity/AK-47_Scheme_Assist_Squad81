@@ -39,6 +39,8 @@ outputs/*
 !outputs/conversational_rag_dialogue.json
 !outputs/rag_evaluation_results.json
 !outputs/rag_evaluation_summary.txt
+!outputs/api_sample_query_response.json
+!outputs/api_sample_query_response.txt
 
 # Vector Stores & Databases
 chroma_db/

@@ -775,3 +775,50 @@ When recording your submission video, cover these 5 core topics:
    - If **Grounding** is weak:
      - Enforce zero-shot strict context-only prompting: *"Answer ONLY from the provided context. If the answer is not present, reply with the standard refusal."*
      - Lower model temperature to $0.0$ to eliminate creative extrapolation.
+
+---
+
+## 🌐 3.44 Backend API for the RAG Service
+
+MSU 3.44 exposes the SchemeAssist RAG pipeline through a high-performance, fully validated **FastAPI** backend service, establishing a clean contract between the knowledge retrieval pipeline and any consuming frontend, mobile app, or chatbot client.
+
+### Key Capabilities:
+1. **Query Endpoint (`POST /query`)**: Accepts a user question, retrieves top matching chunks from ChromaDB, applies guardrails, and returns a grounded answer with cited sources.
+2. **Structured JSON Response**: Returns a predictable schema:
+   ```json
+   {
+     "answer": "Under the Scheme, an amount of Rs 6,000/- per year is released in three 4-monthly installments...",
+     "sources": [
+       {"source": "pmkisan_scheme_doc.md", "chunk_id": "pmkisan_scheme_doc.md:0", "score": 0.1936}
+     ],
+     "status": "answered"
+   }
+   ```
+3. **Strict Validation & Error Handling**:
+   - `400 Bad Request` for empty or whitespace-only questions.
+   - `422 Unprocessable Content` for schema or string constraint violations (< 3 characters).
+   - `500 Internal Server Error` with generic, safe client messaging for unexpected failures.
+4. **Environment-Driven Configuration**: No secrets, models, or DB URLs hardcoded; loaded via `src/config.py` from `.env`.
+5. **Committed Sample Request & Response**: Provided in [`outputs/api_sample_query_response.json`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/api_sample_query_response.json) and [`outputs/api_sample_query_response.txt`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/api_sample_query_response.txt).
+
+### Verification & Testing:
+```bash
+# 1. Run unit tests for API endpoints
+python -m unittest tests/test_api.py -v
+
+# 2. Run entire test suite (114 tests)
+python -m unittest discover tests -v
+
+# 3. Generate sample request & response
+python -m src.generate_api_sample
+
+# 4. Start local development server
+python -m src.api
+```
+
+### 🎥 Video Walkthrough Guide (3–5 Minutes) for 3.44:
+- **Why expose as an API? (0:00 – 0:50)**: Explain decoupling the frontend from vector storage, prompt templates, and embedding models.
+- **Request flowing through the endpoint (0:50 – 1:50)**: Show `POST /query` executing retrieval from ChromaDB, synthesis, and guardrail validation.
+- **Structure of the JSON response (1:50 – 2:30)**: Highlight `answer`, structured `sources` list (`source`, `chunk_id`, `score`), and `status` (`answered` vs `refused_weak_context`).
+- **Validation and Error Handling (2:30 – 3:30)**: Demonstrate `400` for blank strings and `422` for short inputs.
+- **Follow-up: How the frontend consumes this API? (3:30 – 4:30)**: Show how a React or mobile app sends a simple POST request and renders answers with clickable citations or expandable evidence cards.
