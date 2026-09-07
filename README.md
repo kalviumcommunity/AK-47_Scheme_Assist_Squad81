@@ -616,7 +616,121 @@ When recording your submission video, cover these 5 core topics:
    - Explain the 6 evaluation criteria: scale, latency, metadata filtering needs, hosting model (embedded vs cloud SaaS), operational cost, and team familiarity.
    - Contrast ChromaDB (ideal for local/edge/embedded python) with Qdrant/Pinecone/pgvector (for multi-node horizontal scale and distributed production traffic).
 
+---
 
+## 3.31 Indexing Embeddings & Metadata Storage
 
+Milestone 3.31 populates the ChromaDB vector database collection (`schemeassist_chunks`) with all 18 embedded chunks from across the knowledge corpus. It implements batching to avoid socket and memory overload, verifies count reconciliation ($18 = 18$), conducts integrity spot-checks against source chunks, and handles incremental document change re-indexing.
 
+### 🏗️ Record Schema & Indexing Flow
 
+Every indexed record strictly adheres to the 4-part vector database schema:
+1. **`id`**: Unique deterministic identifier formatted as `{source}:{chunk_index}` (e.g. `ayushman_bharat_healthcare.md:0`).
+2. **`vector`**: 1536-dimensional float embedding array matching the embedding model.
+3. **`text`**: Full raw text of the chunk used by the LLM for grounded answer generation.
+4. **`metadata`**: Rich structured metadata dict preserving provenance:
+   - `source`: Source document filename
+   - `chunk_index`: Zero-based index within document
+   - `section`: Heading or policy chapter
+   - `page`: Page number
+   - `token_count`: Token length
+   - `content_hash`: SHA-256 fingerprint for change detection
+   - `doc_format`: Document extension (.md, .html, .txt)
+
+### 📊 Verification & Count Reconciliation
+
+Running the indexing pipeline:
+```bash
+python src/index_corpus.py
+```
+
+Produces verified reconciliation and spot-check output:
+```text
+================================================================================
+  SCHEMEASSIST: 3.31 INDEXING EMBEDDINGS & METADATA STORAGE
+================================================================================
+[PIPELINE LOG] Loaded 18 embedded chunk(s) from 'outputs/embedded_corpus_chunks.json'.
+[PIPELINE LOG] Synchronized stable IDs back to 'outputs/embedded_corpus_chunks.json'.
+[INDEX LOG] Resetting collection 'schemeassist_chunks' for clean run...
+[INDEX LOG] Starting bulk insert of 18 records (batch_size=10)...
+  • Batch 1: Upserted 10 records (IDs: ayushman_bharat_healthcare.md:0 -> sample_doc.md:2)
+  • Batch 2: Upserted 8 records (IDs: sample_doc.md:3 -> senior_citizen_pension_scheme.txt:1)
+
+--- INDEXING RECONCILIATION ---
+expected chunks: 18
+inserted this run: 18
+indexed count: 18
+failures: []
+
+[SPOT CHECK] spot check passed: ayushman_bharat_healthcare.md:0
+source: ayushman_bharat_healthcare.md
+section: Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (AB-PMJAY) Policy Document
+vector dimension: 1536
+text preview: # Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (AB-PMJAY) Policy Document...
+
+[SPOT CHECK] spot check passed: sample_doc.md:2
+source: sample_doc.md
+section: 2.4 Exclusion Criteria
+vector dimension: 1536
+text preview: 2.4 Exclusion Criteria...
+
+[SPOT CHECK] spot check passed: senior_citizen_pension_scheme.txt:1
+source: senior_citizen_pension_scheme.txt
+section: General Overview
+vector dimension: 1536
+text preview: ). - For persons aged 80 years and above: Central assistance of Rs 500 per month...
+
+[REPORT] Saved structured summary -> 'outputs/indexing_summary.json'
+[REPORT] Saved human-readable summary -> 'outputs/indexing_summary.txt'
+```
+
+---
+
+### 🚀 Verification Commands
+
+1. **Run Full Indexing Pipeline**:
+   ```bash
+   python src/index_corpus.py
+   ```
+2. **Run Indexing Unit Tests**:
+   ```bash
+   python -m unittest tests/test_indexing.py -v
+   ```
+3. **Run Full Test Suite**:
+   ```bash
+   python -m unittest discover tests -v
+   ```
+
+### 📁 Generated Artifacts:
+- **Core Indexing Pipeline**: [`src/index_corpus.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/src/index_corpus.py)
+- **Comprehensive Unit Tests**: [`tests/test_indexing.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/tests/test_indexing.py)
+- **Detailed Documentation**: [`docs/indexing_embeddings_metadata_storage.md`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/docs/indexing_embeddings_metadata_storage.md)
+- **Structured Audit Report**: [`outputs/indexing_summary.json`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/indexing_summary.json)
+- **Human-Readable Audit Report**: [`outputs/indexing_summary.txt`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/indexing_summary.txt)
+
+---
+
+### 🎥 Video Walkthrough Guide (3–5 Minutes)
+
+When recording your submission video, cover these 5 core topics:
+
+1. **What Indexing Means in a Vector Database (0:00 – 0:50)**:
+   - Indexing means populating the vector collection with corpus chunk embeddings so they can be searched via approximate nearest-neighbor algorithms (HNSW), while persisting the original source text and structured metadata alongside each vector.
+2. **How You Confirmed the Indexed Count Was Correct (0:50 – 1:40)**:
+   - Point out the reconciliation equation: `indexed_count == expected_count == 18`.
+   - Explain that batched upserting (`batches(items, size=10)`) tracks `inserted` counts and captures any batch exceptions in `failures = []`. Show that 0 failures occurred and the final DB count matches the exact number of chunks produced during ingestion.
+3. **What is Stored for Each Record (1:40 – 2:30)**:
+   - Walk through the record structure in `to_vector_record()`:
+     - `id`: Stable key `{source}:{chunk_index}`
+     - `vector`: 1536-dimensional float embedding
+     - `text`: Chunk text for context injection
+     - `metadata`: `source`, `chunk_index`, `section`, `page`, `token_count`, `content_hash`
+4. **How Metadata Stored Now Enables Filtering Later (2:30 – 3:20)**:
+   - Vectors find semantically similar text, but queries often need hard constraints (e.g., retrieving only from `ayushman_bharat_healthcare.md` or filtering by section).
+   - Storing metadata now enables ChromaDB `where` clauses (`where={"source": "..."}`) to prune search space and return targeted policy details without cross-scheme contamination.
+5. **Follow-Up: How Would Re-Indexing Work When Documents Change? (3:20 – 4:30)**:
+   - Explain incremental re-indexing using stable IDs and content hashes (implemented in `reindex_changed_chunks()`):
+     - **Unchanged chunks**: If the chunk's content hash matches the stored hash, leave it alone. No new embedding is computed, saving API cost and latency.
+     - **Changed chunks**: If content hash changed, upsert the updated text, metadata, and new embedding into the same stable ID.
+     - **Removed chunks**: If a document was edited and reduced in size, obsolete IDs are pruned with `delete_record(id)`.
+   - This keeps the vector store 100% fresh without rebuilding the entire database from scratch.
