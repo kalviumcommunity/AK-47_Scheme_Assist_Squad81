@@ -182,6 +182,17 @@ To support robust RAG operation, we have added three core utilities evaluating t
    python src/citation_experiment.py
    ```
 
+### 8. Hallucination Guardrails & Refusal Handling
+- **Module**: `src/guardrails.py`
+- **Demo**: `src/guardrails_experiment.py`
+- **Output Report**: `outputs/guardrail_examples.json`
+- **Purpose**: Checks retrieval scores before generation. Empty or weak context returns `refused_weak_context`; strong context can answer only when the generated response includes valid citations.
+- **Default threshold**: `0.72` with at least one supporting chunk.
+- **Execution**:
+   ```bash
+   python src/guardrails_experiment.py
+   ```
+
 ---
 
 ## 🔒 Security & Secret Management

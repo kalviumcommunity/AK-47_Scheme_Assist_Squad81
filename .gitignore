@@ -35,6 +35,7 @@ outputs/*
 !outputs/batch_embedding_run_summary.json
 !outputs/top_k_retrieval_results.json
 !outputs/citation_examples.json
+!outputs/guardrail_examples.json
 
 # Vector Stores & Databases
 chroma_db/
