@@ -203,6 +203,19 @@ To support robust RAG operation, we have added three core utilities evaluating t
    python src/conversational_rag_experiment.py
    ```
 
+### 10. Caching, Logging & Usage Monitoring
+- **Module**: `src/observability.py`
+- **Demo**: `src/caching_logging_experiment.py`
+- **Unit Tests**: `tests/test_observability.py`
+- **Output Logs**: `outputs/rag_requests.jsonl`
+- **Output Summary**: `outputs/usage_summary_report.json`
+- **Purpose**: Serves repeated queries from SHA-256 cache with TTL, logs structured JSON requests/responses, tracks token usage/costs ($0.00015/1k input, $0.00060/1k output), and generates usage reports.
+- **Execution**:
+   ```bash
+   python src/caching_logging_experiment.py
+   python -m unittest tests/test_observability.py
+   ```
+
 ---
 
 ## 🔒 Security & Secret Management
