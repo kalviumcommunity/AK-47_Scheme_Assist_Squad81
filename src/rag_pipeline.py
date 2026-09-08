@@ -105,46 +105,28 @@ def assemble_context(
     """
     Stage 3 - Context Assembly:
     Formats retrieved chunks into a clean, structured context string with explicit
-    source document, section, and page attribution headers.
+    source document, section, and page attribution headers via src.context_assembly.
     """
-    if not retrieved_chunks:
-        return "No relevant source documents found in knowledge base.", []
-
-    formatted_blocks = []
-    sources_summary = []
-
-    for idx, chunk in enumerate(retrieved_chunks, start=1):
-        meta = chunk.get("metadata", {})
-        source_doc = meta.get("source", "Unknown Document")
-        section = meta.get("section", "General Overview")
-        page = meta.get("page", 1)
-        position = meta.get("position", f"Chunk {idx}")
-        text = chunk.get("text", "").strip()
-
-        block_header = f"--- [SOURCE {idx}: Document='{source_doc}' | Section='{section}' | Page={page} | Position='{position}'] ---"
-        block_text = f"{block_header}\n{text}\n"
-
-        # Token safety check
-        current_context = "\n".join(formatted_blocks)
-        proposed_context = current_context + ("\n" if current_context else "") + block_text
-        
-        if count_tokens(proposed_context) > max_context_tokens and formatted_blocks:
-            print(f"[CONTEXT ASSEMBLY LOG] Token budget ({max_context_tokens}) reached. Truncating context at chunk {idx - 1}.")
-            break
-
-        formatted_blocks.append(block_text)
-        sources_summary.append({
-            "citation_index": idx,
-            "source": source_doc,
-            "section": section,
-            "page": page,
-            "position": position,
-            "chunk_id": chunk.get("id")
-        })
-
-    assembled_context_str = "\n".join(formatted_blocks)
-    print(f"[CONTEXT ASSEMBLY LOG] Assembled context from {len(sources_summary)} chunk(s) ({count_tokens(assembled_context_str)} tokens).")
-    return assembled_context_str, sources_summary
+    from src.context_assembly import assemble_augmented_prompt
+    assembled = assemble_augmented_prompt(
+        retrieved_chunks=retrieved_chunks,
+        user_query="Context Assembly Step",
+        max_context_tokens=max_context_tokens
+    )
+    context_str = assembled["context_str"]
+    sources_summary = [
+        {
+            "citation_index": s["citation"].replace("[", "").replace("]", ""),
+            "source": s["source"],
+            "section": s["section"],
+            "page": s["page"],
+            "position": s["position"],
+            "chunk_id": s["chunk_id"]
+        }
+        for s in assembled["sources"]
+    ]
+    print(f"[CONTEXT ASSEMBLY LOG] Assembled context from {len(sources_summary)} chunk(s) ({count_tokens(context_str)} tokens).")
+    return context_str, sources_summary
 
 
 # =====================================================================
