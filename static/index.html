@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SchemeAssist RAG Assistant - Grounded Streaming Chat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --accent-purple: #8b5cf6;
+      --accent-indigo: #6366f1;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --user-msg-bg: #3b82f6;
+      --bot-msg-bg: #1e293b;
+      --citation-bg: #4c1d95;
+      --citation-hover: #6d28d9;
+      --error-red: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-indigo));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+    }
+
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .badge {
+      background: rgba(99, 102, 241, 0.2);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 0.25rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .chat-container {
+      flex: 1;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      overflow-y: auto;
+    }
+
+    .message {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-width: 85%;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user {
+      align-self: flex-end;
+    }
+
+    .message.user .bubble {
+      background: var(--user-msg-bg);
+      color: #fff;
+      border-radius: 18px 18px 2px 18px;
+    }
+
+    .message.bot {
+      align-self: flex-start;
+    }
+
+    .message.bot .bubble {
+      background: var(--bot-msg-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px 18px 18px 2px;
+    }
+
+    .bubble {
+      padding: 1rem 1.25rem;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+
+    /* Citation Marker Badges */
+    .citation-tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--citation-bg);
+      color: #ddd6fe;
+      border: 1px solid rgba(167, 139, 250, 0.4);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.1rem 0.45rem;
+      border-radius: 6px;
+      margin: 0 0.2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .citation-tag:hover {
+      background: var(--citation-hover);
+      transform: scale(1.08);
+      box-shadow: 0 2px 8px rgba(109, 40, 217, 0.6);
+    }
+
+    /* Sources Drawer Card */
+    .sources-card {
+      margin-top: 0.75rem;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 12px;
+      padding: 0.85rem;
+    }
+
+    .sources-header {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent-purple);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .sources-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .source-item {
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.4rem 0.75rem;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .source-item:hover {
+      background: rgba(51, 65, 85, 0.9);
+      border-color: var(--accent-indigo);
+    }
+
+    .source-num {
+      background: var(--citation-bg);
+      color: #fff;
+      font-weight: 700;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+    }
+
+    /* Stream Cursor Animation */
+    .typing-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 16px;
+      background: var(--accent-purple);
+      margin-left: 4px;
+      animation: blink 0.8s infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* Input Footer Bar */
+    .input-wrapper {
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--card-border);
+      padding: 1.25rem 2rem;
+      position: sticky;
+      bottom: 0;
+    }
+
+    .input-box {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 0.85rem 1.25rem;
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent-purple);
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+    }
+
+    button.send-btn {
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-indigo));
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 0 1.5rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    button.send-btn:hover { opacity: 0.9; }
+    button.send-btn:active { transform: scale(0.97); }
+
+    /* Error Banner */
+    .error-banner {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid var(--error-red);
+      color: #fca5a5;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+
+    .retry-btn {
+      background: var(--error-red);
+      color: #fff;
+      border: none;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    /* Modal for Chunk Inspection */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-content {
+      background: #1e293b;
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      max-width: 650px;
+      width: 90%;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 0.75rem;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .modal-body {
+      background: rgba(15, 23, 42, 0.8);
+      border-radius: 10px;
+      padding: 1rem;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      max-height: 350px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-logo">SA</div>
+      <div class="brand-title">SchemeAssist RAG Assistant</div>
+    </div>
+    <div class="badge">SSE Progressive Stream • Grounded Citations</div>
+  </header>
+
+  <main class="chat-container" id="chatContainer">
+    <!-- Bot Welcome Message -->
+    <div class="message bot">
+      <div class="bubble">
+        👋 Welcome to SchemeAssist! Ask any question about government welfare schemes. Answers are generated progressively using verified context and explicit citation markers.
+      </div>
+    </div>
+  </main>
+
+  <div class="input-wrapper">
+    <div class="input-box">
+      <input type="text" id="queryInput" placeholder="Ask a question (e.g. What is the annual income limit for welfare grants?)" onkeydown="handleKeyPress(event)" />
+      <button class="send-btn" id="sendBtn" onclick="submitQuery()">Send</button>
+    </div>
+  </div>
+
+  <!-- Source Inspection Modal (Task 3) -->
+  <div class="modal-overlay" id="sourceModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Source Document Inspection</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-meta" id="modalMeta" style="font-size: 0.8rem; color: var(--text-muted);"></div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    let activeSources = [];
+
+    function handleKeyPress(e) {
+      if (e.key === 'Enter') submitQuery();
+    }
+
+    async function submitQuery() {
+      const input = document.getElementById('queryInput');
+      const query = input.value.trim();
+      if (!query || query.length < 3) return;
+
+      const chatContainer = document.getElementById('chatContainer');
+      const sendBtn = document.getElementById('sendBtn');
+      sendBtn.disabled = true;
+
+      // 1. Render User Message
+      const userDiv = document.createElement('div');
+      userDiv.className = 'message user';
+      userDiv.innerHTML = `<div class="bubble">${escapeHtml(query)}</div>`;
+      chatContainer.appendChild(userDiv);
+
+      // 2. Prepare Bot Message Placeholder (Task 1: Progressive Streaming)
+      const botDiv = document.createElement('div');
+      botDiv.className = 'message bot';
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.innerHTML = '<span class="typing-cursor"></span>';
+      botDiv.appendChild(bubble);
+      chatContainer.appendChild(botDiv);
+
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      input.value = '';
+
+      let textBuffer = '';
+      activeSources = [];
+
+      try {
+        const response = await fetch('/query_stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: query })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error ${response.status}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n\n');
+          buffer = lines.pop();
+
+          for (const chunk of lines) {
+            if (!chunk.trim()) continue;
+            const eventMatch = chunk.match(/event:\s*(\w+)/);
+            const dataMatch = chunk.match(/data:\s*(.+)/);
+
+            if (eventMatch && dataMatch) {
+              const eventType = eventMatch[1];
+              const eventData = JSON.parse(dataMatch[1]);
+
+              if (eventType === 'metadata') {
+                // Task 2: Store and prepare citations
+                activeSources = eventData.sources || [];
+              } else if (eventType === 'token') {
+                // Task 1: Stream answer progressively
+                textBuffer += eventData.token;
+                bubble.innerHTML = formatCitations(escapeHtml(textBuffer)) + '<span class="typing-cursor"></span>';
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+              } else if (eventType === 'error') {
+                // Task 4: Handle streaming error
+                throw new Error(eventData.error || 'Stream processing failed.');
+              }
+            }
+          }
+        }
+
+        // Finalize streaming display
+        bubble.innerHTML = formatCitations(escapeHtml(textBuffer));
+
+        // Task 2 & 3: Render Sources Drawer Card below message
+        if (activeSources.length > 0) {
+          const sourcesCard = document.createElement('div');
+          sourcesCard.className = 'sources-card';
+          let sourcesHtml = `
+            <div class="sources-header">📌 Verified Source Documents (${activeSources.length})</div>
+            <div class="sources-list">
+          `;
+          activeSources.forEach((src, idx) => {
+            sourcesHtml += `
+              <div class="source-item" onclick="openSourceModal(${idx})">
+                <span class="source-num">${src.citation}</span>
+                <span>${escapeHtml(src.source)} (Sec: ${escapeHtml(src.section)})</span>
+              </div>
+            `;
+          });
+          sourcesHtml += `</div>`;
+          sourcesCard.innerHTML = sourcesHtml;
+          botDiv.appendChild(sourcesCard);
+        }
+
+      } catch (err) {
+        // Task 4: Error Handling UI Banner
+        bubble.innerHTML = `<span style="color: var(--error-red);">⚠️ Error generating response: ${escapeHtml(err.message)}</span>`;
+        const errBanner = document.createElement('div');
+        errBanner.className = 'error-banner';
+        errBanner.innerHTML = `
+          <span>Streaming connection failed. You can retry your question.</span>
+          <button class="retry-btn" onclick="retryLastQuery('${escapeHtml(query)}')">Retry</button>
+        `;
+        botDiv.appendChild(errBanner);
+      } finally {
+        sendBtn.disabled = false;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }
+
+    function formatCitations(text) {
+      // Replaces [1], [2] with interactive citation tags
+      return text.replace(/\[(\d+)\]/g, (match, p1) => {
+        const idx = parseInt(p1) - 1;
+        return `<span class="citation-tag" onclick="openSourceModal(${idx})">[${p1}]</span>`;
+      });
+    }
+
+    function openSourceModal(index) {
+      const src = activeSources[index];
+      if (!src) return;
+
+      document.getElementById('modalTitle').innerText = `Source ${src.citation}: ${src.source}`;
+      document.getElementById('modalMeta').innerText = `Chunk ID: ${src.chunk_id} | Section: ${src.section} | Page: ${src.page} | Relevance Score: ${src.score}`;
+      document.getElementById('modalBody').innerText = src.text || 'No raw chunk content available.';
+      document.getElementById('sourceModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('sourceModal').style.display = 'none';
+    }
+
+    function retryLastQuery(queryText) {
+      document.getElementById('queryInput').value = queryText;
+      submitQuery();
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+  </script>
+</body>
+</html>
