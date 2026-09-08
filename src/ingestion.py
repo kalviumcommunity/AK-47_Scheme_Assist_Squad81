@@ -275,6 +275,22 @@ def load_and_chunk_documents_by_tokens(
     )
 
 
+def ingest_and_chunk_documents(
+    data_dir: str = "data",
+    strategy: str = "recursive",
+    chunk_size_tokens: int = 250,
+    overlap_tokens: int = 50
+) -> List[Dict[str, Any]]:
+    """
+    Alias for load_and_chunk_documents matching legacy pipeline callers.
+    """
+    return load_and_chunk_documents(
+        data_dir=data_dir,
+        chunk_size_tokens=chunk_size_tokens,
+        overlap_tokens=overlap_tokens
+    )
+
+
 if __name__ == "__main__":
     print("=" * 60)
     print("  [INGESTION MODULE] Running token-aware ingestion & chunking test...")
