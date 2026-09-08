@@ -139,64 +139,28 @@ def generate_answer(
 ) -> Dict[str, Any]:
     """
     Stage 4 - Answer Generation:
-    Feeds assembled context and user query to LLM (or grounded mock fallback)
-    to produce a factual, context-grounded response.
+    Generates a grounded answer using only the injected context via src.generation.
     """
-    if system_prompt is None:
-        system_prompt = load_system_prompt()
-
-    user_prompt = (
-        f"Grounded Context Information:\n{context_str}\n\n"
-        f"User Query: {query}\n\n"
-        f"Instruction: Provide a direct, concise, and helpful answer based strictly on the provided context."
-    )
-
-    if OPENAI_API_KEY and OPENAI_API_KEY.strip():
-        try:
-            from openai import OpenAI
-            client = OpenAI(api_key=OPENAI_API_KEY)
-            response = client.chat.completions.create(
-                model=CHAT_MODEL,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=0.2
-            )
-            answer_text = response.choices[0].message.content.strip()
-            usage = {
-                "prompt_tokens": response.usage.prompt_tokens,
-                "completion_tokens": response.usage.completion_tokens,
-                "total_tokens": response.usage.total_tokens
-            }
-            print(f"[GENERATION LOG] Generated response via OpenAI API ({CHAT_MODEL}).")
-            return {
-                "answer": answer_text,
-                "model": CHAT_MODEL,
-                "token_usage": usage,
-                "execution_mode": "OpenAI API"
-            }
-        except Exception as e:
-            print(f"[GENERATION WARNING] OpenAI API chat completion failed ({e}). Falling back to grounded mock response.")
-
-    # Grounded Offline Mock Generator
-    print("[GENERATION LOG] Using grounded offline answer generator.")
-    mock_answer = (
-        f"Based on the knowledge base documents:\n\n"
-        f"1. **Eligibility Criteria**: Must be a legal resident/citizen. Income restrictions apply depending on the scheme (e.g. annual family income under $50,000 for National Healthcare Support Scheme).\n"
-        f"2. **Objectives & Guidance**: Designed to enable citizens and helpdesk executives to search welfare schemes, understand qualifications (age, income, occupation), and follow application instructions.\n\n"
-        f"*(Note: Response grounded from retrieved context documents)*"
+    from src.generation import generate_grounded_answer
+    gen_result = generate_grounded_answer(
+        query=query,
+        context_str=context_str,
+        sources=[],
+        system_instructions=system_prompt if system_prompt else load_system_prompt()
     )
     
     return {
-        "answer": mock_answer,
-        "model": f"{CHAT_MODEL} (Offline Grounded Generator)",
+        "answer": gen_result["answer"],
+        "model": CHAT_MODEL,
         "token_usage": {
-            "prompt_tokens": count_tokens(system_prompt + user_prompt),
-            "completion_tokens": count_tokens(mock_answer),
-            "total_tokens": count_tokens(system_prompt + user_prompt + mock_answer)
+            "prompt_tokens": count_tokens(context_str + query),
+            "completion_tokens": count_tokens(gen_result["answer"]),
+            "total_tokens": count_tokens(context_str + query + gen_result["answer"])
         },
-        "execution_mode": "Offline Grounded Fallback"
+        "execution_mode": "Grounded Generation",
+        "grounded": gen_result["grounded"],
+        "fallback_triggered": gen_result["fallback_triggered"],
+        "citations_used": gen_result.get("citations_used", [])
     }
 
 
