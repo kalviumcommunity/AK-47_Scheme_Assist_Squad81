@@ -1,0 +1,38 @@
+================================================================================
+  3.45 Document Upload & Indexing Endpoint - Sample Run Summary
+================================================================================
+
+1. Baseline Health:
+   Indexed Chunks: 25
+
+2. Query Before Upload:
+   Q: What toolkit incentive and collateral-free loan support is provided under PM Vishwakarma Scheme?
+   Status: answered
+
+3. Upload Document:
+   Filename: sample_new_policy.md
+   Stored Path: uploads/sample_new_policy.md
+   Chunks Created: 4
+   Records Indexed: 4
+
+4. Health After Upload:
+   Indexed Chunks: 26 (+1)
+
+5. Follow-Up Query After Upload:
+   Q: What toolkit incentive and collateral-free loan support is provided under PM Vishwakarma Scheme?
+   Status: answered
+   Answer: Collateral-Free Credit Support**: Enterprise development loans up to Rs 3,00,000 provided in two tranches without any collateral requirement. Modern Toolkit Incentive**: A direct financial incentive grant of Rs 15,000 provided in the form of an e-voucher or DBT to purchase modern trade toolkits.
+   Top Citation: sample_new_policy.md
+
+6. Second Query on New Document:
+   Q: What is the daily stipend during basic skill training under PM Vishwakarma Yojana?
+   Status: answered
+   Answer: Enrolment is conducted via Common Service Centers (CSCs) on the PM Vishwakarma portal: Upon successful verification, artisans receive a digital PM Vishwakarma Certificate and ID Card.
+   Top Citation: sample_new_policy.md
+
+7. Error Handling Verification:
+   Unsupported Format (.exe): HTTP 415
+   Empty File (0 bytes): HTTP 400
+   Oversized File (>10MB): HTTP 413
+
+================================================================================
