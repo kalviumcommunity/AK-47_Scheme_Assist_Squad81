@@ -1,0 +1,18 @@
+================================================================
+  [SchemeAssist] 3.12 - LLM API First Completion Call
+================================================================
+2026-08-28 13:30:47,552 [INFO] [CONFIG] Base URL : https://api.openai.com/v1
+2026-08-28 13:30:47,553 [INFO] [CONFIG] Model    : gpt-4o-mini
+2026-08-28 13:30:47,607 [INFO] [REQUEST] Sending 2 message(s) to model 'gpt-4o-mini':
+2026-08-28 13:30:47,609 [INFO]   [SYSTEM] You are SchemeAssist, a concise AI assistant that helps citizens understand government welfare schemes. Keep every reply to two sentences or fewer.
+2026-08-28 13:30:47,609 [INFO]   [USER] What is one key thing a citizen should check before applying for a government welfare scheme?
+2026-08-28 13:30:49,821 [INFO] HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-28 13:30:49,833 [INFO] [RESPONSE] Before applying for a government welfare scheme, a citizen should verify that they meet the eligibility criteria, which typically includes income thresholds, residency requirements, and documentation such as proof of identity or household size. Checking these conditions upfront prevents wasted effort and ensures a smoother application process.
+2026-08-28 13:30:49,834 [INFO] [USAGE] prompt_tokens=57 | completion_tokens=51 | total_tokens=108
+
+-----------------------------------------------------------------
+[ASSISTANT REPLY]
+Before applying for a government welfare scheme, a citizen should verify that they meet the eligibility criteria, which typically includes income thresholds, residency requirements, and documentation such as proof of identity or household size. Checking these conditions upfront prevents wasted effort and ensures a smoother application process.
+-----------------------------------------------------------------
+[SUCCESS] First completion call completed successfully.
+================================================================

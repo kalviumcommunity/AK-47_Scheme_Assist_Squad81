@@ -1,0 +1,33 @@
+================================================================================
+  SCHEMEASSIST: 3.30 VECTOR DATABASE SETUP & READBACK AUDIT
+================================================================================
+
+Timestamp           : 2026-09-07T06:14:13.593150+00:00
+Vector Database     : CHROMA
+Collection Name     : schemeassist_chunks
+Configured Dimension: 1536
+Similarity Metric   : cosine
+Persist Directory   : chroma_db
+
+--------------------------------------------------------------------------------
+READBACK VERIFICATION RESULTS:
+--------------------------------------------------------------------------------
+Readback ID        : pmkisan_scheme_doc.md:chunk_0 (Expected: pmkisan_scheme_doc.md:chunk_0)
+Vector Length      : 1536 floats
+ID Matched         : True
+Dimension Matched  : True
+Text Matched       : True
+Metadata Matched   : True
+Stored Metadata    : {"token_count": 48, "category": "agriculture_income_support", "chunk_index": 0, "page": 1, "source": "pmkisan_scheme_doc.md", "section": "1. Scheme Overview & Direct Benefit Transfer"}
+
+--------------------------------------------------------------------------------
+SEMANTIC RETRIEVAL TEST:
+--------------------------------------------------------------------------------
+Query Text         : How much money do farmers receive in installments under PM-KISAN?
+Matched ID         : pmkisan_scheme_doc.md:chunk_0
+Cosine Similarity  : 0.1404
+Cosine Distance    : 0.8596
+
+--------------------------------------------------------------------------------
+OVERALL STATUS     : PASSED
+================================================================================

@@ -1,0 +1,214 @@
+=====================================================================================
+  [SchemeAssist] 3.18 Prompt Templates & Reusable Prompt Design - Example Renders
+=====================================================================================
+This document records the exact runtime-injected prompt renders demonstrating:
+  1. Decoupled prompt templates defined with named placeholders.
+  2. Dynamic runtime value injection across multiple features.
+  3. Cross-feature template reuse (Chat Path, Batch CLI Evaluator, Profiler).
+  4. Safe version evolution (v1.0.0 baseline vs v2.0.0 grounded production).
+
+-------------------------------------------------------------------------------------
+SAMPLE 1: EXAMPLE_1_DIRECT_ANSWER
+Description  : Direct render using prompts/answer.py ANSWER template with runtime context and question injection
+Template     : ANSWER
+Rendered Prompt:
+You are a support assistant. Answer ONLY from the context.
+If the answer isn't there, say you don't know.
+
+Context:
+# Knowledge Base Document: Government Welfare Schemes Overview
+
+## Overview
+This knowledge base contains official notifications, circulars, and guidelines regarding government welf...
+
+Question: What is the maximum income limit for applying?
+-------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------
+SAMPLE 2: FEATURE_1_CHAT_PATH
+Description  : Interactive Citizen Chat Assistant turn using SCHEME_QA_TEMPLATE_V2
+Template     : scheme_qa (v2.0.0)
+System Message Render:
+You are SchemeAssist, the official AI assistant specializing in government welfare schemes, eligibility rules, and application procedures.
+Tone & Style: Objective, citizen-friendly, and concise
+Grounding Rules:
+- Answer strictly from the provided context guidelines.
+- If the answer is not present in the context, respond strictly with: 'I do not have sufficient verified information in the official guidelines to answer this query.'
+- Citation Requirement: Cite official scheme circulars, portal links, or eligibility clauses whenever available.
+
+User Message Render:
+Role: SchemeAssist welfare guidance specialist
+
+Context Information:
+"""
+# Knowledge Base Document: Government Welfare Schemes Overview
+
+## Overview
+This knowledge base contains official notifications, circulars, and guidelines regarding government welfare assistance programs across departments.
+
+## Primary Objectives
+- Discoverability: Enable citizens and helpdesk executives to search and identify applicable welfare schemes.
+- Eligibility Guidance: Explain specific age, income, occupation, category, and demographic qualifications.
+- Application Enablement: Provide clear documentation checklists, step-by-step application instructions, and official portal links.
+"""
+
+Citizen Question: What documentation do I need to prepare for scheme application?
+
+Instructions:
+1. Base your answer strictly on the context provided above.
+2. If the context does not contain the answer, reply with: "I do not have sufficient verified information to answer this question. Please consult the official department portal."
+3. Keep the response to 2 to 3 sentences.
+4. Format requirements: Plain text with bulleted points for lists of documents or criteria.
+
+Model Output / Finding:
+A citizen should check eligibility criteria (such as income, age, and residency) and ensure all required identity documents are ready before applying.
+-------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------
+SAMPLE 3: FEATURE_2_BATCH_RUN_101
+Description  : Batch Audit evaluation for Pre-Matric Minority Scholarship Scheme
+Template     : scheme_batch_eval (v1.0.0)
+Rendered Prompt:
+[BATCH EVALUATION RUN #101]
+Target Scheme: Pre-Matric Minority Scholarship Scheme
+Auditing Standard: Strict Compliance with Welfare Eligibility Guidelines
+
+Official Guidelines Context:
+Eligibility: Minority students studying in Classes 1-10 with family income not exceeding Rs. 1.00 Lakh per annum.
+Required Documents: Income Certificate, Minority Declaration, Previous Marksheet.
+
+Evaluation Query / Test Scenario:
+Assess compliance for an applicant in Class 8 with family income of Rs. 85,000/year.
+
+Required Output:
+- Verification Status (PASS / FAIL / INSUFFICIENT_DATA)
+- Direct Factual Findings (citing clause from context)
+- Recommendation for Citizen
+
+Model Output / Finding:
+A citizen should check eligibility criteria (such as income, age, and residency) and ensure all required identity documents are ready before applying.
+-------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------
+SAMPLE 4: FEATURE_2_BATCH_RUN_102
+Description  : Batch Audit evaluation for National Means-cum-Merit Scholarship Scheme (NMMSS)
+Template     : scheme_batch_eval (v1.0.0)
+Rendered Prompt:
+[BATCH EVALUATION RUN #102]
+Target Scheme: National Means-cum-Merit Scholarship Scheme (NMMSS)
+Auditing Standard: Strict Compliance with Welfare Eligibility Guidelines
+
+Official Guidelines Context:
+Eligibility: Students in Class 8 from government/aided schools with at least 55% marks in Class 7 and parental income under Rs. 3.5 Lakh.
+Ineligibility: Students of Kendriya Vidyalaya and Jawahar Navodaya Vidyalaya are NOT eligible.
+
+Evaluation Query / Test Scenario:
+Check eligibility for a student studying in Kendriya Vidyalaya with 90% marks in Class 7.
+
+Required Output:
+- Verification Status (PASS / FAIL / INSUFFICIENT_DATA)
+- Direct Factual Findings (citing clause from context)
+- Recommendation for Citizen
+
+Model Output / Finding:
+A citizen should check eligibility criteria (such as income, age, and residency) and ensure all required identity documents are ready before applying.
+-------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------
+SAMPLE 5: FEATURE_2_BATCH_RUN_103
+Description  : Batch Audit evaluation for Post-Matric Technical Higher Education Grant
+Template     : scheme_batch_eval (v1.0.0)
+Rendered Prompt:
+[BATCH EVALUATION RUN #103]
+Target Scheme: Post-Matric Technical Higher Education Grant
+Auditing Standard: Strict Compliance with Welfare Eligibility Guidelines
+
+Official Guidelines Context:
+Eligibility: Full-time diploma and undergraduate engineering students with family income <= Rs. 2.5 Lakh.
+Required Documents: College Admission Receipt, Marksheets, Caste/Income Certificate.
+
+Evaluation Query / Test Scenario:
+Applicant is enrolled in part-time correspondence diploma with income Rs. 1.5 Lakh.
+
+Required Output:
+- Verification Status (PASS / FAIL / INSUFFICIENT_DATA)
+- Direct Factual Findings (citing clause from context)
+- Recommendation for Citizen
+
+Model Output / Finding:
+A citizen should check eligibility criteria (such as income, age, and residency) and ensure all required identity documents are ready before applying.
+-------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------
+SAMPLE 6: FEATURE_3_APPLICANT_PROFILER
+Description  : Applicant profiling prompt rendering dynamic citizen demographic fields
+Template     : scheme_eligibility_eval (v1.0.0)
+Rendered Prompt:
+Evaluate eligibility for the following applicant against the official scheme guidelines.
+
+Scheme: Post-Matric Higher Education Grant
+
+Official Scheme Rules:
+# Knowledge Base Document: Government Welfare Schemes Overview
+
+## Overview
+This knowledge base contains official notifications, circulars, and guidelines regarding government welfare assistance programs across departments.
+
+## Primary Objectives
+- Discoverability: Enable citizens and helpdesk executives to search and identify applicable welfare schemes.
+- Eligibility Guidance: Explain specific age, income, occupation, category, and demographic qualifications.
+- Application Enablement: Provide clear documentation checklists, step-by-step application instructions, and official portal links.
+
+Applicant Profile:
+- Age: 19
+- Annual Family Income: Rs. 1,80,000 / year
+- Category / Demographics: OBC Minority
+- Occupation / Status: First-Year B.Tech Undergraduate Student
+
+Determine:
+1. Is the applicant Eligible, Ineligible, or Needs Verification?
+2. Highlight matching / failing criteria based strictly on the scheme rules.
+-------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------
+SAMPLE 7: VERSION_COMPARISON_V1
+Description  : Scheme Q&A Template Version 1.0.0 render
+Template     : scheme_qa (v1.0.0)
+Rendered Prompt:
+You are a support assistant for welfare schemes. Answer ONLY from the context.
+If the answer isn't there, say you don't know.
+
+Context:
+PM-Kisan scheme provides Rs. 6,000 per year in three equal installments to eligible landholding farmer families.
+
+Question: How many installments are provided under PM-Kisan?
+-------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------
+SAMPLE 8: VERSION_COMPARISON_V2
+Description  : Scheme Q&A Template Version 2.0.0 render (Enhanced grounding & citation)
+Template     : scheme_qa (v2.0.0)
+Rendered Prompt:
+Role: SchemeAssist welfare guidance specialist
+
+Context Information:
+"""
+PM-Kisan scheme provides Rs. 6,000 per year in three equal installments to eligible landholding farmer families.
+"""
+
+Citizen Question: How many installments are provided under PM-Kisan?
+
+Instructions:
+1. Base your answer strictly on the context provided above.
+2. If the context does not contain the answer, reply with: "I do not have sufficient verified information to answer this question. Please consult the official department portal."
+3. Keep the response to 2 to 3 sentences.
+4. Format requirements: Plain text with bulleted points for lists of documents or criteria.
+-------------------------------------------------------------------------------------
+
+=====================================================================================
+ARCHITECTURE SUMMARY:
+1. Centralization : Prompts live exclusively in `prompts/` (e.g. templates.py, answer.py).
+2. Reusability    : One template definition serves Chat, Batch CLI, and Evaluator.
+3. Maintainability: Wording fixes or citation rules are modified once and propagate everywhere.
+4. Safety         : Missing placeholders are caught at runtime via TemplateValidationError.
+=====================================================================================

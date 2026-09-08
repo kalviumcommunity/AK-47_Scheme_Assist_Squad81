@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-09-07T06:14:13.593150+00:00",
+  "database": {
+    "type": "chroma",
+    "persist_directory": "chroma_db",
+    "collection_name": "schemeassist_chunks",
+    "dimension": 1536,
+    "metric": "cosine",
+    "total_records": 1
+  },
+  "readback_test": {
+    "inserted_id": "pmkisan_scheme_doc.md:chunk_0",
+    "readback_id": "pmkisan_scheme_doc.md:chunk_0",
+    "id_matched": true,
+    "vector_dimension": 1536,
+    "dimension_matched": true,
+    "text_matched": true,
+    "metadata_matched": true,
+    "stored_metadata": {
+      "token_count": 48,
+      "category": "agriculture_income_support",
+      "chunk_index": 0,
+      "page": 1,
+      "source": "pmkisan_scheme_doc.md",
+      "section": "1. Scheme Overview & Direct Benefit Transfer"
+    }
+  },
+  "retrieval_test": {
+    "query": "How much money do farmers receive in installments under PM-KISAN?",
+    "matched_id": "pmkisan_scheme_doc.md:chunk_0",
+    "score": 0.1404,
+    "distance": 0.8596
+  },
+  "safety_checks": {
+    "dimension_mismatch_rejected": true
+  },
+  "status": "PASSED"
+}

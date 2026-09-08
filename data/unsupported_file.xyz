@@ -1,0 +1,4 @@
+RAW BINARY OR UNSUPPORTED FORMAT TEST PAYLOAD
+This file is deliberately included in the corpus to verify that the Ingestion Pipeline
+detects, records, and reports unparseable or unsupported file formats in the failure log,
+proving that total_files == ingested_docs + recorded_failures without silent drops.
