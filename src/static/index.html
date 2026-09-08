@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SchemeAssist | Citizen Welfare RAG Query UI</title>
+  <meta name="description" content="Intelligent, grounded question answering and source inspection for Indian Government Welfare Schemes powered by SchemeAssist RAG.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #121829;
+      --bg-card: rgba(22, 30, 49, 0.75);
+      --bg-glass: rgba(26, 36, 61, 0.55);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(99, 102, 241, 0.35);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-glow: rgba(99, 102, 241, 0.25);
+      --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.2);
+      --warning: #f59e0b;
+      --warning-glow: rgba(245, 158, 11, 0.2);
+      --danger: #ef4444;
+      --danger-glow: rgba(239, 68, 68, 0.2);
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-heading: 'Outfit', sans-serif;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --radius-full: 9999px;
+      --shadow-lg: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: radial-gradient(circle at 50% 0%, #171f38 0%, var(--bg-primary) 70%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    header {
+      background: rgba(10, 14, 26, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 0.85rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #6366f1, #10b981);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-family: var(--font-heading);
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+
+    .brand-text h1 {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #ffffff, #c7d2fe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-text p {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    /* Status indicator */
+    .system-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-full);
+      padding: 0.35rem 0.85rem;
+      font-size: 0.75rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      animation: pulse-dot 2s infinite;
+    }
+
+    .status-dot.error {
+      background: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.9); }
+    }
+
+    .btn-header {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.4rem 0.9rem;
+      border-radius: var(--radius-md);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-header:hover {
+      border-color: var(--primary);
+      background: var(--primary-glow);
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 960px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 7rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* Welcome Hero */
+    .hero {
+      text-align: center;
+      padding: 1.5rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(10px);
+      margin-top: 0.5rem;
+    }
+
+    .hero h2 {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+    }
+
+    .hero p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      max-width: 620px;
+      margin: 0 auto 1.25rem;
+      line-height: 1.45;
+    }
+
+    .chips-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+      margin-bottom: 0.6rem;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .chip {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      padding: 0.35rem 0.8rem;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chip:hover {
+      background: var(--primary-glow);
+      border-color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    /* Chat Thread */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .message {
+      display: flex;
+      gap: 0.9rem;
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .message.assistant .avatar {
+      background: linear-gradient(135deg, #6366f1, #3b82f6);
+      color: white;
+    }
+
+    .message.user .avatar {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+    }
+
+    .bubble-wrapper {
+      max-width: 82%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .bubble {
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-lg);
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+
+    .message.user .bubble {
+      background: #4338ca;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.assistant .bubble {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      border-bottom-left-radius: 4px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .message.assistant.refusal .bubble {
+      border-left: 4px solid var(--warning);
+      background: rgba(245, 158, 11, 0.05);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--radius-full);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .status-badge.answered {
+      background: var(--success-glow);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-badge.refused {
+      background: var(--warning-glow);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    /* Sources Section */
+    .sources-box {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .sources-header {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .source-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .source-card {
+      background: var(--bg-glass);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .source-card:hover {
+      border-color: var(--border-glow);
+      background: rgba(99, 102, 241, 0.08);
+    }
+
+    .source-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .source-name {
+      font-weight: 500;
+      color: #e0e7ff;
+    }
+
+    .source-chunk {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      font-family: monospace;
+    }
+
+    .source-score {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.15rem 0.45rem;
+      border-radius: var(--radius-sm);
+      background: var(--primary-glow);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    /* Loading state */
+    .loading-bubble {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(99, 102, 241, 0.2);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Error Banner */
+    .error-card {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+    }
+
+    .btn-retry {
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 0.25rem 0.65rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    /* Bottom Input Bar */
+    .input-bar-container {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, transparent 0%, rgba(10, 14, 26, 0.95) 30%);
+      padding: 1.25rem 1rem 1.5rem;
+      z-index: 40;
+    }
+
+    .input-box-wrapper {
+      max-width: 960px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .input-form {
+      display: flex;
+      align-items: center;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-full);
+      padding: 0.35rem 0.5rem 0.35rem 1.25rem;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .input-form:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    .query-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 0.92rem;
+      font-family: var(--font-body);
+      outline: none;
+    }
+
+    .query-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .btn-submit {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      background: var(--primary-hover);
+      transform: scale(1.05);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Upload Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1rem;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal h3 {
+      font-family: var(--font-heading);
+      margin-bottom: 0.5rem;
+      font-size: 1.2rem;
+    }
+
+    .modal p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1.2rem;
+    }
+
+    .file-dropzone {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 2rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 1rem;
+    }
+
+    .file-dropzone:hover {
+      border-color: var(--primary);
+      background: var(--primary-glow);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 0.45rem 1rem;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.45rem 1.25rem;
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon" id="brandIcon">SA</div>
+      <div class="brand-text">
+        <h1 id="appTitle">SchemeAssist</h1>
+        <p id="appSubtitle">Citizen Welfare RAG Query UI & Citation Inspector</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="system-status" id="systemStatusBadge" title="Polling RAG API /health">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Connecting...</span>
+      </div>
+      <button class="btn-header" id="uploadModalBtn" onclick="openUploadModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload Policy
+      </button>
+      <button class="btn-header" id="clearChatBtn" onclick="clearChat()">Clear</button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="mainContainer">
+    <!-- Welcome Hero -->
+    <section class="hero" id="welcomeHero">
+      <h2>Ask About Welfare Policies & Schemes</h2>
+      <p>Enter any natural-language question regarding subsidies, eligibility criteria, documentation, or coverage. All answers are grounded in official scheme circulars and backed by transparent source citations.</p>
+      <div class="chips-title">Suggested Inquiries</div>
+      <div class="chips" id="suggestionChips">
+        <button class="chip" onclick="askPreset('What is the annual financial assistance provided under PM-KISAN?')">🌾 PM-KISAN Installments</button>
+        <button class="chip" onclick="askPreset('What hospitalisation cover is provided under Ayushman Bharat PM-JAY?')">🏥 Ayushman Bharat PM-JAY</button>
+        <button class="chip" onclick="askPreset('What interest subsidy is offered under PMAY Credit Linked Subsidy Scheme?')">🏠 PMAY Housing Subsidy</button>
+        <button class="chip" onclick="askPreset('What are the age and assistance criteria under the senior citizen pension scheme?')">👵 Senior Citizen Pension</button>
+        <button class="chip" onclick="askPreset('What toolkit incentive and collateral-free loan support is provided under PM Vishwakarma Scheme?')">🔨 PM Vishwakarma Benefits</button>
+      </div>
+    </section>
+
+    <!-- Chat Stream Container -->
+    <div class="chat-container" id="chatContainer"></div>
+  </main>
+
+  <!-- Input Bar -->
+  <div class="input-bar-container">
+    <div class="input-box-wrapper">
+      <form class="input-form" id="queryForm" onsubmit="handleFormSubmit(event)">
+        <input 
+          type="text" 
+          class="query-input" 
+          id="queryInput" 
+          placeholder="Ask a question about welfare schemes (e.g. 'What is the PM-KISAN payment schedule?')..." 
+          autocomplete="off"
+          required
+        />
+        <button type="submit" class="btn-submit" id="submitBtn" aria-label="Submit Question">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Document Upload Modal -->
+  <div class="modal-overlay" id="uploadModal">
+    <div class="modal">
+      <h3>Upload Policy Document</h3>
+      <p>Upload a new welfare policy document (.md, .txt, .pdf, .html). It will be cleaned, chunked, embedded, and indexed into the vector database at runtime without restarting.</p>
+      
+      <div class="file-dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+        <input type="file" id="fileInput" accept=".md,.txt,.pdf,.html" style="display:none;" onchange="handleFileSelected(event)">
+        <p id="dropzoneText">Click to select or drag & drop document here</p>
+        <span style="font-size:0.75rem; color: var(--text-dim);">Supported: .md, .txt, .pdf, .html (Max 10MB)</span>
+      </div>
+
+      <div id="uploadStatusText" style="font-size:0.8rem; margin-bottom:1rem; min-height:1.2rem;"></div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeUploadModal()">Cancel</button>
+        <button class="btn-primary" id="btnUploadSubmit" onclick="uploadSelectedFile()" disabled>Upload & Index</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    let selectedFile = null;
+    let isProcessing = false;
+
+    // Initialize & Poll Health
+    async function checkHealth() {
+      const statusDot = document.getElementById("statusDot");
+      const statusText = document.getElementById("statusText");
+      try {
+        const res = await fetch(`${API_BASE}/health`);
+        if (!res.ok) throw new Error("Health check failed");
+        const data = await res.json();
+        statusDot.className = "status-dot";
+        statusText.textContent = `Online • ${data.indexed_chunks} chunks indexed`;
+      } catch (err) {
+        statusDot.className = "status-dot error";
+        statusText.textContent = "API Offline";
+      }
+    }
+
+    checkHealth();
+    setInterval(checkHealth, 15000);
+
+    // Preset helper
+    function askPreset(question) {
+      const input = document.getElementById("queryInput");
+      input.value = question;
+      handleQuestionSubmission(question);
+    }
+
+    // Form submit handler
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById("queryInput");
+      const q = input.value.trim();
+      if (!q || isProcessing) return;
+      handleQuestionSubmission(q);
+      input.value = "";
+    }
+
+    // Core submission flow
+    async function handleQuestionSubmission(question) {
+      if (!question || isProcessing) return;
+
+      isProcessing = true;
+      toggleInputState(true);
+
+      // Hide welcome hero on first message
+      const hero = document.getElementById("welcomeHero");
+      if (hero) hero.style.display = "none";
+
+      const chat = document.getElementById("chatContainer");
+
+      // 1. Append User Message
+      appendUserMessage(question);
+
+      // 2. Append Loading Placeholder
+      const loadingId = "loading_" + Date.now();
+      appendLoadingBubble(loadingId);
+      chat.scrollTop = chat.scrollHeight;
+
+      try {
+        // Call Backend RAG API
+        const response = await fetch(`${API_BASE}/query`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
+
+        const loadingElem = document.getElementById(loadingId);
+        if (loadingElem) loadingElem.remove();
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.detail || `Server error (${response.status})`);
+        }
+
+        const data = await response.json();
+        appendAssistantMessage(data);
+
+      } catch (err) {
+        const loadingElem = document.getElementById(loadingId);
+        if (loadingElem) loadingElem.remove();
+        appendErrorMessage(err.message || "Failed to contact RAG service.", question);
+      } finally {
+        isProcessing = false;
+        toggleInputState(false);
+        chat.scrollTop = chat.scrollHeight;
+      }
+    }
+
+    function toggleInputState(disabled) {
+      document.getElementById("submitBtn").disabled = disabled;
+      document.getElementById("queryInput").disabled = disabled;
+    }
+
+    function appendUserMessage(text) {
+      const chat = document.getElementById("chatContainer");
+      const msg = document.createElement("div");
+      msg.className = "message user";
+      msg.innerHTML = `
+        <div class="bubble-wrapper">
+          <div class="bubble">${escapeHtml(text)}</div>
+        </div>
+        <div class="avatar" title="You">U</div>
+      `;
+      chat.appendChild(msg);
+    }
+
+    function appendLoadingBubble(id) {
+      const chat = document.getElementById("chatContainer");
+      const msg = document.createElement("div");
+      msg.className = "message assistant";
+      msg.id = id;
+      msg.innerHTML = `
+        <div class="avatar">SA</div>
+        <div class="bubble-wrapper">
+          <div class="bubble loading-bubble">
+            <div class="spinner"></div>
+            <span>Searching vector database & synthesizing grounded answer...</span>
+          </div>
+        </div>
+      `;
+      chat.appendChild(msg);
+    }
+
+    function appendAssistantMessage(data) {
+      const chat = document.getElementById("chatContainer");
+      const isRefusal = data.status && data.status.startsWith("refused");
+      const msg = document.createElement("div");
+      msg.className = `message assistant ${isRefusal ? 'refusal' : ''}`;
+
+      let statusBadgeHtml = "";
+      if (isRefusal) {
+        statusBadgeHtml = `<div class="status-badge refused">⚠️ Context Refusal (${escapeHtml(data.status)})</div>`;
+      } else {
+        statusBadgeHtml = `<div class="status-badge answered">✓ Verified Grounded Answer</div>`;
+      }
+
+      let sourcesHtml = "";
+      if (data.sources && data.sources.length > 0) {
+        const sourceCards = data.sources.map(s => {
+          const scoreDisplay = s.score !== null && s.score !== undefined ? `Score: ${s.score}` : "Verified Source";
+          return `
+            <div class="source-card">
+              <div class="source-info">
+                <span class="source-name">${escapeHtml(s.source || "Unknown")}</span>
+                ${s.chunk_id ? `<span class="source-chunk">${escapeHtml(s.chunk_id)}</span>` : ""}
+              </div>
+              <span class="source-score">${scoreDisplay}</span>
+            </div>
+          `;
+        }).join("");
+
+        sourcesHtml = `
+          <div class="sources-box">
+            <div class="sources-header">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              Retrieved Grounding Sources (${data.sources.length})
+            </div>
+            <div class="source-list">
+              ${sourceCards}
+            </div>
+          </div>
+        `;
+      }
+
+      msg.innerHTML = `
+        <div class="avatar">SA</div>
+        <div class="bubble-wrapper">
+          <div class="bubble">
+            ${statusBadgeHtml}
+            <div>${escapeHtml(data.answer)}</div>
+            ${sourcesHtml}
+          </div>
+        </div>
+      `;
+      chat.appendChild(msg);
+    }
+
+    function appendErrorMessage(errText, originalQuestion) {
+      const chat = document.getElementById("chatContainer");
+      const msg = document.createElement("div");
+      msg.className = "message assistant";
+      msg.innerHTML = `
+        <div class="avatar" style="background:#ef4444;">!</div>
+        <div class="bubble-wrapper">
+          <div class="error-card">
+            <div><strong>Query Error:</strong> ${escapeHtml(errText)}</div>
+            <button class="btn-retry" onclick="askPreset('${escapeJsString(originalQuestion)}')">Retry</button>
+          </div>
+        </div>
+      `;
+      chat.appendChild(msg);
+    }
+
+    function clearChat() {
+      const chat = document.getElementById("chatContainer");
+      chat.innerHTML = "";
+      const hero = document.getElementById("welcomeHero");
+      if (hero) hero.style.display = "block";
+    }
+
+    // Modal & Document Upload Helpers
+    function openUploadModal() {
+      document.getElementById("uploadModal").classList.add("active");
+      document.getElementById("uploadStatusText").textContent = "";
+    }
+
+    function closeUploadModal() {
+      document.getElementById("uploadModal").classList.remove("active");
+      selectedFile = null;
+      document.getElementById("fileInput").value = "";
+      document.getElementById("dropzoneText").textContent = "Click to select or drag & drop document here";
+      document.getElementById("btnUploadSubmit").disabled = true;
+    }
+
+    function handleFileSelected(e) {
+      const files = e.target.files;
+      if (files && files.length > 0) {
+        selectedFile = files[0];
+        document.getElementById("dropzoneText").textContent = `Selected: ${selectedFile.name} (${(selectedFile.size / 1024).toFixed(1)} KB)`;
+        document.getElementById("btnUploadSubmit").disabled = false;
+      }
+    }
+
+    async function uploadSelectedFile() {
+      if (!selectedFile) return;
+      const statusText = document.getElementById("uploadStatusText");
+      const btn = document.getElementById("btnUploadSubmit");
+      btn.disabled = true;
+      statusText.style.color = "#a5b4fc";
+      statusText.textContent = "Uploading, chunking, embedding, and indexing into ChromaDB...";
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      try {
+        const res = await fetch(`${API_BASE}/documents`, {
+          method: "POST",
+          body: formData
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `Upload failed with status ${res.status}`);
+        }
+
+        const data = await res.json();
+        statusText.style.color = "#34d399";
+        statusText.textContent = `✓ Indexed '${data.filename}': ${data.summary.chunks} chunks (${data.summary.indexed} indexed).`;
+        setTimeout(() => {
+          closeUploadModal();
+          checkHealth();
+        }, 2200);
+      } catch (err) {
+        statusText.style.color = "#f87171";
+        statusText.textContent = `Error: ${err.message}`;
+        btn.disabled = false;
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeJsString(str) {
+      if (!str) return "";
+      return String(str).replace(/'/g, "\\'");
+    }
+  </script>
+</body>
+</html>

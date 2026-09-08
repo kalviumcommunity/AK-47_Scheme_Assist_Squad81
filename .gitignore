@@ -8,6 +8,8 @@ env/
 .env
 .env.local
 .env.*.local
+!.env.example
+!frontend/.env.example
 *.pem
 
 # Local Data & Outputs (except placeholder tracking files)
@@ -41,6 +43,9 @@ outputs/*
 !outputs/api_sample_query_response.txt
 !outputs/sample_upload_run.json
 !outputs/sample_upload_run.txt
+!outputs/sample_chat_interaction.json
+!outputs/sample_chat_interaction.txt
+!outputs/chat_interface_screenshot.png
 
 # Uploaded Files
 uploads/*

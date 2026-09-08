@@ -1,0 +1,36 @@
+{
+  "timestamp": "2026-09-08T08:47:31Z",
+  "client": "Next.js 16 (React 19, Turbopack)",
+  "endpoint": "POST /query",
+  "request": {
+    "question": "What is the installment amount and annual benefit under PM-KISAN scheme?"
+  },
+  "response": {
+    "status": "answered",
+    "answer": "Under the Scheme, an amount of Rs 6,000/- per year is released in three 4-monthly installments of Rs 2,000/- each directly into the bank accounts of the beneficiaries. The PM-KISAN scheme is a Central Sector Scheme to provide income support to all landholding farmers' families across the country to enable them to take care of expenses related to agriculture and allied activities as well as domestic needs.",
+    "sources": [
+      {
+        "source": "pmkisan_scheme_doc.md",
+        "chunk_id": "pmkisan_scheme_doc.md:0",
+        "score": 0.2859
+      },
+      {
+        "source": "sample_new_policy.md",
+        "chunk_id": "sample_new_policy:chunk:1",
+        "score": 0.2118
+      },
+      {
+        "source": "test_kcc_guide.txt",
+        "chunk_id": "test_kcc_guide:chunk:1",
+        "score": 0.2107
+      }
+    ]
+  },
+  "ui_verification": {
+    "rendered_sources_count": 3,
+    "top_source": "pmkisan_scheme_doc.md",
+    "relevance_badge": "Relevance: 0.2859",
+    "status_badge": "Grounded Response",
+    "screenshot": "outputs/chat_interface_screenshot.png"
+  }
+}
