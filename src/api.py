@@ -22,13 +22,16 @@ import os
 import re
 import sys
 import logging
+import hashlib
+import datetime
+from pathlib import Path
 from typing import List, Optional, Dict, Any
 from contextlib import asynccontextmanager
 
 # Ensure root directory is on sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field
@@ -48,10 +51,17 @@ from src.vector_store import VectorStore
 from src.retrieval import retrieve_from_vector_store
 from src.guardrails import guarded_answer
 from src.citations import answer_with_citations
+from src.cleaning import clean_text
+from src.ingestion import chunk_document_by_tokens
 
 # Setup logger
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("rag_api")
+
+# Upload Configuration (3.45 Document Upload & Indexing)
+UPLOAD_DIR = Path("uploads")
+SUPPORTED_EXTENSIONS = {".txt", ".md", ".pdf", ".html"}
+MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB limit
 
 # Global pipeline state (cached across requests)
 pipeline_state: Dict[str, Any] = {
@@ -137,13 +147,29 @@ class HealthResponse(BaseModel):
     indexed_chunks: int
 
 
+# ─── Document Upload Models (3.45) ──────────────────────────────────────────
+
+class DocumentSummary(BaseModel):
+    """Execution metrics and audit record for uploaded document processing."""
+    document: str = Field(..., description="Stored document file path.")
+    chunks: int = Field(..., description="Number of token chunks generated.")
+    indexed: int = Field(..., description="Number of chunk records indexed into the vector database.")
+
+
+class DocumentUploadResponse(BaseModel):
+    """Structured response contract for document upload and indexing."""
+    status: str = Field(..., description="Indexing status: 'indexed'.")
+    filename: str = Field(..., description="Original filename of uploaded document.")
+    summary: DocumentSummary = Field(..., description="Indexing summary metrics.")
+
+
 # ─── Custom Error Handlers (Task 3) ───────────────────────────────────────────
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handles schema validation errors with structured JSON and 422 status."""
     return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status_code=422,
         content={
             "error": "Validation Error",
             "detail": exc.errors(),
@@ -163,6 +189,7 @@ def root():
         "docs_url": "/docs",
         "health_url": "/health",
         "query_url": "/query",
+        "documents_url": "/documents",
         "status": "operational",
     }
 
@@ -344,6 +371,267 @@ def query_rag(request: QueryRequest):
     except Exception as exc:
         logger.exception("Internal failure during RAG execution: %s", exc)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="RAG service failed")
+
+
+# ─── Document Upload & Processing Pipeline (3.45) ─────────────────────────────
+
+def validate_upload(file: UploadFile) -> str:
+    """
+    Validates uploaded file format against SUPPORTED_EXTENSIONS.
+    Fails clearly with HTTP 400 if filename is missing, or HTTP 415 for unsupported types.
+    """
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file must have a valid filename.",
+        )
+    suffix = Path(file.filename).suffix.lower()
+    if suffix not in SUPPORTED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=f"Unsupported file type '{suffix}'. Supported formats: {', '.join(sorted(SUPPORTED_EXTENSIONS))}",
+        )
+    return suffix
+
+
+async def store_upload(file: UploadFile) -> Path:
+    """
+    Validates upload, enforces size limits, safely creates destination directory,
+    and stores uploaded file to disk with path traversal sanitization.
+    """
+    validate_upload(file)
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Sanitize path to prevent directory traversal attacks (e.g. ../../etc/passwd)
+    safe_filename = Path(file.filename).name
+    if not safe_filename or safe_filename.startswith("."):
+        safe_filename = f"upload_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}{Path(file.filename).suffix.lower()}"
+
+    path = UPLOAD_DIR / safe_filename
+
+    # Read binary content
+    content = await file.read()
+
+    # Reject empty files (0 bytes) with 400 Bad Request
+    if len(content) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file is empty (0 bytes).",
+        )
+
+    # Reject oversized files with 413 Content Too Large
+    if len(content) > MAX_UPLOAD_SIZE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Uploaded file exceeds maximum allowed size of {MAX_UPLOAD_SIZE_BYTES // (1024 * 1024)}MB.",
+        )
+
+    path.write_bytes(content)
+    return path
+
+
+def process_uploaded_document(path: Path) -> Dict[str, Any]:
+    """
+    Runs the uploaded document through the complete RAG ingestion pipeline:
+      1. Load raw text (format-specific extraction for .txt, .md, .pdf, .html)
+      2. Clean & normalize (whitespace, boilerplate stripping)
+      3. Token chunking (250 tokens, 50 overlap)
+      4. Tag chunks with source, section, content hash, and timestamp
+      5. Embed chunks using active embedding service
+      6. Index/upsert chunks into the active vector database
+    """
+    state = get_pipeline()
+    vs = state.get("vector_store")
+    embed_svc = state.get("embedding_service")
+
+    if vs is None or embed_svc is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Vector store or embedding service is not initialized.",
+        )
+
+    ext = path.suffix.lower()
+    raw_text = ""
+    page_numbers = None
+
+    # 1. Load Raw Text
+    try:
+        if ext in [".txt", ".md"]:
+            try:
+                raw_text = path.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                raw_text = path.read_text(encoding="latin-1", errors="replace")
+
+        elif ext in [".html", ".htm"]:
+            html_content = path.read_text(encoding="utf-8", errors="replace")
+            try:
+                from bs4 import BeautifulSoup
+                soup = BeautifulSoup(html_content, "html.parser")
+                for tag in soup(["script", "style", "noscript"]):
+                    tag.decompose()
+                raw_text = soup.get_text(separator="\n").strip()
+            except ImportError:
+                raw_text = re.sub(r"<[^>]+>", " ", html_content).strip()
+
+        elif ext == ".pdf":
+            try:
+                from pypdf import PdfReader
+                reader = PdfReader(str(path))
+                text_parts = []
+                page_numbers = []
+                offset = 0
+                for p_idx, page in enumerate(reader.pages, start=1):
+                    page_text = page.extract_text()
+                    if page_text:
+                        clean_p = page_text.strip()
+                        page_numbers.append((p_idx, offset))
+                        text_parts.append(clean_p)
+                        offset += len(clean_p) + 1
+                raw_text = "\n".join(text_parts).strip()
+            except Exception as pdf_err:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Unable to read or parse PDF file: {pdf_err}",
+                )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail=f"Unsupported format: {ext}",
+            )
+    except HTTPException:
+        raise
+    except Exception as read_err:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Failed to read uploaded file: {read_err}",
+        )
+
+    # 2. Clean
+    cleaned = clean_text(raw_text)
+    if not cleaned or not cleaned.strip():
+        raise HTTPException(
+            status_code=422,
+            detail="Uploaded document contains no readable text after cleaning.",
+        )
+
+    # 3. Chunk
+    doc_dict = {
+        "filename": path.name,
+        "filepath": str(path).replace("\\", "/"),
+        "content": cleaned,
+        "page_numbers": page_numbers,
+    }
+    raw_chunks = chunk_document_by_tokens(
+        doc=doc_dict,
+        chunk_size_tokens=250,
+        overlap_tokens=50,
+        model_name="gpt-4o-mini",
+    )
+
+    if not raw_chunks:
+        raw_chunks = [{
+            "text": cleaned,
+            "metadata": {
+                "source": path.name,
+                "chunk_index": 0,
+                "section": "General Overview",
+                "page": 1,
+                "token_count": len(cleaned.split()),
+            },
+        }]
+
+    # 4. Tag Chunks
+    content_hash = hashlib.sha256(cleaned.encode("utf-8")).hexdigest()[:16]
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    tagged_chunks = []
+
+    for idx, c in enumerate(raw_chunks):
+        cid = f"{path.stem}:chunk:{idx + 1}"
+        meta = dict(c.get("metadata", {}))
+        meta["source"] = path.name
+        meta["filepath"] = str(path).replace("\\", "/")
+        meta["content_hash"] = content_hash
+        meta["doc_format"] = ext
+        meta["ingestion_time"] = now_iso
+
+        tagged_chunks.append({
+            "id": cid,
+            "chunk_id": cid,
+            "text": c["text"],
+            "content": c["text"],
+            "metadata": meta,
+        })
+
+    # 5. Embed Chunks
+    chunk_texts = [c["text"] for c in tagged_chunks]
+    embeddings = embed_svc.embed_texts(chunk_texts)
+
+    # 6. Index into VectorStore
+    records_to_upsert = []
+    for c, vec in zip(tagged_chunks, embeddings):
+        records_to_upsert.append({
+            "id": c["id"],
+            "vector": vec,
+            "text": c["text"],
+            "metadata": c["metadata"],
+        })
+
+    indexed_count = vs.upsert_batch(records_to_upsert)
+    logger.info(
+        "Successfully indexed document '%s': %d chunks into VectorStore (total records: %d)",
+        path.name, indexed_count, vs.count()
+    )
+
+    # Return structured summary with normalized forward-slash path
+    doc_display_path = str(path).replace("\\", "/")
+    return {
+        "document": doc_display_path,
+        "chunks": len(tagged_chunks),
+        "indexed": indexed_count,
+    }
+
+
+# ─── Document Endpoints (Tasks 1, 2, 3, 4) ───────────────────────────────────
+
+@app.post("/documents", response_model=DocumentUploadResponse, tags=["Document Ingestion"])
+async def upload_document(file: UploadFile = File(...)):
+    """
+    Accepts a document file (.txt, .md, .pdf, .html), stores it safely,
+    runs it through the full ingestion pipeline (clean, chunk, embed, index),
+    and makes the new content searchable immediately at runtime.
+    """
+    try:
+        path = await store_upload(file)
+        summary = process_uploaded_document(path)
+        return {
+            "status": "indexed",
+            "filename": file.filename,
+            "summary": summary,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Document indexing failed: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Document indexing failed",
+        )
+
+
+@app.get("/documents", tags=["Document Ingestion"])
+def list_documents():
+    """Returns list of uploaded documents currently stored in the uploads directory."""
+    if not UPLOAD_DIR.exists():
+        return {"documents": [], "total": 0}
+    docs = []
+    for f in sorted(UPLOAD_DIR.iterdir()):
+        if f.is_file():
+            docs.append({
+                "filename": f.name,
+                "size_bytes": f.stat().st_size,
+                "path": str(f).replace("\\", "/"),
+            })
+    return {"documents": docs, "total": len(docs)}
 
 
 def start():
