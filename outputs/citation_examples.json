@@ -1,0 +1,37 @@
+{
+  "cited_answer_example": {
+    "answer": "Registered landholding farmer families can apply [1]. Applications are submitted through the official PM-KISAN portal [2].",
+    "citations": {
+      "[1]": {
+        "source": "pmkisan_scheme_doc.md",
+        "chunk_id": "pmkisan-eligibility-001",
+        "chunk_index": 1,
+        "page": null,
+        "section": "Eligibility",
+        "text": "Eligible farmers must be registered landholding farmer families."
+      },
+      "[2]": {
+        "source": "pmkisan_scheme_doc.md",
+        "chunk_id": "pmkisan-application-002",
+        "chunk_index": 2,
+        "page": 3,
+        "section": "Application Process",
+        "text": "Applications can be submitted through the official PM-KISAN portal."
+      }
+    },
+    "prompt": "Answer using only the context below.\nCite every factual claim with one or more source markers such as [1] or [2].\nOnly use source markers that appear in the context.\nIf the context does not support an answer, say exactly: I do not have sufficient verified information to answer this question.\n\nContext:\n[1] Eligible farmers must be registered landholding farmer families.\n\n[2] Applications can be submitted through the official PM-KISAN portal.\n\nQuestion:\nWho can apply and where?",
+    "verification": {
+      "valid": true,
+      "marker": "[1]",
+      "source": "pmkisan_scheme_doc.md",
+      "chunk_id": "pmkisan-eligibility-001",
+      "text": "Eligible farmers must be registered landholding farmer families.",
+      "reason": "matched original chunk text"
+    }
+  },
+  "no_source_fallback_example": {
+    "answer": "I do not have sufficient verified information to answer this question.",
+    "citations": {},
+    "prompt": ""
+  }
+}

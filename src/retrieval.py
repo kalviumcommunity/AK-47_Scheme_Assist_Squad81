@@ -1,10 +1,100 @@
-# -*- coding: utf-8 -*-
-"""
-retrieval.py - 3.29 / 3.33 Retrieval Engine
-============================================
-Provides two retriever implementations for SchemeAssist:
+from math import sqrt
+from typing import List, Dict, Any, Sequence, TYPE_CHECKING
 
-  SimpleRetriever  - Keyword-overlap ranked search over in-memory item lists.
+if TYPE_CHECKING:
+    from src.vector_store import VectorStore
+
+
+def cosine_similarity(a: Sequence[float], b: Sequence[float]) -> float:
+    """Return cosine similarity for two equal-length, non-zero vectors."""
+    if len(a) != len(b):
+        raise ValueError("Vectors must have the same dimensions")
+
+    dot_product = sum(left * right for left, right in zip(a, b))
+    norm_a = sqrt(sum(value * value for value in a))
+    norm_b = sqrt(sum(value * value for value in b))
+    if norm_a == 0 or norm_b == 0:
+        raise ValueError("Cosine similarity is undefined for a zero vector")
+    return dot_product / (norm_a * norm_b)
+
+
+def rank_by_embedding(
+    query_embedding: Sequence[float],
+    chunk_records: Sequence[Dict[str, Any]],
+    top_k: int | None = None,
+) -> List[Dict[str, Any]]:
+    """Rank chunk records by cosine similarity to a query embedding."""
+    ranked = []
+    for record in chunk_records:
+        embedding = record.get("embedding")
+        if embedding is None:
+            continue
+        try:
+            score = cosine_similarity(query_embedding, embedding)
+        except (TypeError, ValueError):
+            continue
+        enriched_record = dict(record)
+        enriched_record["similarity_score"] = score
+        ranked.append(enriched_record)
+
+    ranked.sort(key=lambda item: item["similarity_score"], reverse=True)
+    return ranked if top_k is None else ranked[:max(top_k, 0)]
+
+
+def retrieve_top_k(
+    query: str,
+    chunk_records: Sequence[Dict[str, Any]],
+    embed_query,
+    top_k: int = 3,
+) -> List[Dict[str, Any]]:
+    """Embed a query and return top-k local chunk matches with citation fields."""
+    if not query or not query.strip() or top_k <= 0:
+        return []
+
+    query_embedding = embed_query(query)
+    ranked = rank_by_embedding(query_embedding, chunk_records, top_k=top_k)
+    return [
+        {
+            "rank": rank,
+            "score": record["similarity_score"],
+            "text": record.get("text", record.get("content", "")),
+            "metadata": record.get("metadata", {}),
+            "chunk_id": record.get("chunk_id"),
+        }
+        for rank, record in enumerate(ranked, start=1)
+    ]
+
+
+def retrieve_from_vector_store(
+    query: str,
+    vector_store,
+    embed_query,
+    top_k: int = 3,
+    metadata_filter: Dict[str, Any] | None = None,
+) -> List[Dict[str, Any]]:
+    """Embed a query and search a VectorStore, preserving scores and metadata."""
+    if not query or not query.strip() or top_k <= 0:
+        return []
+
+    query_embedding = embed_query(query)
+    matches = vector_store.query_similar(
+        query_vector=query_embedding,
+        top_k=top_k,
+        where_filter=metadata_filter,
+    )
+    return [
+        {
+            "rank": rank,
+            "score": match["score"],
+            "text": match.get("text", ""),
+            "metadata": match.get("metadata", {}),
+            "id": match.get("id"),
+        }
+        for rank, match in enumerate(matches, start=1)
+    ]
+
+"""
+    SimpleRetriever  - Keyword-overlap ranked search over in-memory item lists.
                      Used for lightweight / offline operation (no vector DB required).
 
   HybridRetriever  - Semantic vector search backed by VectorStore (ChromaDB) with:
@@ -22,9 +112,6 @@ Both classes share a common output shape so callers can swap them transparently.
 
 import re
 from typing import List, Dict, Any, Optional
-
-from src.vector_store import VectorStore
-
 
 # ---------------------------------------------------------------------------
 # SimpleRetriever
@@ -124,7 +211,7 @@ class HybridRetriever:
 
     def __init__(
         self,
-        vector_store: VectorStore,
+        vector_store: Any,
         embed_fn,
         alpha: float = 0.7,
         beta: float = 0.3,

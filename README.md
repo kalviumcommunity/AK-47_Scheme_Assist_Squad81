@@ -143,6 +143,66 @@ To support robust RAG operation, we have added three core utilities evaluating t
   python src/model_parameter_experiment.py
   ```
 
+### 4. Embedding Similarity & Distance Metrics
+- **Script**: `src/similarity_experiment.py`
+- **Output Report**: `outputs/similarity_ranking_results.txt`
+- **Purpose**: Ranks precomputed chunk embeddings against a query embedding with cosine similarity. Higher scores indicate closer vector direction; they do not guarantee factual correctness.
+- **Execution**:
+  ```bash
+  python src/similarity_experiment.py
+  ```
+
+### 5. Batch Embedding & Resume-Safe Cost Tracking
+- **Script**: `src/batch_embedding.py`
+- **Output Report**: `outputs/batch_embedding_run_summary.json`
+- **Purpose**: Embeds pending chunks in configurable batches, retries transient failures with exponential backoff, checkpoints vectors after every batch, skips existing vectors, and reports estimated input cost.
+- **Execution**:
+  ```bash
+  python -m src.batch_embedding input_chunks.json embedded_chunks.json --batch-size 64
+  ```
+- Input may be a JSON list of chunk records or an object containing a `chunks` list. Each completed record receives an `embedding` field, so rerunning against the checkpoint avoids duplicate requests.
+
+### 6. Similarity Search & Top-K Retrieval
+- **Script**: `src/similarity_experiment.py`
+- **Output Report**: `outputs/top_k_retrieval_results.json`
+- **Purpose**: Embeds a sample query with the same configured embedding model as the document chunks, ranks matches by cosine similarity, and compares `k=1`, `k=3`, and `k=5` results with citation metadata.
+- **Execution**:
+   ```bash
+   python src/similarity_experiment.py
+   ```
+- For application code, `retrieve_from_vector_store()` embeds the query and calls `VectorStore.query_similar()`, while `retrieve_top_k()` provides the same result shape for local chunk records.
+
+### 7. Source Citation & Attribution
+- **Module**: `src/citations.py`
+- **Demo**: `src/citation_experiment.py`
+- **Output Report**: `outputs/citation_examples.json`
+- **Purpose**: Maps answer markers such as `[1]` to retrieved source metadata and original chunk text, verifies citation text against its source chunks, and returns a verified-information fallback when sources or valid citations are unavailable.
+- **Execution**:
+   ```bash
+   python src/citation_experiment.py
+   ```
+
+### 8. Hallucination Guardrails & Refusal Handling
+- **Module**: `src/guardrails.py`
+- **Demo**: `src/guardrails_experiment.py`
+- **Output Report**: `outputs/guardrail_examples.json`
+- **Purpose**: Checks retrieval scores before generation. Empty or weak context returns `refused_weak_context`; strong context can answer only when the generated response includes valid citations.
+- **Default threshold**: `0.72` with at least one supporting chunk.
+- **Execution**:
+   ```bash
+   python src/guardrails_experiment.py
+   ```
+
+### 9. Conversational RAG & Follow-Up Context
+- **Module**: `src/conversational_rag.py`
+- **Demo**: `src/conversational_rag_experiment.py`
+- **Output Report**: `outputs/conversational_rag_dialogue.json`
+- **Purpose**: Maintains a rolling user/assistant history, rewrites follow-up questions into standalone retrieval queries, retrieves with the rewritten query, and applies citation and retrieval guardrails before answering.
+- **Execution**:
+   ```bash
+   python src/conversational_rag_experiment.py
+   ```
+
 ---
 
 ## 🔒 Security & Secret Management
@@ -646,91 +706,3 @@ python src/index_corpus.py
 
 Produces verified reconciliation and spot-check output:
 ```text
-================================================================================
-  SCHEMEASSIST: 3.31 INDEXING EMBEDDINGS & METADATA STORAGE
-================================================================================
-[PIPELINE LOG] Loaded 18 embedded chunk(s) from 'outputs/embedded_corpus_chunks.json'.
-[PIPELINE LOG] Synchronized stable IDs back to 'outputs/embedded_corpus_chunks.json'.
-[INDEX LOG] Resetting collection 'schemeassist_chunks' for clean run...
-[INDEX LOG] Starting bulk insert of 18 records (batch_size=10)...
-  • Batch 1: Upserted 10 records (IDs: ayushman_bharat_healthcare.md:0 -> sample_doc.md:2)
-  • Batch 2: Upserted 8 records (IDs: sample_doc.md:3 -> senior_citizen_pension_scheme.txt:1)
-
---- INDEXING RECONCILIATION ---
-expected chunks: 18
-inserted this run: 18
-indexed count: 18
-failures: []
-
-[SPOT CHECK] spot check passed: ayushman_bharat_healthcare.md:0
-source: ayushman_bharat_healthcare.md
-section: Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (AB-PMJAY) Policy Document
-vector dimension: 1536
-text preview: # Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (AB-PMJAY) Policy Document...
-
-[SPOT CHECK] spot check passed: sample_doc.md:2
-source: sample_doc.md
-section: 2.4 Exclusion Criteria
-vector dimension: 1536
-text preview: 2.4 Exclusion Criteria...
-
-[SPOT CHECK] spot check passed: senior_citizen_pension_scheme.txt:1
-source: senior_citizen_pension_scheme.txt
-section: General Overview
-vector dimension: 1536
-text preview: ). - For persons aged 80 years and above: Central assistance of Rs 500 per month...
-
-[REPORT] Saved structured summary -> 'outputs/indexing_summary.json'
-[REPORT] Saved human-readable summary -> 'outputs/indexing_summary.txt'
-```
-
----
-
-### 🚀 Verification Commands
-
-1. **Run Full Indexing Pipeline**:
-   ```bash
-   python src/index_corpus.py
-   ```
-2. **Run Indexing Unit Tests**:
-   ```bash
-   python -m unittest tests/test_indexing.py -v
-   ```
-3. **Run Full Test Suite**:
-   ```bash
-   python -m unittest discover tests -v
-   ```
-
-### 📁 Generated Artifacts:
-- **Core Indexing Pipeline**: [`src/index_corpus.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/src/index_corpus.py)
-- **Comprehensive Unit Tests**: [`tests/test_indexing.py`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/tests/test_indexing.py)
-- **Detailed Documentation**: [`docs/indexing_embeddings_metadata_storage.md`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/docs/indexing_embeddings_metadata_storage.md)
-- **Structured Audit Report**: [`outputs/indexing_summary.json`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/indexing_summary.json)
-- **Human-Readable Audit Report**: [`outputs/indexing_summary.txt`](file:///c:/Users/msham/Desktop/AK-47_Scheme_Assist_Squad81/outputs/indexing_summary.txt)
-
----
-
-### 🎥 Video Walkthrough Guide (3–5 Minutes)
-
-When recording your submission video, cover these 5 core topics:
-
-1. **What Indexing Means in a Vector Database (0:00 – 0:50)**:
-   - Indexing means populating the vector collection with corpus chunk embeddings so they can be searched via approximate nearest-neighbor algorithms (HNSW), while persisting the original source text and structured metadata alongside each vector.
-2. **How You Confirmed the Indexed Count Was Correct (0:50 – 1:40)**:
-   - Point out the reconciliation equation: `indexed_count == expected_count == 18`.
-   - Explain that batched upserting (`batches(items, size=10)`) tracks `inserted` counts and captures any batch exceptions in `failures = []`. Show that 0 failures occurred and the final DB count matches the exact number of chunks produced during ingestion.
-3. **What is Stored for Each Record (1:40 – 2:30)**:
-   - Walk through the record structure in `to_vector_record()`:
-     - `id`: Stable key `{source}:{chunk_index}`
-     - `vector`: 1536-dimensional float embedding
-     - `text`: Chunk text for context injection
-     - `metadata`: `source`, `chunk_index`, `section`, `page`, `token_count`, `content_hash`
-4. **How Metadata Stored Now Enables Filtering Later (2:30 – 3:20)**:
-   - Vectors find semantically similar text, but queries often need hard constraints (e.g., retrieving only from `ayushman_bharat_healthcare.md` or filtering by section).
-   - Storing metadata now enables ChromaDB `where` clauses (`where={"source": "..."}`) to prune search space and return targeted policy details without cross-scheme contamination.
-5. **Follow-Up: How Would Re-Indexing Work When Documents Change? (3:20 – 4:30)**:
-   - Explain incremental re-indexing using stable IDs and content hashes (implemented in `reindex_changed_chunks()`):
-     - **Unchanged chunks**: If the chunk's content hash matches the stored hash, leave it alone. No new embedding is computed, saving API cost and latency.
-     - **Changed chunks**: If content hash changed, upsert the updated text, metadata, and new embedding into the same stable ID.
-     - **Removed chunks**: If a document was edited and reduced in size, obsolete IDs are pruned with `delete_record(id)`.
-   - This keeps the vector store 100% fresh without rebuilding the entire database from scratch.

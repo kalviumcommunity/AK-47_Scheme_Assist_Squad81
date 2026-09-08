@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.config import validate_environment, CHAT_MODEL
 from src.ingestion import load_documents_from_data_dir, ingest_and_chunk_documents
-from src.retrieval import SimpleRetriever
+from src.rag_pipeline import run_rag_pipeline
 
 
 def load_system_prompt() -> str:
@@ -15,12 +15,12 @@ def load_system_prompt() -> str:
     if os.path.exists(prompt_path):
         with open(prompt_path, "r", encoding="utf-8") as f:
             return f.read().strip()
-    return "You are an AI assistant."
+    return "You are an AI assistant for SchemeAssist."
 
 
 def main():
     print("=" * 65)
-    print("  [RAG App] SchemeAssist - Metadata-Tagged Chunk Retrieval Test")
+    print("  [RAG App] SchemeAssist - End-to-End RAG Pipeline Run")
     print("=" * 65)
     
     # 1. Validate Environment & Secrets
@@ -33,25 +33,27 @@ def main():
         return
 
     # Count unique documents ingested
-    unique_docs = {c.get("source_doc") for c in chunks if c.get("source_doc")}
+    unique_docs = {c.get("metadata", {}).get("source", c.get("source_doc", "unknown")) for c in chunks}
+    print(f"[INGESTION LOG] Ingested {len(unique_docs)} unique doc(s) into {len(chunks)} chunk(s).")
 
-    # 3. Build Retriever & Prompt
-    retriever = SimpleRetriever(chunks)
+    # 3. Load System Prompt
     system_prompt = load_system_prompt()
     print(f"[PROMPT LOG] Loaded system prompt ({len(system_prompt)} chars).")
 
-    # 4. Perform Verification Query & Trace Source Metadata
-    test_query = "welfare schemes eligibility guidance"
+    # 4. Perform End-to-End RAG Query & Trace Source Metadata
+    test_query = "welfare schemes eligibility guidance and income limits"
     print(f"\n[QUERY]: '{test_query}'")
     
-    results = retriever.search(test_query, top_k=1)
-    if results:
-        top_chunk = results[0]
-        print(f"[RETRIEVED CHUNK]: {top_chunk.get('chunk_id', 'N/A')} (Source: {top_chunk.get('source_doc', 'N/A')})")
-        print(f"[CHUNK METADATA]: Strategy: {top_chunk.get('strategy', 'N/A')} | Chars: {top_chunk.get('char_count', 'N/A')} | Score: {top_chunk.get('retrieval_score', 'N/A')}")
-        print(f"[CONTENT PREVIEW]:\n{top_chunk.get('content', '')[:250]}...")
+    result = run_rag_pipeline(test_query, top_k=3)
     
-    # 5. Log verification run
+    print("\n--- [FINAL GENERATED RAG ANSWER] ---")
+    print(result["answer"])
+    
+    print("\n--- [RETURNED SOURCES & CITATIONS] ---")
+    for src in result["sources"]:
+        print(f"[{src['citation_index']}] {src['source']} (Section: {src['section']}, Page: {src['page']})")
+    
+    # 5. Log verification run log for workspace compatibility
     os.makedirs("outputs", exist_ok=True)
     output_log_path = os.path.join("outputs", "verification_run.log")
     with open(output_log_path, "w", encoding="utf-8") as f:
@@ -61,13 +63,12 @@ def main():
             f"Documents Ingested: {len(unique_docs)}\n"
             f"Chunks Indexed: {len(chunks)}\n"
         )
-    
     print(f"\n[OUTPUT LOG] Verification run logged to '{output_log_path}'.")
-    print("=" * 65)
-    print("  [SUCCESS] METADATA TAGGING & SOURCE TRACKING PASSED SUCCESSFULLY!")
+
+    print("\n" + "=" * 65)
+    print("  [SUCCESS] END-TO-END RAG PIPELINE EXECUTED PASSED SUCCESSFULLY!")
     print("=" * 65)
 
 
 if __name__ == "__main__":
     main()
-

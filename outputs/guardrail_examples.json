@@ -1,0 +1,28 @@
+{
+  "answer_case": {
+    "answer": "Applicants must submit an income certificate [1].",
+    "citations": {
+      "[1]": {
+        "source": "scheme-guidelines.md",
+        "chunk_id": null,
+        "chunk_index": 2,
+        "page": null,
+        "section": null,
+        "text": "Applicants must submit an income certificate."
+      }
+    },
+    "prompt": "Answer using only the context below.\nCite every factual claim with one or more source markers such as [1] or [2].\nOnly use source markers that appear in the context.\nIf the context does not support an answer, say exactly: I do not have sufficient verified information to answer this question.\n\nContext:\n[1] Applicants must submit an income certificate.\n\nQuestion:\nWhat document is required?",
+    "status": "answered",
+    "top_score": 0.91,
+    "supporting_chunks": 1,
+    "threshold": 0.72
+  },
+  "refusal_case": {
+    "answer": "I don't have enough reliable context to answer that.",
+    "citations": [],
+    "status": "refused_weak_context",
+    "top_score": 0.21,
+    "supporting_chunks": 0,
+    "threshold": 0.72
+  }
+}

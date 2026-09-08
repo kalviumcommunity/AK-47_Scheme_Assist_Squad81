@@ -1,0 +1,36 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/query",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "question": "What is the annual financial assistance provided under PM-KISAN?"
+    }
+  },
+  "response": {
+    "status_code": 200,
+    "body": {
+      "answer": "Under the Scheme, an amount of Rs 6,000/- per year is released in three 4-monthly installments of Rs 2,000/- each directly into the bank accounts of the beneficiaries. Pradhan Mantri Kisan Samman Nidhi (PM-KISAN) Operational Guidelines",
+      "sources": [
+        {
+          "source": "pmkisan_scheme_doc.md",
+          "chunk_id": "pmkisan_scheme_doc.md:0",
+          "score": 0.1936
+        },
+        {
+          "source": "senior_citizen_pension_scheme.txt",
+          "chunk_id": "senior_citizen_pension_scheme.txt:0",
+          "score": 0.167
+        },
+        {
+          "source": "scholarship_welfare_circular.md",
+          "chunk_id": "scholarship_welfare_circular.md:1",
+          "score": 0.1629
+        }
+      ],
+      "status": "answered"
+    }
+  }
+}
