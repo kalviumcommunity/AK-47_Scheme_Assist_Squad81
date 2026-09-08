@@ -282,6 +282,22 @@ def ingest_and_chunk_documents(
     return all_chunks
 
 
+def load_and_chunk_documents(
+    data_dir: str = "data",
+    chunk_size_tokens: int = 250,
+    overlap_tokens: int = 50
+) -> List[Dict[str, Any]]:
+    """
+    Alias for ingest_and_chunk_documents supporting token-based parameters.
+    """
+    return ingest_and_chunk_documents(
+        data_dir=data_dir,
+        strategy="recursive",
+        chunk_size=chunk_size_tokens,
+        chunk_overlap=overlap_tokens
+    )
+
+
 def validate_corpus_ingestion(
     data_dir: str = "data",
     chunk_size_tokens: int = 250,
@@ -299,3 +315,17 @@ def validate_corpus_ingestion(
     )
     persist_pipeline_artifacts(summary, chunks)
     return chunks, summary.to_dict()
+
+
+if __name__ == "__main__":
+    print("=" * 60)
+    print("  [INGESTION MODULE] Running document ingestion & chunking test...")
+    print("=" * 60)
+    chunks = ingest_and_chunk_documents("data", strategy="recursive")
+    print("-" * 60)
+    print(f"Total chunks created: {len(chunks)}")
+    if chunks:
+        print("\n[SAMPLE CHUNK METADATA]:")
+        import json
+        print(json.dumps(chunks[0], indent=2))
+    print("=" * 60)

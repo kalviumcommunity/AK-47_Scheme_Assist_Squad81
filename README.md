@@ -689,7 +689,33 @@ When recording your submission video, cover these 5 core topics:
    - Explain the 6 evaluation criteria: scale, latency, metadata filtering needs, hosting model (embedded vs cloud SaaS), operational cost, and team familiarity.
    - Contrast ChromaDB (ideal for local/edge/embedded python) with Qdrant/Pinecone/pgvector (for multi-node horizontal scale and distributed production traffic).
 
+---
 
+## 3.31 Indexing Embeddings & Metadata Storage
 
+Milestone 3.31 populates the ChromaDB vector database collection (`schemeassist_chunks`) with all 18 embedded chunks from across the knowledge corpus. It implements batching to avoid socket and memory overload, verifies count reconciliation ($18 = 18$), conducts integrity spot-checks against source chunks, and handles incremental document change re-indexing.
 
+### 🏗️ Record Schema & Indexing Flow
 
+Every indexed record strictly adheres to the 4-part vector database schema:
+1. **`id`**: Unique deterministic identifier formatted as `{source}:{chunk_index}` (e.g. `ayushman_bharat_healthcare.md:0`).
+2. **`vector`**: 1536-dimensional float embedding array matching the embedding model.
+3. **`text`**: Full raw text of the chunk used by the LLM for grounded answer generation.
+4. **`metadata`**: Rich structured metadata dict preserving provenance:
+   - `source`: Source document filename
+   - `chunk_index`: Zero-based index within document
+   - `section`: Heading or policy chapter
+   - `page`: Page number
+   - `token_count`: Token length
+   - `content_hash`: SHA-256 fingerprint for change detection
+   - `doc_format`: Document extension (.md, .html, .txt)
+
+### 📊 Verification & Count Reconciliation
+
+Running the indexing pipeline:
+```bash
+python src/index_corpus.py
+```
+
+Produces verified reconciliation and spot-check output:
+```text

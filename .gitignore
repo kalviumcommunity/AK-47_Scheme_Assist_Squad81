@@ -32,6 +32,7 @@ outputs/*
 !outputs/chunking_comparison_results.txt
 !outputs/sample_chunks.json
 !outputs/sample_chunks.txt
+feature/caching-logging-monitoring
 !outputs/batch_embedding_run_summary.json
 !outputs/top_k_retrieval_results.json
 !outputs/citation_examples.json
@@ -39,6 +40,15 @@ outputs/*
 !outputs/conversational_rag_dialogue.json
 !outputs/rag_requests.jsonl
 !outputs/usage_summary_report.json
+
+!outputs/embedding_sanity_report.json
+!outputs/embedding_sanity_report.txt
+!outputs/vector_db_readback_results.json
+!outputs/vector_db_readback_results.txt
+!outputs/embedded_corpus_chunks.json
+!outputs/indexing_summary.json
+!outputs/indexing_summary.txt
+main
 
 # Vector Stores & Databases
 chroma_db/

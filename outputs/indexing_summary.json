@@ -1,0 +1,89 @@
+{
+  "milestone": "3.31 Indexing Embeddings & Metadata Storage",
+  "timestamp": "2026-09-07T08:18:37.137527+00:00",
+  "vector_database": {
+    "type": "ChromaDB (Persistent)",
+    "persist_directory": "chroma_db",
+    "collection_name": "schemeassist_chunks",
+    "dimension": 1536,
+    "similarity_metric": "cosine"
+  },
+  "reconciliation": {
+    "expected_chunks": 18,
+    "inserted_this_run": 18,
+    "indexed_count": 18,
+    "count_matches": true,
+    "failures": []
+  },
+  "batch_configuration": {
+    "batch_size": 10,
+    "total_batches": 2
+  },
+  "spot_checks": [
+    {
+      "id": "ayushman_bharat_healthcare.md:0",
+      "status": "PASSED",
+      "source": "ayushman_bharat_healthcare.md",
+      "section": "Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (AB-PMJAY) Policy Document",
+      "chunk_index": 0,
+      "vector_dim": 1536,
+      "text_preview": "# Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (AB-PMJAY) Policy Document\n\n## 1. Executive Summary\nAyushman Bharat P",
+      "metadata_snapshot": {
+        "position": "Chunk 1 of 2 (tokens 0-250)",
+        "token_count": 250,
+        "chunk_index": 0,
+        "content_hash": "d405c13b695d250b",
+        "page": 1,
+        "source": "ayushman_bharat_healthcare.md",
+        "section": "Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (AB-PMJAY) Policy Document",
+        "doc_format": ".md"
+      }
+    },
+    {
+      "id": "sample_doc.md:2",
+      "status": "PASSED",
+      "source": "sample_doc.md",
+      "section": "2.4 Exclusion Criteria",
+      "chunk_index": 2,
+      "vector_dim": 1536,
+      "text_preview": "2.4 Exclusion Criteria\nThe following categories are explicitly disqualified from receiving benefits under PM-DIS regardl",
+      "metadata_snapshot": {
+        "content_hash": "8c7d4203474df14e",
+        "doc_format": ".md",
+        "section": "2.4 Exclusion Criteria",
+        "position": "Chunk 3 of 7 (tokens 400-650)",
+        "source": "sample_doc.md",
+        "chunk_index": 2,
+        "token_count": 250,
+        "page": 1
+      }
+    },
+    {
+      "id": "senior_citizen_pension_scheme.txt:1",
+      "status": "PASSED",
+      "source": "senior_citizen_pension_scheme.txt",
+      "section": "General Overview",
+      "chunk_index": 1,
+      "vector_dim": 1536,
+      "text_preview": ").\n- For persons aged 80 years and above: Central assistance of Rs 500 per month per beneficiary.\n\n4. Application and Ve",
+      "metadata_snapshot": {
+        "token_count": 130,
+        "content_hash": "661fb5304cb2a6f1",
+        "source": "senior_citizen_pension_scheme.txt",
+        "section": "General Overview",
+        "doc_format": ".txt",
+        "chunk_index": 1,
+        "position": "Chunk 2 of 2 (tokens 200-330)",
+        "page": 1
+      }
+    }
+  ],
+  "indexed_sources_breakdown": {
+    "ayushman_bharat_healthcare.md": 2,
+    "housing_welfare_guidelines.html": 2,
+    "pmkisan_scheme_doc.md": 3,
+    "sample_doc.md": 7,
+    "scholarship_welfare_circular.md": 2,
+    "senior_citizen_pension_scheme.txt": 2
+  }
+}

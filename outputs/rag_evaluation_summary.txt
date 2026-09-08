@@ -1,0 +1,91 @@
+================================================================================
+  SCHEMEASSIST: 3.43 RAG EVALUATION & ANSWER QUALITY SUMMARY
+================================================================================
+Timestamp                 : 2026-09-07T08:53:48.033360+00:00
+Total Questions Evaluated : 7
+Average Correctness       : 81.0%
+Average Grounding         : 100.0%
+Average Citation Accuracy : 85.7%
+Overall Quality Score     : 88.9%
+Perfect Pass Rate         : 71.4% (5/7)
+
+--- PER-QUESTION SCORECARD ---
+[Q1_PMKISAN_BENEFIT] What is the annual financial assistance provided under PM-KISAN?
+  Category          : agriculture_income_support
+  Correctness       : 1.0
+  Grounding         : 1.0
+  Citation Accuracy : 1.0
+  Citations         : ['pmkisan_scheme_doc.md']
+  Expected Sources  : ['pmkisan_scheme_doc.md']
+  Answer Preview    : Pradhan Mantri Kisan Samman Nidhi (PM-KISAN) Operational Guidelines The PM-KISAN scheme is a Central Sector Scheme to provide income support to all la...
+
+[Q2_ABPMJAY_COVERAGE] What hospitalisation cover is provided under Ayushman Bharat PM-JAY?
+  Category          : healthcare_assurance
+  Correctness       : 1.0
+  Grounding         : 1.0
+  Citation Accuracy : 1.0
+  Citations         : ['ayushman_bharat_healthcare.md']
+  Expected Sources  : ['ayushman_bharat_healthcare.md']
+  Answer Preview    : Ayushman Bharat PM-JAY is the world's largest government funded healthcare assurance scheme, providing a health cover of Rs 5 Lakhs per family per yea...
+
+[Q3_PMAY_SUBSIDY] What interest subsidy is offered under PMAY Credit Linked Subsidy Scheme?
+  Category          : housing_welfare
+  Correctness       : 1.0
+  Grounding         : 1.0
+  Citation Accuracy : 1.0
+  Citations         : ['housing_welfare_guidelines.html']
+  Expected Sources  : ['housing_welfare_guidelines.html']
+  Answer Preview    : Credit Linked Subsidy Scheme (CLSS) provides upfront interest subsidy of up to 6.5% on home loans up to Rs 6,00,000 for a tenure of 20 years. Rural be...
+
+[Q4_PENSION_ELIGIBILITY] What are the age and assistance criteria under the senior citizen pension scheme?
+  Category          : social_security_pension
+  Correctness       : 1.0
+  Grounding         : 1.0
+  Citation Accuracy : 1.0
+  Citations         : ['senior_citizen_pension_scheme.txt']
+  Expected Sources  : ['senior_citizen_pension_scheme.txt']
+  Answer Preview    : The Indira Gandhi National Old Age Pension Scheme (IGNOAPS) is a non-contributory pension scheme under the Ministry of Rural Development aimed at prov...
+
+[Q5_SCHOLARSHIP_CRITERIA] What are the eligibility conditions for pre-matric scholarship assistance?
+  Category          : education_welfare
+  Correctness       : 0.3333
+  Grounding         : 1.0
+  Citation Accuracy : 0.0
+  Citations         : ['ayushman_bharat_healthcare.md']
+  Expected Sources  : ['scholarship_welfare_circular.md']
+  Answer Preview    : Ayushman Bharat PM-JAY is the world's largest government funded healthcare assurance scheme, providing a health cover of Rs 5 Lakhs per family per yea...
+
+[Q6_PMDIS_EXCLUSIONS] Which categories are explicitly disqualified from receiving benefits under PM-DIS?
+  Category          : welfare_exclusions
+  Correctness       : 0.3333
+  Grounding         : 1.0
+  Citation Accuracy : 1.0
+  Citations         : ['sample_doc.md']
+  Expected Sources  : ['sample_doc.md']
+  Answer Preview    : The following categories are explicitly disqualified from receiving benefits under PM-DIS regardless of land size: Institutional landholders and corpo...
+
+[Q7_OUT_OF_DOMAIN_GUARDRAIL] What flight license is required to pilot a commercial supersonic jet under SchemeAssist?
+  Category          : out_of_domain_fallback
+  Correctness       : 1.0
+  Grounding         : 1.0
+  Citation Accuracy : 1.0
+  Citations         : []
+  Expected Sources  : []
+  Answer Preview    : I do not have sufficient verified information in the official welfare scheme guidelines to answer this question. Please consult the official ministry ...
+
+--- HOW TO IMPROVE THE WEAKEST DIMENSION ---
+1. If Correctness is low:
+   - Increase top-k retrieval depth (e.g. k=3 -> k=5).
+   - Tune hybrid search weights (alpha for semantic vector, beta for exact keywords).
+   - Strengthen prompt instructions to explicitly cover all aspects of citizen queries.
+
+2. If Grounding is low:
+   - Enforce strict context-only prompting ('Answer ONLY using retrieved context').
+   - Lower temperature to 0.0 to suppress creative extrapolation.
+   - Strengthen fallback threshold to reject unverified queries early.
+
+3. If Citation Accuracy is low:
+   - Verify document chunk metadata tagging during ingestion.
+   - Enforce 1-to-1 mapping between cited chunk IDs and source filenames.
+   - Prune unverified or low-confidence sources before prompt generation.
+================================================================================
