@@ -1,0 +1,14 @@
+{
+  "total_requests": 3,
+  "cache_hits": 1,
+  "cache_misses": 2,
+  "cache_hit_rate": 0.33,
+  "total_input_tokens": 127,
+  "total_output_tokens": 36,
+  "total_estimated_cost": 4e-05,
+  "average_latency_ms": 0.0,
+  "status_counts": {
+    "answered": 2,
+    "refused_weak_context": 1
+  }
+}
