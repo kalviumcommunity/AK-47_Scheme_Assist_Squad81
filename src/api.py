@@ -68,10 +68,11 @@ def get_pipeline():
             force_offline=True,  # Ensure reliable, deterministic local execution without quota dependencies
         )
 
-    if pipeline_state["vector_store"] is None:
-        vs = VectorStore(persist_dir=VECTOR_DB_URL, collection_name=COLLECTION_NAME)
+    if pipeline_state["vector_store"] is None or pipeline_state["vector_store"].count() == 0:
+        db_path = "data/chroma_db" if os.path.exists("data/chroma_db") else VECTOR_DB_URL
+        vs = VectorStore(persist_dir=db_path, collection_name=COLLECTION_NAME)
         pipeline_state["vector_store"] = vs
-        logger.info("Connected to ChromaDB VectorStore with %d records.", vs.count())
+        logger.info("Connected to ChromaDB VectorStore at '%s' with %d records.", db_path, vs.count())
 
     return pipeline_state
 
@@ -344,6 +345,117 @@ def query_rag(request: QueryRequest):
     except Exception as exc:
         logger.exception("Internal failure during RAG execution: %s", exc)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="RAG service failed")
+
+
+# ─── SSE Streaming Endpoint (Tasks 1, 2, 3, & 4) ──────────────────────────────
+from fastapi.responses import StreamingResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+import asyncio
+import json
+
+@app.post("/query_stream", tags=["RAG Query Streaming"])
+async def query_rag_stream(request: QueryRequest):
+    """
+    Progressive SSE streaming endpoint for RAG query responses.
+    Yields event streams for:
+      - 'metadata': Sources, citations, and status
+      - 'token': Progressive answer text tokens
+      - 'done': Signal completion
+      - 'error': Exception / timeout details
+    """
+    cleaned_question = request.question.strip()
+    if not cleaned_question or len(cleaned_question) < 3:
+        async def err_generator():
+            yield f"event: error\ndata: {json.dumps({'error': 'Question must be at least 3 characters long.'})}\n\n"
+        return StreamingResponse(err_generator(), media_type="text/event-stream")
+
+    async def event_generator():
+        try:
+            state = get_pipeline()
+            embed_svc = state["embedding_service"]
+            vs = state["vector_store"]
+
+            if vs is None or vs.count() == 0:
+                yield f"event: error\ndata: {json.dumps({'error': 'Vector database is unavailable or empty.'})}\n\n"
+                return
+
+            # Step 1: Perform retrieval
+            raw_results = retrieve_from_vector_store(
+                query=cleaned_question,
+                vector_store=vs,
+                embed_query=embed_svc.embed_query,
+                top_k=3,
+            )
+
+            retrieved_chunks = []
+            structured_sources = []
+            for idx, r in enumerate(raw_results, start=1):
+                meta = r.get("metadata", {})
+                src_name = meta.get("source") or r.get("source") or "document"
+                cid = r.get("id")
+                score_val = r.get("score", 0.0)
+
+                chunk_obj = {
+                    "text": r.get("text", ""),
+                    "score": score_val,
+                    "chunk_id": cid,
+                    "metadata": meta,
+                    "source": src_name,
+                    "citation_idx": idx,
+                    "citation": f"[{idx}]"
+                }
+                retrieved_chunks.append(chunk_obj)
+                structured_sources.append({
+                    "citation": f"[{idx}]",
+                    "source": str(src_name),
+                    "chunk_id": str(cid) if cid else f"chunk_{idx}",
+                    "score": round(float(score_val), 4) if score_val else 0.0,
+                    "section": meta.get("section", "General Overview"),
+                    "page": meta.get("page", 1),
+                    "text": r.get("text", "")
+                })
+
+            # Send metadata SSE event first (Task 2 & 3: Sources & Citations)
+            metadata_event = {
+                "sources": structured_sources,
+                "status": "answered" if retrieved_chunks else "refused_weak_context"
+            }
+            yield f"event: metadata\ndata: {json.dumps(metadata_event)}\n\n"
+            await asyncio.sleep(0.05)
+
+            # Step 2: Stream progressive tokens (Task 1)
+            full_answer = _synthesize_grounded_answer(cleaned_question, retrieved_chunks)
+            # Break answer into progressive words/tokens
+            words = full_answer.split(" ")
+            for i, word in enumerate(words):
+                space = " " if i < len(words) - 1 else ""
+                token_event = {"token": word + space}
+                yield f"event: token\ndata: {json.dumps(token_event)}\n\n"
+                await asyncio.sleep(0.04)  # Simulate progressive typing output
+
+            # Send completion SSE event
+            yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
+
+        except Exception as e:
+            logger.exception("Error during SSE streaming: %s", e)
+            err_payload = {"error": f"Streaming failed: {str(e)}"}
+            yield f"event: error\ndata: {json.dumps(err_payload)}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+# Serve Chat UI HTML (Tasks 1-4)
+static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
+os.makedirs(static_dir, exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+@app.get("/ui", tags=["System"])
+def serve_chat_ui():
+    """Serves the interactive RAG Web Chat UI."""
+    index_path = os.path.join(static_dir, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return JSONResponse({"error": "UI page under construction."})
 
 
 def start():

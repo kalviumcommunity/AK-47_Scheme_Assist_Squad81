@@ -15,9 +15,10 @@ EMBED_MODEL = os.getenv("EMBED_MODEL", "text-embedding-3-small")
 
 # Vector Database Settings (ChromaDB)
 VECTOR_DB_TYPE = os.getenv("VECTOR_DB_TYPE", "chroma")
-CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", "chroma_db")
+default_db_dir = "data/chroma_db" if os.path.exists("data/chroma_db") else "chroma_db"
+CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", default_db_dir)
 VECTOR_DB_URL = os.getenv("VECTOR_DB_URL", CHROMA_PERSIST_DIR)
-COLLECTION_NAME = os.getenv("COLLECTION_NAME", "schemeassist_chunks")
+COLLECTION_NAME = os.getenv("COLLECTION_NAME", "scheme_assist_corpus")
 VECTOR_DIMENSION = int(os.getenv("VECTOR_DIMENSION", "1536"))
 SIMILARITY_METRIC = os.getenv("SIMILARITY_METRIC", "cosine")
 
