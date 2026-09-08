@@ -32,8 +32,9 @@ from contextlib import asynccontextmanager
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File, status
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from src.config import (
@@ -102,6 +103,18 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# Enable CORS for frontend clients (Next.js, Streamlit, local browsers)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Static UI Directory (3.46 Chat Interface & Query UI)
+STATIC_DIR = Path(__file__).parent / "static"
 
 
 # ─── Request & Response Models (Tasks 1 & 2) ──────────────────────────────────
@@ -191,8 +204,28 @@ def root():
         "health_url": "/health",
         "query_url": "/query",
         "documents_url": "/documents",
+        "ui_url": "/ui",
         "status": "operational",
     }
+
+
+@app.get("/ui", response_class=HTMLResponse, tags=["UI"])
+def serve_ui():
+    """Serves the SchemeAssist Chat Interface & Query UI."""
+    index_file = STATIC_DIR / "index.html"
+    if index_file.exists():
+        return HTMLResponse(content=index_file.read_text(encoding="utf-8"), status_code=200)
+    return HTMLResponse(
+        content="""<!DOCTYPE html>
+<html>
+<head><title>SchemeAssist UI</title></head>
+<body style="font-family:sans-serif;padding:2rem;">
+  <h2>SchemeAssist UI</h2>
+  <p>Static index.html not yet initialized.</p>
+</body>
+</html>""",
+        status_code=200,
+    )
 
 
 @app.get("/health", response_model=HealthResponse, tags=["System"])

@@ -1,0 +1,47 @@
+================================================================================
+SCHEME ASSIST - NEXT.JS CHAT INTERFACE SAMPLE INTERACTION
+================================================================================
+Timestamp: 2026-09-08T08:47:31Z
+Frontend: Next.js 16 (React 19, Vanilla CSS, App Router)
+Backend: FastAPI RAG Service (http://127.0.0.1:8000)
+
+[USER QUERY]
+"What is the installment amount and annual benefit under PM-KISAN scheme?"
+
+[API CALL]
+POST /query
+Host: http://localhost:8000
+Content-Type: application/json
+Payload: {"question": "What is the installment amount and annual benefit under PM-KISAN scheme?"}
+
+[API RESPONSE (Status 200 OK)]
+Status: answered
+Answer:
+Under the Scheme, an amount of Rs 6,000/- per year is released in three 4-monthly 
+installments of Rs 2,000/- each directly into the bank accounts of the beneficiaries. 
+The PM-KISAN scheme is a Central Sector Scheme to provide income support to all 
+landholding farmers' families across the country to enable them to take care of 
+expenses related to agriculture and allied activities as well as domestic needs.
+
+Retrieved Sources:
+1. Source Document: pmkisan_scheme_doc.md
+   Chunk ID: pmkisan_scheme_doc.md:0
+   Similarity Score: 0.2859
+2. Source Document: sample_new_policy.md
+   Chunk ID: sample_new_policy:chunk:1
+   Similarity Score: 0.2118
+3. Source Document: test_kcc_guide.txt
+   Chunk ID: test_kcc_guide:chunk:1
+   Similarity Score: 0.2107
+
+[UI RENDERED ELEMENTS]
+- Question message bubble with user avatar and timestamp
+- Assistant message bubble with SchemeAssist AI avatar
+- Grounded Response badge (emerald theme)
+- Retrieved Sources drawer rendered with 3 distinct card items:
+    * File icon + document name
+    * Unique chunk ID tag
+    * Relevance score badge
+- Live system status indicator: "● System Online | Knowledge Base: 13 Chunks Indexed"
+- Screenshot captured: outputs/chat_interface_screenshot.png
+================================================================================
