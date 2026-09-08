@@ -1,0 +1,65 @@
+================================================================================
+  SCHEMEASSIST: 3.31 INDEXING EMBEDDINGS & METADATA STORAGE SUMMARY
+================================================================================
+Timestamp          : 2026-09-07T08:18:37.137527+00:00
+Vector DB Engine   : ChromaDB (Persistent)
+Persist Directory  : chroma_db
+Collection Name    : schemeassist_chunks
+Vector Dimension   : 1536
+Similarity Metric  : cosine
+
+--- RECONCILIATION & COUNT VALIDATION ---
+Expected Chunks    : 18
+Inserted This Run  : 18
+Indexed DB Count   : 18
+Count Match Status : MATCHED (PASS)
+Batch Failures     : 0
+
+--- SOURCES BREAKDOWN ---
+  • ayushman_bharat_healthcare.md        : 2 chunks
+  • housing_welfare_guidelines.html      : 2 chunks
+  • pmkisan_scheme_doc.md                : 3 chunks
+  • sample_doc.md                        : 7 chunks
+  • scholarship_welfare_circular.md      : 2 chunks
+  • senior_citizen_pension_scheme.txt    : 2 chunks
+
+--- INTEGRITY SPOT CHECKS ---
+[Check 1] ID: ayushman_bharat_healthcare.md:0
+  Status        : PASSED
+  Source Doc    : ayushman_bharat_healthcare.md
+  Section       : Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (AB-PMJAY) Policy Document
+  Chunk Index   : 0
+  Vector Dim    : 1536
+  Text Preview  : # Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (AB-PMJAY) Policy Document
+
+## 1. Executive Summary
+Ayushman Bharat P...
+
+[Check 2] ID: sample_doc.md:2
+  Status        : PASSED
+  Source Doc    : sample_doc.md
+  Section       : 2.4 Exclusion Criteria
+  Chunk Index   : 2
+  Vector Dim    : 1536
+  Text Preview  : 2.4 Exclusion Criteria
+The following categories are explicitly disqualified from receiving benefits under PM-DIS regardl...
+
+[Check 3] ID: senior_citizen_pension_scheme.txt:1
+  Status        : PASSED
+  Source Doc    : senior_citizen_pension_scheme.txt
+  Section       : General Overview
+  Chunk Index   : 1
+  Vector Dim    : 1536
+  Text Preview  : ).
+- For persons aged 80 years and above: Central assistance of Rs 500 per month per beneficiary.
+
+4. Application and Ve...
+
+--- RE-INDEXING ON DOCUMENT CHANGE EXPLANATION ---
+When documents change:
+1. Chunks use stable IDs: {source}:{chunk_index}
+2. Content hashes (SHA-256) track whether chunk text has changed.
+3. Changed chunks are upserted with fresh embeddings.
+4. Unchanged chunks remain untouched, avoiding expensive re-embedding.
+5. Orphaned/removed chunks are pruned via delete_record(chunk_id).
+================================================================================
