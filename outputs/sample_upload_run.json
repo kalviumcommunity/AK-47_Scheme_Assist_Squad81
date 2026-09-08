@@ -1,0 +1,130 @@
+{
+  "experiment": "3.45 Document Upload & Indexing Endpoint",
+  "steps": {
+    "1_baseline_health": {
+      "status": "healthy",
+      "embedding_model": "text-embedding-3-small",
+      "chat_model": "gpt-4o-mini",
+      "vector_db_url": "chroma_db",
+      "collection_name": "schemeassist_chunks",
+      "openai_configured": true,
+      "indexed_chunks": 25
+    },
+    "2_query_before_upload": {
+      "question": "What toolkit incentive and collateral-free loan support is provided under PM Vishwakarma Scheme?",
+      "response": {
+        "answer": "Scheme Component A: Small & Marginal Farmers Direct Income Support (PM-DIS) The National Welfare Assistance Framework establishes comprehensive social security, direct income support, and healthcare enablement for economically vulnerable citizens, smallholder agriculturalists, and senior citizens.",
+        "sources": [
+          {
+            "source": "sample_doc.md",
+            "chunk_id": "sample_doc.md:0",
+            "score": 0.1414
+          },
+          {
+            "source": "pmkisan_scheme_doc.md",
+            "chunk_id": "pmkisan_scheme_doc.md:0",
+            "score": 0.1286
+          },
+          {
+            "source": "sample_doc.md",
+            "chunk_id": "sample_doc.md:2",
+            "score": 0.115
+          }
+        ],
+        "status": "answered"
+      }
+    },
+    "3_upload_document": {
+      "status_code": 200,
+      "response": {
+        "status": "indexed",
+        "filename": "sample_new_policy.md",
+        "summary": {
+          "document": "uploads/sample_new_policy.md",
+          "chunks": 4,
+          "indexed": 4
+        }
+      }
+    },
+    "4_health_after_upload": {
+      "health": {
+        "status": "healthy",
+        "embedding_model": "text-embedding-3-small",
+        "chat_model": "gpt-4o-mini",
+        "vector_db_url": "chroma_db",
+        "collection_name": "schemeassist_chunks",
+        "openai_configured": true,
+        "indexed_chunks": 26
+      },
+      "delta_chunks": 1
+    },
+    "5_query_after_upload": {
+      "question": "What toolkit incentive and collateral-free loan support is provided under PM Vishwakarma Scheme?",
+      "response": {
+        "answer": "Collateral-Free Credit Support**: Enterprise development loans up to Rs 3,00,000 provided in two tranches without any collateral requirement. Modern Toolkit Incentive**: A direct financial incentive grant of Rs 15,000 provided in the form of an e-voucher or DBT to purchase modern trade toolkits.",
+        "sources": [
+          {
+            "source": "sample_new_policy.md",
+            "chunk_id": "sample_new_policy:chunk:2",
+            "score": 0.2044
+          },
+          {
+            "source": "sample_new_policy.md",
+            "chunk_id": "sample_new_policy:chunk:1",
+            "score": 0.1955
+          },
+          {
+            "source": "sample_new_policy.md",
+            "chunk_id": "sample_new_policy:chunk:4",
+            "score": 0.16
+          }
+        ],
+        "status": "answered"
+      }
+    },
+    "6_second_query_after_upload": {
+      "question": "What is the daily stipend during basic skill training under PM Vishwakarma Yojana?",
+      "response": {
+        "answer": "Enrolment is conducted via Common Service Centers (CSCs) on the PM Vishwakarma portal: Upon successful verification, artisans receive a digital PM Vishwakarma Certificate and ID Card.",
+        "sources": [
+          {
+            "source": "sample_new_policy.md",
+            "chunk_id": "sample_new_policy:chunk:4",
+            "score": 0.1965
+          },
+          {
+            "source": "sample_new_policy.md",
+            "chunk_id": "sample_new_policy:chunk:2",
+            "score": 0.1835
+          },
+          {
+            "source": "sample_new_policy.md",
+            "chunk_id": "sample_new_policy:chunk:1",
+            "score": 0.1201
+          }
+        ],
+        "status": "answered"
+      }
+    },
+    "7_error_handling": {
+      "unsupported_format": {
+        "status": 415,
+        "detail": {
+          "detail": "Unsupported file type '.exe'. Supported formats: .html, .md, .pdf, .txt"
+        }
+      },
+      "empty_file": {
+        "status": 400,
+        "detail": {
+          "detail": "Uploaded file is empty (0 bytes)."
+        }
+      },
+      "oversized_file": {
+        "status": 413,
+        "detail": {
+          "detail": "Uploaded file exceeds maximum allowed size of 10MB."
+        }
+      }
+    }
+  }
+}

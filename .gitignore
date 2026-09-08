@@ -20,6 +20,7 @@ data/*
 !data/housing_welfare_guidelines.html
 !data/scholarship_welfare_circular.md
 !data/unsupported_file.xyz
+!data/sample_new_policy.md
 
 outputs/*
 !outputs/.gitkeep
@@ -34,13 +35,16 @@ outputs/*
 !outputs/sample_chunks.txt
 !outputs/batch_embedding_run_summary.json
 !outputs/top_k_retrieval_results.json
-!outputs/citation_examples.json
-!outputs/guardrail_examples.json
-!outputs/conversational_rag_dialogue.json
 !outputs/rag_evaluation_results.json
 !outputs/rag_evaluation_summary.txt
 !outputs/api_sample_query_response.json
 !outputs/api_sample_query_response.txt
+!outputs/sample_upload_run.json
+!outputs/sample_upload_run.txt
+
+# Uploaded Files
+uploads/*
+!uploads/.gitkeep
 
 # Vector Stores & Databases
 chroma_db/
