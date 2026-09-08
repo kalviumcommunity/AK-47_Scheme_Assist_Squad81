@@ -20,6 +20,15 @@ def get_tokenizer(model_name: str = "gpt-4o-mini"):
         print(f"[TOKENIZER WARNING] Direct encoding for '{model_name}' not found. Falling back to 'cl100k_base'.")
         return tiktoken.get_encoding("cl100k_base")
 
+def count_tokens(text: str, model_name: str = "gpt-4o-mini") -> int:
+    """
+    Returns the token count for a given text using tiktoken.
+    """
+    if not text:
+        return 0
+    encoding = get_tokenizer(model_name)
+    return len(encoding.encode(text))
+
 def calculate_cost(input_tokens: int, output_tokens: int) -> float:
     """
     Calculates cost based on input and output token counts and standard rates.
