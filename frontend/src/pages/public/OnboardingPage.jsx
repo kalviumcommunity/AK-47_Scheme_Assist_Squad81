@@ -6,20 +6,22 @@ import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import { DEFAULT_CITIZEN } from '../../data/mockCitizenData';
+import { useAuth } from '../../context/AuthContext';
 
 export function OnboardingPage() {
   const navigate = useNavigate();
+  const { user, login } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     // Step 1: Personal
-    fullName: DEFAULT_CITIZEN.name,
+    fullName: user?.name || DEFAULT_CITIZEN.name,
     dob: DEFAULT_CITIZEN.dob,
     age: DEFAULT_CITIZEN.age,
     gender: DEFAULT_CITIZEN.gender,
-    phone: DEFAULT_CITIZEN.phone,
-    email: DEFAULT_CITIZEN.email,
+    phone: user?.phone || DEFAULT_CITIZEN.phone,
+    email: user?.email || DEFAULT_CITIZEN.email,
     // Step 2: Location
-    state: DEFAULT_CITIZEN.location.state,
+    state: user?.state || DEFAULT_CITIZEN.location.state,
     district: DEFAULT_CITIZEN.location.district,
     city: DEFAULT_CITIZEN.location.city,
     pincode: DEFAULT_CITIZEN.location.pincode,
@@ -52,8 +54,17 @@ export function OnboardingPage() {
       setCurrentStep((prev) => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      // Completed, redirect to AI analysis
-      navigate('/ai-analysis');
+      // Completed, persist profile and redirect to dashboard
+      if (user) {
+        login({
+          ...user,
+          name: formData.fullName.trim() || user.name,
+          phone: formData.phone.trim(),
+          email: formData.email.trim(),
+          state: formData.state,
+        });
+      }
+      navigate('/dashboard');
     }
   };
 

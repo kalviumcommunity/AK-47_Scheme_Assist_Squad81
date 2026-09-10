@@ -16,9 +16,12 @@ import { SchemeCard, ActivityFeed } from '../../components/dashboard/SchemeCard'
 import Button from '../../components/ui/Button';
 import { DEFAULT_CITIZEN, MOCK_APPLICATIONS } from '../../data/mockCitizenData';
 import { SCHEMES } from '../../data/schemesData';
+import { useAuth } from '../../context/AuthContext';
 
 export function DashboardPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const citizenName = user?.name || DEFAULT_CITIZEN.name;
   const [savedSchemes, setSavedSchemes] = useState(['pm-kisan', 'ayushman-bharat']);
 
   const handleToggleSave = (id) => {
@@ -42,7 +45,7 @@ export function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-navy tracking-tight">
-            Good Morning, {DEFAULT_CITIZEN.name.split(' ')[0]} 👋
+            Good Morning, {citizenName} 👋
           </h1>
           <p className="text-xs sm:text-sm text-slate-muted mt-1">
             Here is your SchemeAssist welfare and eligibility overview.

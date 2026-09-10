@@ -9,7 +9,7 @@ Before trusting vector retrieval in **SchemeAssist**, we verify whether our embe
 - **Provider**: `offline`
 - **Indexed Corpus Chunks**: `18`
 - **Vector Dimensionality**: `1536`
-- **Evaluation Timestamp**: `2026-09-07T05:45:04.997351+00:00`
+- **Evaluation Timestamp**: `2026-09-10T08:24:42.730309+00:00`
 
 ## 📊 Summary Scorecard
 

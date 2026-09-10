@@ -1,790 +1,2729 @@
 # -*- coding: utf-8 -*-
 """
-src/api.py - 3.44 Backend API for the RAG Service
-=================================================
-Exposes the SchemeAssist RAG pipeline through a high-performance, validated
-REST API using FastAPI and Pydantic.
+src/api.py - SchemeAssist Backend API Service
+================================================
 
-Key Capabilities:
-  1. POST /query : Accepts a validated question, executes RAG retrieval and
-                   grounded synthesis, and returns structured JSON with answer,
-                   sources (source, chunk_id, score), and status.
-  2. GET /health : Verifies service liveness, environment settings, and vector DB state.
-  3. GET /       : Root discovery endpoint returning API metadata and route directory.
-  4. Environment-driven configuration : Loads all API keys, model names, vector DB
-                                        URLs, and host/port dynamically from environment.
-  5. Strict input validation & error handling : Returns 400 for empty or invalid
-                                               questions, 422 for unprocessable entities,
-                                               and 500 for internal server errors.
+SchemeAssist supports two answer modes:
+
+1. VERIFIED RAG MODE
+   - Searches ChromaDB
+   - Uses uploaded / indexed scheme documents
+   - Returns source citations
+
+2. GENERAL SCHEME AI MODE
+   - Used when the requested scheme is not available
+     in the local ChromaDB knowledge base
+   - Gemini answers general government scheme questions
+   - Clearly marks the response as AI generated
+
+Architecture:
+
+Frontend
+   |
+   v
+FastAPI
+   |
+   v
+Scheme Query Detection
+   |
+   +----------------------------+
+   |                            |
+   v                            v
+ChromaDB RAG               Gemini General Knowledge
+   |                            |
+   v                            v
+Verified Answer             General Scheme Answer
+   |                            |
+   +-------------+--------------+
+                 |
+                 v
+          Structured JSON
 """
 
 import os
 import re
 import sys
+import json
 import logging
 import hashlib
 import datetime
+import asyncio
+
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from contextlib import asynccontextmanager
 
-# Ensure root directory is on sys.path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# ---------------------------------------------------------
+# ROOT PATH
+# ---------------------------------------------------------
 
-from fastapi import FastAPI, HTTPException, Request, UploadFile, File, status
+sys.path.append(
+    os.path.dirname(
+        os.path.dirname(
+            os.path.abspath(__file__)
+        )
+    )
+)
+
+# ---------------------------------------------------------
+# FASTAPI
+# ---------------------------------------------------------
+
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Request,
+    UploadFile,
+    File,
+    status,
+)
+
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
+
+from fastapi.responses import (
+    JSONResponse,
+    HTMLResponse,
+    StreamingResponse,
+)
+
 from fastapi.middleware.cors import CORSMiddleware
+
 from pydantic import BaseModel, Field
 
+
+# ---------------------------------------------------------
+# SCHEMEASSIST IMPORTS
+# ---------------------------------------------------------
+
 from src.config import (
-    OPENAI_API_KEY,
-    OPENAI_BASE_URL,
+    GEMINI_API_KEY,
+    GEMINI_MODEL,
     CHAT_MODEL,
     EMBED_MODEL,
     VECTOR_DB_URL,
+    CHROMA_PERSIST_DIR,
     COLLECTION_NAME,
     API_HOST,
     API_PORT,
 )
+
 from src.embeddings import EmbeddingService
+
 from src.vector_store import VectorStore
-from src.retrieval import retrieve_from_vector_store
-from src.guardrails import guarded_answer
-from src.citations import answer_with_citations
+
+from src.retrieval import (
+    SchemeRetriever,
+    is_scheme_related_query,
+    get_guardrail_response,
+    is_retrieval_strong,
+    MIN_RETRIEVAL_SCORE,
+    WEAK_CONTEXT_MESSAGE,
+)
+
 from src.cleaning import clean_text
+
 from src.ingestion import chunk_document_by_tokens
 
-# Setup logger
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-logger = logging.getLogger("rag_api")
+from src.llm_client import (
+    build_client,
+    make_completion,
+)
 
-# Upload Configuration (3.45 Document Upload & Indexing)
+from prompts.answer import (
+    ANSWER_V2,
+    render,
+)
+
+from prompts.templates import (
+    SYSTEM_SCHEME_ASSIST_TEMPLATE,
+)
+
+
+# ---------------------------------------------------------
+# LOGGER
+# ---------------------------------------------------------
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
+
+logger = logging.getLogger("schemeassist_api")
+
+
+# ---------------------------------------------------------
+# CONFIGURATION
+# ---------------------------------------------------------
+
 UPLOAD_DIR = Path("uploads")
-SUPPORTED_EXTENSIONS = {".txt", ".md", ".pdf", ".html"}
-MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB limit
 
-# Global pipeline state (cached across requests)
+SUPPORTED_EXTENSIONS = {
+    ".txt",
+    ".md",
+    ".pdf",
+    ".html",
+    ".htm",
+}
+
+MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024
+
+
+# ---------------------------------------------------------
+# PIPELINE STATE
+# ---------------------------------------------------------
+
 pipeline_state: Dict[str, Any] = {
+
     "vector_store": None,
+
     "embedding_service": None,
+
+    "retriever": None,
+
+    "gemini_client": None,
+
 }
 
 
-def get_pipeline():
-    """Initializes and returns cached vector store and embedding service."""
+# =========================================================
+# PIPELINE INITIALIZATION
+# =========================================================
+
+def get_pipeline() -> Dict[str, Any]:
+
+    # -----------------------------------------------------
+    # EMBEDDINGS
+    # -----------------------------------------------------
+
     if pipeline_state["embedding_service"] is None:
-        pipeline_state["embedding_service"] = EmbeddingService(
-            model_name=EMBED_MODEL,
-            force_offline=True,  # Ensure reliable, deterministic local execution without quota dependencies
+
+        logger.info(
+            "Initializing embedding service..."
         )
 
-    if pipeline_state["vector_store"] is None or pipeline_state["vector_store"].count() == 0:
-        db_path = "data/chroma_db" if os.path.exists("data/chroma_db") else VECTOR_DB_URL
-        vs = VectorStore(persist_dir=db_path, collection_name=COLLECTION_NAME)
-        pipeline_state["vector_store"] = vs
-        logger.info("Connected to ChromaDB VectorStore at '%s' with %d records.", db_path, vs.count())
+        pipeline_state["embedding_service"] = EmbeddingService(
+
+            model_name=EMBED_MODEL,
+
+            force_offline=False,
+
+        )
+
+
+    # -----------------------------------------------------
+    # VECTOR STORE
+    # -----------------------------------------------------
+
+    if pipeline_state["vector_store"] is None:
+
+        logger.info(
+            "Connecting to ChromaDB..."
+        )
+
+        candidates = [
+
+            (
+                CHROMA_PERSIST_DIR,
+                COLLECTION_NAME,
+            ),
+
+            (
+                "chroma_db",
+                "scheme_assist_corpus",
+            ),
+
+            (
+                "chroma_db",
+                "schemeassist_chunks",
+            ),
+
+            (
+                "data/chroma_db",
+                "scheme_assist_corpus",
+            ),
+
+        ]
+
+        vector_store = None
+
+
+        for persist_dir, collection_name in candidates:
+
+            try:
+
+                if os.path.exists(persist_dir):
+
+                    candidate = VectorStore(
+
+                        persist_dir=persist_dir,
+
+                        collection_name=collection_name,
+
+                    )
+
+                    count = candidate.count()
+
+
+                    if count > 0:
+
+                        vector_store = candidate
+
+                        logger.info(
+
+                            "Connected to ChromaDB '%s' collection '%s' with %d records.",
+
+                            persist_dir,
+
+                            collection_name,
+
+                            count,
+
+                        )
+
+                        break
+
+
+            except Exception as error:
+
+                logger.warning(
+
+                    "ChromaDB candidate failed: %s",
+
+                    error,
+
+                )
+
+
+        # Create if nothing found
+
+        if vector_store is None:
+
+            vector_store = VectorStore(
+
+                persist_dir=CHROMA_PERSIST_DIR,
+
+                collection_name=COLLECTION_NAME,
+
+            )
+
+
+        pipeline_state["vector_store"] = vector_store
+
+
+    # -----------------------------------------------------
+    # RETRIEVER
+    # -----------------------------------------------------
+
+    if pipeline_state["retriever"] is None:
+
+        try:
+
+            pipeline_state["retriever"] = SchemeRetriever(
+
+                db_dir=CHROMA_PERSIST_DIR,
+
+                collection_name=COLLECTION_NAME,
+
+            )
+
+            logger.info(
+                "SchemeRetriever initialized."
+            )
+
+        except Exception as error:
+
+            logger.warning(
+
+                "SchemeRetriever initialization warning: %s",
+
+                error,
+
+            )
+
+
+    # -----------------------------------------------------
+    # GEMINI
+    # -----------------------------------------------------
+
+    if pipeline_state["gemini_client"] is None:
+
+        api_key = GEMINI_API_KEY or os.getenv(
+            "GEMINI_API_KEY"
+        )
+
+
+        if api_key:
+
+            try:
+
+                pipeline_state["gemini_client"] = build_client()
+
+                logger.info(
+                    "Gemini client initialized."
+                )
+
+            except Exception as error:
+
+                logger.warning(
+
+                    "Gemini initialization warning: %s",
+
+                    error,
+
+                )
+
 
     return pipeline_state
 
 
+# =========================================================
+# GET RETRIEVER
+# =========================================================
+
+def get_retriever() -> SchemeRetriever:
+
+    state = get_pipeline()
+
+
+    if state["retriever"] is None:
+
+        state["retriever"] = SchemeRetriever(
+
+            db_dir=CHROMA_PERSIST_DIR,
+
+            collection_name=COLLECTION_NAME,
+
+        )
+
+
+    return state["retriever"]
+
+
+# =========================================================
+# GET GEMINI CLIENT
+# =========================================================
+
+def get_gemini_client():
+
+    state = get_pipeline()
+
+
+    if state["gemini_client"] is None:
+
+        state["gemini_client"] = build_client()
+
+
+    return state["gemini_client"]
+
+
+# =========================================================
+# APPLICATION LIFESPAN
+# =========================================================
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifespan context manager for warm-up and teardown."""
-    logger.info("Starting SchemeAssist RAG API service...")
-    get_pipeline()
-    yield
-    logger.info("Shutting down SchemeAssist RAG API service.")
 
-
-app = FastAPI(
-    title="SchemeAssist RAG API Service",
-    description="Backend API exposing the SchemeAssist Retrieval-Augmented Generation pipeline.",
-    version="1.0.0",
-    lifespan=lifespan,
-)
-
-# Enable CORS for frontend clients (Next.js, Streamlit, local browsers)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Static UI Directory (3.46 Chat Interface & Query UI)
-STATIC_DIR = Path(__file__).parent / "static"
-
-
-# ─── Request & Response Models (Tasks 1 & 2) ──────────────────────────────────
-
-class QueryRequest(BaseModel):
-    """
-    Request payload for RAG query endpoint.
-    Requires question to have min length 3 and max length 1000.
-    """
-    question: str = Field(
-        ...,
-        min_length=3,
-        max_length=1000,
-        description="The user's natural language question regarding welfare schemes.",
-        examples=["What is the annual financial assistance provided under PM-KISAN?"],
+    logger.info(
+        "Starting SchemeAssist AI service..."
     )
 
 
-class Source(BaseModel):
-    """Represents a retrieved source document chunk backing an answer."""
-    source: str = Field(..., description="Source document filename or identifier.")
-    chunk_id: Optional[str] = Field(None, description="Unique chunk record identifier.")
-    score: Optional[float] = Field(None, description="Retrieval similarity or relevance score.")
+    try:
+
+        get_pipeline()
+
+    except Exception as error:
+
+        logger.warning(
+
+            "Pipeline warmup warning: %s",
+
+            error,
+
+        )
 
 
-class QueryResponse(BaseModel):
-    """
-    Structured response payload returned by the query endpoint.
-    Guarantees stable contract for frontend, mobile, or chatbot clients.
-    """
-    answer: str = Field(..., description="Grounded answer synthesized from verified sources.")
-    sources: List[Source] = Field(default_factory=list, description="List of source citations.")
-    status: str = Field(..., description="Pipeline execution status: 'answered', 'refused_weak_context', etc.")
+    yield
 
+
+    logger.info(
+        "Shutting down SchemeAssist..."
+    )
+
+
+# =========================================================
+# FASTAPI APP
+# =========================================================
+
+app = FastAPI(
+
+    title="SchemeAssist API",
+
+    description=(
+        "AI powered Government Scheme Assistant "
+        "using Gemini and ChromaDB RAG."
+    ),
+
+    version="2.0.0",
+
+    lifespan=lifespan,
+
+)
+
+
+# =========================================================
+# CORS
+# =========================================================
+
+app.add_middleware(
+
+    CORSMiddleware,
+
+    allow_origins=["*"],
+
+    allow_credentials=True,
+
+    allow_methods=["*"],
+
+    allow_headers=["*"],
+
+)
+
+
+# =========================================================
+# STATIC DIRECTORY
+# =========================================================
+
+STATIC_DIR = (
+    Path(__file__).parent.parent
+    / "static"
+)
+
+
+# =========================================================
+# REQUEST MODELS
+# =========================================================
+
+class ChatRequest(BaseModel):
+
+    question: str = Field(
+
+        ...,
+
+        min_length=3,
+
+        max_length=2000,
+
+        description="Government scheme question.",
+
+    )
+
+
+class QueryRequest(BaseModel):
+
+    question: str = Field(
+
+        ...,
+
+        min_length=3,
+
+        max_length=2000,
+
+    )
+
+
+# =========================================================
+# SOURCE MODEL
+# =========================================================
+
+class ChatSource(BaseModel):
+
+    scheme: str
+
+    source: str
+
+    section: Optional[str] = "General Overview"
+
+    chunk_id: Optional[str] = None
+
+    score: Optional[float] = None
+
+
+# =========================================================
+# CHAT RESPONSE
+# =========================================================
+
+class ChatResponse(BaseModel):
+
+    answer: str
+
+    eligibility: Optional[str] = ""
+
+    benefits: Optional[str] = ""
+
+    application_process: List[str] = Field(
+        default_factory=list
+    )
+
+    documents_required: List[str] = Field(
+        default_factory=list
+    )
+
+    sources: List[ChatSource] = Field(
+        default_factory=list
+    )
+
+    status: str = "answered"
+
+    answer_mode: str = "general_ai"
+
+
+# =========================================================
+# HEALTH RESPONSE
+# =========================================================
 
 class HealthResponse(BaseModel):
-    """Health and configuration status payload."""
+
     status: str
+
     embedding_model: str
+
     chat_model: str
-    vector_db_url: str
+
     collection_name: str
-    openai_configured: bool
+
     indexed_chunks: int
 
+    gemini_configured: bool
 
-# ─── Document Upload Models (3.45) ──────────────────────────────────────────
+    openai_configured: bool = False
+
+
+# =========================================================
+# DOCUMENT MODELS
+# =========================================================
 
 class DocumentSummary(BaseModel):
-    """Execution metrics and audit record for uploaded document processing."""
-    document: str = Field(..., description="Stored document file path.")
-    chunks: int = Field(..., description="Number of token chunks generated.")
-    indexed: int = Field(..., description="Number of chunk records indexed into the vector database.")
+
+    document: str
+
+    chunks: int
+
+    indexed: int
 
 
 class DocumentUploadResponse(BaseModel):
-    """Structured response contract for document upload and indexing."""
-    status: str = Field(..., description="Indexing status: 'indexed'.")
-    filename: str = Field(..., description="Original filename of uploaded document.")
-    summary: DocumentSummary = Field(..., description="Indexing summary metrics.")
+
+    status: str
+
+    filename: str
+
+    summary: DocumentSummary
 
 
-# ─── Custom Error Handlers (Task 3) ───────────────────────────────────────────
+# =========================================================
+# VALIDATION ERROR HANDLER
+# =========================================================
 
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """Handles schema validation errors with structured JSON and 422 status."""
+@app.exception_handler(
+    RequestValidationError
+)
+async def validation_exception_handler(
+    request: Request,
+    exc: RequestValidationError,
+):
+
     return JSONResponse(
+
         status_code=422,
+
         content={
+
             "error": "Validation Error",
+
             "detail": exc.errors(),
+
             "status": "validation_error",
+
         },
+
     )
 
 
-# ─── Endpoints ────────────────────────────────────────────────────────────────
+# =========================================================
+# ROOT
+# =========================================================
 
-@app.get("/", tags=["System"])
+@app.get("/")
+
 def root():
-    """Root discovery endpoint."""
+
     return {
-        "service": "SchemeAssist RAG API Service",
-        "version": "1.0.0",
+
+        "service": "SchemeAssist",
+
+        "version": "2.0.0",
+
+        "provider": "Google Gemini",
+
+        "features": [
+
+            "Government Scheme AI",
+
+            "RAG Search",
+
+            "ChromaDB",
+
+            "Document Upload",
+
+            "Hybrid Retrieval",
+
+            "General Scheme Knowledge",
+
+        ],
+
+        "chat_url": "/api/chat",
+
+        "health_url": "/api/health",
+
+        "documents_url": "/api/documents",
+
         "docs_url": "/docs",
-        "health_url": "/health",
-        "query_url": "/query",
-        "documents_url": "/documents",
-        "ui_url": "/ui",
-        "status": "operational",
+
     }
 
 
-@app.get("/ui", response_class=HTMLResponse, tags=["UI"])
-def serve_ui():
-    """Serves the SchemeAssist Chat Interface & Query UI."""
-    index_file = STATIC_DIR / "index.html"
-    if index_file.exists():
-        return HTMLResponse(content=index_file.read_text(encoding="utf-8"), status_code=200)
-    return HTMLResponse(
-        content="""<!DOCTYPE html>
-<html>
-<head><title>SchemeAssist UI</title></head>
-<body style="font-family:sans-serif;padding:2rem;">
-  <h2>SchemeAssist UI</h2>
-  <p>Static index.html not yet initialized.</p>
-</body>
-</html>""",
-        status_code=200,
+# =========================================================
+# HEALTH CHECK
+# =========================================================
+
+@app.get(
+    "/api/health",
+    response_model=HealthResponse,
+)
+
+@app.get(
+    "/health",
+    response_model=HealthResponse,
+)
+
+def health_check():
+
+    state = get_pipeline()
+
+
+    vector_store = state.get(
+        "vector_store"
     )
 
 
-@app.get("/health", response_model=HealthResponse, tags=["System"])
-def health_check():
-    """Returns system operational status and loaded environment settings."""
-    state = get_pipeline()
-    vs = state.get("vector_store")
-    indexed = vs.count() if vs is not None else 0
+    indexed_chunks = 0
+
+
+    if vector_store is not None:
+
+        indexed_chunks = vector_store.count()
+
+
+    retriever = state.get(
+        "retriever"
+    )
+
+
+    if retriever:
+
+        try:
+
+            indexed_chunks = max(
+
+                indexed_chunks,
+
+                retriever.record_count,
+
+            )
+
+        except Exception:
+
+            pass
+
+
     return {
+
         "status": "healthy",
+
         "embedding_model": EMBED_MODEL,
-        "chat_model": CHAT_MODEL,
-        "vector_db_url": VECTOR_DB_URL,
+
+        "chat_model": (
+
+            CHAT_MODEL
+            or GEMINI_MODEL
+        ),
+
         "collection_name": COLLECTION_NAME,
-        "openai_configured": bool(OPENAI_API_KEY),
-        "indexed_chunks": indexed,
+
+        "indexed_chunks": indexed_chunks,
+
+        "gemini_configured": bool(
+            GEMINI_API_KEY
+            or os.getenv("GEMINI_API_KEY")
+        ),
+
+        "openai_configured": False,
+
     }
 
 
-def _synthesize_grounded_answer(question: str, retrieved_chunks: List[Dict[str, Any]]) -> str:
-    """Extracts salient factual sentences from the primary retrieved chunk."""
-    if not retrieved_chunks:
-        return "I do not have sufficient verified information to answer this question."
+# =========================================================
+# SCHEME QUESTION DETECTION
+# =========================================================
 
-    top_chunk = retrieved_chunks[0]
-    top_src = top_chunk.get("metadata", {}).get("source") or top_chunk.get("source")
-    text = top_chunk.get("text", "")
+def is_government_scheme_question(
+    question: str
+) -> bool:
 
-    q_tokens = {
-        tok.lower()
-        for tok in re.findall(r"\w+", question)
-        if len(tok) > 2
-        and tok.lower() not in {"what", "is", "the", "under", "for", "are", "which", "and", "provided", "conditions"}
-    }
-
-    # Split lines and sentences
-    segments = []
-    candidates = []
-    for block in text.split("\n"):
-        block = block.strip()
-        if not block:
-            continue
-        for sentence in re.split(r"(?<=[.!?])\s+", block):
-            clean = re.sub(r"^[\s#*\-]+", "", sentence).strip()
-            if len(clean) >= 15:
-                segments.append(clean)
-
-    for clean in segments:
-        line_tokens = {tok.lower() for tok in re.findall(r"\w+", clean)}
-        overlap = len(q_tokens.intersection(line_tokens))
-        bonus = 3 if any(kw in clean for kw in ["6,000", "5 Lakh", "6.5%", "60 years", "50%", "disqualified", "Rs 200 per month", "Rs 2,000", "three"]) else 0
-        if overlap >= 1 or bonus > 0:
-            candidates.append((overlap * 2.0 + bonus, clean))
-
-    candidates.sort(key=lambda x: x[0], reverse=True)
-    if candidates:
-        selected = [c[1] for c in candidates[:2]]
-        return f"{' '.join(selected)} [1]"
-    
-    # Fallback to first salient sentences from top chunk
-    first_lines = [re.sub(r"^[\s#*\-]+", "", l).strip() for l in text.splitlines() if len(l.strip()) > 15]
-    if first_lines:
-        return f"{' '.join(first_lines[:2])} [1]"
-
-    return f"{text[:250]} [1]"
+    text = question.lower()
 
 
-@app.post("/query", response_model=QueryResponse, tags=["RAG Query"])
-def query_rag(request: QueryRequest):
-    """
-    Query the SchemeAssist RAG pipeline.
+    # Clearly unrelated questions
 
-    Flow:
-      1. Validates input (rejects empty or whitespace strings with 400).
-      2. Embeds question and retrieves top matching chunks from VectorStore.
-      3. Passes retrieved context through answer synthesis and guardrails.
-      4. Returns structured JSON containing answer, sources, and status.
-    """
-    cleaned_question = request.question.strip()
-    if not cleaned_question or len(cleaned_question) < 3:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Question must not be empty or consist only of whitespace.",
-        )
+    unrelated_keywords = [
 
-    # Check for out-of-domain query topics that should be refused
-    out_of_domain_topics = ["supersonic", "drone pilot", "crypto trading", "space shuttle"]
-    if any(topic in cleaned_question.lower() for topic in out_of_domain_topics):
-        return {
-            "answer": "I do not have sufficient verified information in the official welfare scheme guidelines to answer this question. Please consult the official ministry portal or helpdesk.",
-            "sources": [],
-            "status": "refused_weak_context",
-        }
+        "javascript",
+
+        "python",
+
+        "react",
+
+        "nextjs",
+
+        "movie",
+
+        "film",
+
+        "song",
+
+        "cricket score",
+
+        "football score",
+
+        "programming",
+
+        "coding",
+
+        "weather",
+
+        "bitcoin",
+
+    ]
+
+
+    for keyword in unrelated_keywords:
+
+        if keyword in text:
+
+            return False
+
+
+    # Scheme related keywords
+
+    scheme_keywords = [
+
+        "scheme",
+
+        "yojana",
+
+        "government",
+
+        "govt",
+
+        "benefit",
+
+        "benefits",
+
+        "subsidy",
+
+        "subsidies",
+
+        "eligibility",
+
+        "eligible",
+
+        "apply",
+
+        "application",
+
+        "financial assistance",
+
+        "pension",
+
+        "farmer",
+
+        "agriculture",
+
+        "student scholarship",
+
+        "scholarship",
+
+        "health insurance",
+
+        "housing",
+
+        "ration",
+
+        "aadhaar",
+
+        "dbt",
+
+        "kisan",
+
+        "pm-",
+
+        "pm ",
+
+        "pradhan mantri",
+
+        "ayushman",
+
+        "mudra",
+
+        "ujjwala",
+
+        "awas",
+
+        "nrega",
+
+        "mgnrega",
+
+        "atal",
+
+        "startup india",
+
+        "digital india",
+
+        "india",
+
+    ]
+
+
+    for keyword in scheme_keywords:
+
+        if keyword in text:
+
+            return True
+
+
+    # Existing RAG detector
 
     try:
-        state = get_pipeline()
-        embed_svc = state["embedding_service"]
-        vs = state["vector_store"]
 
-        if vs is None or vs.count() == 0:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Vector database is empty or unavailable.",
-            )
+        if is_scheme_related_query(question):
 
-        # 1. Vector Search
-        raw_results = retrieve_from_vector_store(
-            query=cleaned_question,
-            vector_store=vs,
-            embed_query=embed_svc.embed_query,
-            top_k=3,
-        )
+            return True
 
-        retrieved_chunks = []
-        for r in raw_results:
-            meta = r.get("metadata", {})
-            retrieved_chunks.append({
-                "text": r.get("text", ""),
-                "content": r.get("text", ""),
-                "score": r.get("score", 0.0),
-                "chunk_id": r.get("id"),
-                "id": r.get("id"),
-                "metadata": meta,
-                "source": meta.get("source", "document"),
-            })
+    except Exception:
 
-        # 2. Answer synthesis function
-        def answer_fn(prompt: str) -> str:
-            return _synthesize_grounded_answer(cleaned_question, retrieved_chunks)
+        pass
 
-        # 3. Guardrail execution
-        # Calibrated threshold 0.12 cleanly admits verified scheme queries (0.14 - 0.33)
-        # while refusing irrelevant out-of-domain queries (<=0.11)
-        guard_res = guarded_answer(
-            question=cleaned_question,
-            chunks=retrieved_chunks,
-            answer_fn=answer_fn,
-            min_top_score=0.12,
-        )
 
-        exec_status = guard_res.get("status", "answered")
-        raw_answer = guard_res.get("answer", "")
-        # Strip citation marker bracket from final consumer string if desired, or keep as grounded text
-        clean_answer = re.sub(r"\s*\[\d+\]", "", raw_answer).strip()
+    return False
 
-        # 4. Extract structured sources
-        structured_sources: List[Dict[str, Any]] = []
-        if exec_status == "answered":
-            for chunk in retrieved_chunks:
-                meta = chunk.get("metadata", {})
-                src_name = meta.get("source") or chunk.get("source") or "unknown_source"
-                cid = chunk.get("chunk_id") or chunk.get("id")
-                score_val = chunk.get("score")
-                if score_val is not None:
-                    try:
-                        score_val = round(float(score_val), 4)
-                    except (TypeError, ValueError):
-                        score_val = None
 
-                structured_sources.append({
-                    "source": str(src_name),
-                    "chunk_id": str(cid) if cid else None,
-                    "score": score_val,
-                })
+# =========================================================
+# GENERAL GEMINI SCHEME ANSWER
+# =========================================================
+
+def generate_general_scheme_answer(
+    question: str,
+    client: Any,
+) -> Dict[str, Any]:
+
+    """
+    Answers government scheme questions that are
+    not available in the local ChromaDB database.
+    """
+
+
+    system_prompt = """
+
+You are SchemeAssist, an AI assistant that helps citizens understand
+government welfare schemes and public benefit programs.
+
+You can answer questions about government schemes across India,
+including central and state government schemes when information
+is available.
+
+Your responsibilities:
+
+1. Explain government schemes clearly.
+2. Explain eligibility criteria.
+3. Explain benefits and financial assistance.
+4. Explain application processes.
+5. Explain required documents.
+6. Mention official portals when you are confident.
+7. Do not invent scheme details.
+8. Do not make up financial amounts.
+9. Do not present uncertain information as confirmed.
+10. If a scheme has state-specific rules, clearly mention that.
+11. If you are not sufficiently confident, say so.
+
+IMPORTANT:
+
+Return ONLY valid JSON.
+
+Use exactly this format:
+
+{
+    "answer": "",
+    "eligibility": "",
+    "benefits": "",
+    "application_process": [],
+    "documents_required": []
+}
+
+If a field is unknown, use an empty string or empty array.
+
+Use simple citizen-friendly language.
+
+"""
+
+
+    user_prompt = f"""
+
+Citizen Question:
+
+{question}
+
+Provide accurate information about the government scheme.
+
+Do not discuss unrelated topics.
+
+Return JSON only.
+
+"""
+
+
+    messages = [
+
+        {
+
+            "role": "system",
+
+            "content": system_prompt,
+
+        },
+
+        {
+
+            "role": "user",
+
+            "content": user_prompt,
+
+        },
+
+    ]
+
+
+    reply = make_completion(
+        client,
+        messages,
+    )
+
+
+    if not reply:
 
         return {
-            "answer": clean_answer,
-            "sources": structured_sources,
-            "status": exec_status,
+
+            "answer": (
+                "I am currently unable to generate "
+                "a response. Please try again."
+            ),
+
+            "eligibility": "",
+
+            "benefits": "",
+
+            "application_process": [],
+
+            "documents_required": [],
+
+            "sources": [],
+
+            "status": "error",
+
+            "answer_mode": "general_ai",
+
         }
 
-    except HTTPException:
-        raise
-    except ValueError as val_err:
-        logger.error("Bad request error during query execution: %s", val_err)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(val_err))
-    except Exception as exc:
-        logger.exception("Internal failure during RAG execution: %s", exc)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="RAG service failed")
+
+    # Remove markdown fences
+
+    cleaned_reply = reply.strip()
 
 
-# ─── SSE Streaming Endpoint (Tasks 1, 2, 3, & 4) ──────────────────────────────
-from fastapi.responses import StreamingResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
-import asyncio
-import json
+    cleaned_reply = re.sub(
 
-@app.post("/query_stream", tags=["RAG Query Streaming"])
-async def query_rag_stream(request: QueryRequest):
-    """
-    Progressive SSE streaming endpoint for RAG query responses.
-    Yields event streams for:
-      - 'metadata': Sources, citations, and status
-      - 'token': Progressive answer text tokens
-      - 'done': Signal completion
-      - 'error': Exception / timeout details
-    """
-    cleaned_question = request.question.strip()
-    if not cleaned_question or len(cleaned_question) < 3:
-        async def err_generator():
-            yield f"event: error\ndata: {json.dumps({'error': 'Question must be at least 3 characters long.'})}\n\n"
-        return StreamingResponse(err_generator(), media_type="text/event-stream")
+        r"^```json\s*",
 
-    async def event_generator():
-        try:
-            state = get_pipeline()
-            embed_svc = state["embedding_service"]
-            vs = state["vector_store"]
+        "",
 
-            if vs is None or vs.count() == 0:
-                yield f"event: error\ndata: {json.dumps({'error': 'Vector database is unavailable or empty.'})}\n\n"
-                return
+        cleaned_reply,
 
-            # Step 1: Perform retrieval
-            raw_results = retrieve_from_vector_store(
-                query=cleaned_question,
-                vector_store=vs,
-                embed_query=embed_svc.embed_query,
-                top_k=3,
+        flags=re.IGNORECASE,
+
+    )
+
+
+    cleaned_reply = re.sub(
+
+        r"^```\s*",
+
+        "",
+
+        cleaned_reply,
+
+    )
+
+
+    cleaned_reply = re.sub(
+
+        r"\s*```$",
+
+        "",
+
+        cleaned_reply,
+
+    ).strip()
+
+
+    # Parse JSON
+
+    try:
+
+        parsed = json.loads(
+            cleaned_reply
+        )
+
+
+        application_process = parsed.get(
+            "application_process",
+            [],
+        )
+
+
+        documents_required = parsed.get(
+            "documents_required",
+            [],
+        )
+
+
+        if isinstance(
+            application_process,
+            str,
+        ):
+
+            application_process = [
+                application_process
+            ]
+
+
+        if isinstance(
+            documents_required,
+            str,
+        ):
+
+            documents_required = [
+                documents_required
+            ]
+
+
+        return {
+
+            "answer": str(
+
+                parsed.get(
+                    "answer",
+                    "",
+                )
+
+            ),
+
+            "eligibility": str(
+
+                parsed.get(
+                    "eligibility",
+                    "",
+                )
+
+            ),
+
+            "benefits": str(
+
+                parsed.get(
+                    "benefits",
+                    "",
+                )
+
+            ),
+
+            "application_process": [
+
+                str(item)
+
+                for item in application_process
+
+                if str(item).strip()
+
+            ],
+
+            "documents_required": [
+
+                str(item)
+
+                for item in documents_required
+
+                if str(item).strip()
+
+            ],
+
+            "sources": [
+
+                {
+
+                    "scheme": "General Government Scheme Information",
+
+                    "source": "Google Gemini AI",
+
+                    "section": "General Scheme Knowledge",
+
+                    "chunk_id": None,
+
+                    "score": None,
+
+                }
+
+            ],
+
+            "status": "answered",
+
+            "answer_mode": "general_ai",
+
+        }
+
+
+    except Exception:
+
+        # Plain text fallback
+
+        return {
+
+            "answer": cleaned_reply,
+
+            "eligibility": "",
+
+            "benefits": "",
+
+            "application_process": [],
+
+            "documents_required": [],
+
+            "sources": [
+
+                {
+
+                    "scheme": "General Government Scheme Information",
+
+                    "source": "Google Gemini AI",
+
+                    "section": "General Scheme Knowledge",
+
+                    "chunk_id": None,
+
+                    "score": None,
+
+                }
+
+            ],
+
+            "status": "answered",
+
+            "answer_mode": "general_ai",
+
+        }
+
+
+# =========================================================
+# VERIFIED RAG ANSWER
+# =========================================================
+
+def generate_grounded_scheme_answer(
+
+    question: str,
+
+    retrieved_chunks: List[Dict[str, Any]],
+
+    client: Any,
+
+) -> Dict[str, Any]:
+
+
+    context_blocks = []
+
+    sources = []
+
+
+    for index, chunk in enumerate(
+
+        retrieved_chunks,
+
+        start=1,
+
+    ):
+
+        metadata = chunk.get(
+            "metadata",
+            {},
+        )
+
+
+        source = (
+
+            metadata.get("source")
+
+            or chunk.get("source")
+
+            or "Official Scheme Document"
+
+        )
+
+
+        section = metadata.get(
+
+            "section",
+
+            "General Overview",
+
+        )
+
+
+        scheme_name = metadata.get(
+            "scheme_name"
+        )
+
+
+        if not scheme_name:
+
+            scheme_name = (
+                Path(source)
+                .stem
+                .replace("_", " ")
+                .title()
             )
 
-            retrieved_chunks = []
-            structured_sources = []
-            for idx, r in enumerate(raw_results, start=1):
-                meta = r.get("metadata", {})
-                src_name = meta.get("source") or r.get("source") or "document"
-                cid = r.get("id")
-                score_val = r.get("score", 0.0)
 
-                chunk_obj = {
-                    "text": r.get("text", ""),
-                    "score": score_val,
-                    "chunk_id": cid,
-                    "metadata": meta,
-                    "source": src_name,
-                    "citation_idx": idx,
-                    "citation": f"[{idx}]"
-                }
-                retrieved_chunks.append(chunk_obj)
-                structured_sources.append({
-                    "citation": f"[{idx}]",
-                    "source": str(src_name),
-                    "chunk_id": str(cid) if cid else f"chunk_{idx}",
-                    "score": round(float(score_val), 4) if score_val else 0.0,
-                    "section": meta.get("section", "General Overview"),
-                    "page": meta.get("page", 1),
-                    "text": r.get("text", "")
-                })
+        text = (
 
-            # Send metadata SSE event first (Task 2 & 3: Sources & Citations)
-            metadata_event = {
-                "sources": structured_sources,
-                "status": "answered" if retrieved_chunks else "refused_weak_context"
+            chunk.get("text")
+
+            or chunk.get("content")
+
+            or ""
+
+        ).strip()
+
+
+        score = (
+
+            chunk.get("hybrid_score")
+
+            or chunk.get("score")
+
+        )
+
+
+        context_blocks.append(
+
+            f"""
+--- SOURCE {index} ---
+
+Scheme:
+{scheme_name}
+
+Document:
+{source}
+
+Section:
+{section}
+
+Content:
+{text}
+"""
+
+        )
+
+
+        sources.append(
+
+            {
+
+                "scheme": scheme_name,
+
+                "source": source,
+
+                "section": section,
+
+                "chunk_id": (
+
+                    chunk.get("id")
+
+                    or chunk.get("chunk_id")
+
+                ),
+
+                "score": (
+
+                    round(
+                        float(score),
+                        4,
+                    )
+
+                    if score is not None
+
+                    else None
+
+                ),
+
             }
-            yield f"event: metadata\ndata: {json.dumps(metadata_event)}\n\n"
-            await asyncio.sleep(0.05)
 
-            # Step 2: Stream progressive tokens (Task 1)
-            full_answer = _synthesize_grounded_answer(cleaned_question, retrieved_chunks)
-            # Break answer into progressive words/tokens
-            words = full_answer.split(" ")
-            for i, word in enumerate(words):
-                space = " " if i < len(words) - 1 else ""
-                token_event = {"token": word + space}
-                yield f"event: token\ndata: {json.dumps(token_event)}\n\n"
-                await asyncio.sleep(0.04)  # Simulate progressive typing output
-
-            # Send completion SSE event
-            yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
-
-        except Exception as e:
-            logger.exception("Error during SSE streaming: %s", e)
-            err_payload = {"error": f"Streaming failed: {str(e)}"}
-            yield f"event: error\ndata: {json.dumps(err_payload)}\n\n"
-
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+        )
 
 
-# Serve Chat UI HTML (Tasks 1-4)
-static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
-os.makedirs(static_dir, exist_ok=True)
-app.mount("/static", StaticFiles(directory=static_dir), name="static")
-
-@app.get("/ui", tags=["System"])
-def serve_chat_ui():
-    """Serves the interactive RAG Web Chat UI."""
-    index_path = os.path.join(static_dir, "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return JSONResponse({"error": "UI page under construction."})
+    context = "\n".join(
+        context_blocks
+    )
 
 
-# ─── Document Upload & Processing Pipeline (3.45) ─────────────────────────────
+    system_prompt = """
 
-def validate_upload(file: UploadFile) -> str:
+You are SchemeAssist.
+
+You are a government welfare scheme assistant.
+
+Answer ONLY using the provided verified documents.
+
+Rules:
+
+1. Do not use outside knowledge.
+2. Do not invent information.
+3. Do not mix information from unrelated schemes.
+4. If application steps are not provided,
+   return an empty application_process array.
+5. If documents are not provided,
+   return an empty documents_required array.
+6. Return JSON only.
+
+"""
+
+
+    user_prompt = f"""
+
+VERIFIED SCHEME DOCUMENTS:
+
+{context}
+
+
+CITIZEN QUESTION:
+
+{question}
+
+
+Return ONLY JSON:
+
+{{
+    "answer": "",
+    "eligibility": "",
+    "benefits": "",
+    "application_process": [],
+    "documents_required": []
+}}
+
+"""
+
+
+    messages = [
+
+        {
+
+            "role": "system",
+
+            "content": system_prompt,
+
+        },
+
+        {
+
+            "role": "user",
+
+            "content": user_prompt,
+
+        },
+
+    ]
+
+
+    reply = make_completion(
+        client,
+        messages,
+    )
+
+
+    if not reply:
+
+        return {
+
+            "answer": (
+                "Unable to generate an answer "
+                "at this moment."
+            ),
+
+            "eligibility": "",
+
+            "benefits": "",
+
+            "application_process": [],
+
+            "documents_required": [],
+
+            "sources": sources,
+
+            "status": "error",
+
+            "answer_mode": "verified_rag",
+
+        }
+
+
+    cleaned_reply = reply.strip()
+
+
+    cleaned_reply = re.sub(
+
+        r"^```json\s*",
+
+        "",
+
+        cleaned_reply,
+
+        flags=re.IGNORECASE,
+
+    )
+
+
+    cleaned_reply = re.sub(
+
+        r"^```\s*",
+
+        "",
+
+        cleaned_reply,
+
+    )
+
+
+    cleaned_reply = re.sub(
+
+        r"\s*```$",
+
+        "",
+
+        cleaned_reply,
+
+    ).strip()
+
+
+    try:
+
+        parsed = json.loads(
+            cleaned_reply
+        )
+
+
+        application_process = parsed.get(
+            "application_process",
+            [],
+        )
+
+
+        documents_required = parsed.get(
+            "documents_required",
+            [],
+        )
+
+
+        if isinstance(
+            application_process,
+            str,
+        ):
+
+            application_process = [
+                application_process
+            ]
+
+
+        if isinstance(
+            documents_required,
+            str,
+        ):
+
+            documents_required = [
+                documents_required
+            ]
+
+
+        return {
+
+            "answer": str(
+
+                parsed.get(
+                    "answer",
+                    "",
+                )
+
+            ),
+
+            "eligibility": str(
+
+                parsed.get(
+                    "eligibility",
+                    "",
+                )
+
+            ),
+
+            "benefits": str(
+
+                parsed.get(
+                    "benefits",
+                    "",
+                )
+
+            ),
+
+            "application_process": [
+
+                str(item)
+
+                for item in application_process
+
+                if str(item).strip()
+
+            ],
+
+            "documents_required": [
+
+                str(item)
+
+                for item in documents_required
+
+                if str(item).strip()
+
+            ],
+
+            "sources": sources,
+
+            "status": "answered",
+
+            "answer_mode": "verified_rag",
+
+        }
+
+
+    except Exception:
+
+        return {
+
+            "answer": cleaned_reply,
+
+            "eligibility": "",
+
+            "benefits": "",
+
+            "application_process": [],
+
+            "documents_required": [],
+
+            "sources": sources,
+
+            "status": "answered",
+
+            "answer_mode": "verified_rag",
+
+        }
+
+
+# =========================================================
+# MAIN CHAT ENDPOINT
+# =========================================================
+
+@app.post(
+
+    "/api/chat",
+
+    response_model=ChatResponse,
+
+)
+
+@app.post(
+
+    "/chat",
+
+    response_model=ChatResponse,
+
+)
+
+def chat_ai(
+    request: ChatRequest
+):
+
+    question = request.question.strip()
+
+
+    # -----------------------------------------------------
+    # VALIDATION
+    # -----------------------------------------------------
+
+    if not question:
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail="Question cannot be empty.",
+
+        )
+
+
+    logger.info(
+        "CHAT QUESTION: %s",
+        question,
+    )
+
+
+    # -----------------------------------------------------
+    # CHECK QUESTION TYPE
+    # -----------------------------------------------------
+
+    if not is_government_scheme_question(
+        question
+    ):
+
+        return {
+
+            "answer": (
+                "I can assist with government welfare schemes, "
+                "eligibility, benefits, subsidies, pensions, "
+                "scholarships, applications, and public schemes. "
+                "Please ask a government scheme related question."
+            ),
+
+            "eligibility": "",
+
+            "benefits": "",
+
+            "application_process": [],
+
+            "documents_required": [],
+
+            "sources": [],
+
+            "status": "refused_unrelated_query",
+
+            "answer_mode": "guardrail",
+
+        }
+
+
+    try:
+
+        client = get_gemini_client()
+
+
+        # -------------------------------------------------
+        # TRY RAG FIRST
+        # -------------------------------------------------
+
+        retriever = None
+
+        results = []
+
+
+        try:
+
+            retriever = get_retriever()
+
+
+            if retriever.record_count > 0:
+
+                logger.info(
+                    "Trying verified RAG search..."
+                )
+
+
+                results = retriever.search(
+
+                    query=question,
+
+                    top_k=4,
+
+                )
+
+
+        except Exception as error:
+
+            logger.warning(
+
+                "RAG search failed: %s",
+
+                error,
+
+            )
+
+
+        # -------------------------------------------------
+        # STRONG RAG RESULT
+        # -------------------------------------------------
+
+        if results:
+
+            try:
+
+                strong = is_retrieval_strong(
+
+                    results,
+
+                    min_score=MIN_RETRIEVAL_SCORE,
+
+                )
+
+            except Exception:
+
+                strong = False
+
+
+            if strong:
+
+                logger.info(
+                    "Using VERIFIED RAG mode."
+                )
+
+
+                return generate_grounded_scheme_answer(
+
+                    question=question,
+
+                    retrieved_chunks=results,
+
+                    client=client,
+
+                )
+
+
+        # -------------------------------------------------
+        # GENERAL AI FALLBACK
+        # -------------------------------------------------
+
+        logger.info(
+            "Using GENERAL SCHEME AI mode."
+        )
+
+
+        return generate_general_scheme_answer(
+
+            question=question,
+
+            client=client,
+
+        )
+
+
+    except Exception as error:
+
+        logger.exception(
+            "Chat endpoint failed: %s",
+            error,
+        )
+
+
+        raise HTTPException(
+
+            status_code=500,
+
+            detail=str(error),
+
+        )
+
+
+# =========================================================
+# QUERY ENDPOINT
+# =========================================================
+
+@app.post(
+    "/api/query"
+)
+
+@app.post(
+    "/query"
+)
+
+def query_rag(
+    request: QueryRequest
+):
+
     """
-    Validates uploaded file format against SUPPORTED_EXTENSIONS.
-    Fails clearly with HTTP 400 if filename is missing, or HTTP 415 for unsupported types.
+    Query endpoint.
+
+    Uses the same hybrid logic:
+
+    RAG if verified documents exist
+    ↓
+    General Gemini answer if scheme is not indexed
     """
+
+    chat_request = ChatRequest(
+        question=request.question
+    )
+
+
+    return chat_ai(
+        chat_request
+    )
+
+
+# =========================================================
+# STREAMING ENDPOINT
+# =========================================================
+
+@app.post(
+    "/api/query_stream"
+)
+
+@app.post(
+    "/query_stream"
+)
+
+async def query_stream(
+    request: QueryRequest
+):
+
+    question = request.question.strip()
+
+
+    async def event_generator():
+
+        try:
+
+            # Run normal chat
+
+            response = chat_ai(
+
+                ChatRequest(
+                    question=question
+                )
+
+            )
+
+
+            # Metadata
+
+            metadata = {
+
+                "sources": response.get(
+                    "sources",
+                    [],
+                ),
+
+                "status": response.get(
+                    "status",
+                    "answered",
+                ),
+
+                "answer_mode": response.get(
+                    "answer_mode",
+                    "general_ai",
+                ),
+
+            }
+
+
+            yield (
+
+                "event: metadata\n"
+
+                f"data: {json.dumps(metadata)}\n\n"
+
+            )
+
+
+            # Stream answer
+
+            answer = response.get(
+                "answer",
+                "",
+            )
+
+
+            words = answer.split()
+
+
+            for index, word in enumerate(
+                words
+            ):
+
+                suffix = (
+                    " "
+                    if index < len(words) - 1
+                    else ""
+                )
+
+
+                payload = {
+
+                    "token": word + suffix
+
+                }
+
+
+                yield (
+
+                    "event: token\n"
+
+                    f"data: {json.dumps(payload)}\n\n"
+
+                )
+
+
+                await asyncio.sleep(
+                    0.01
+                )
+
+
+            yield (
+
+                "event: done\n"
+
+                "data: {\"status\":\"complete\"}\n\n"
+
+            )
+
+
+        except Exception as error:
+
+            logger.exception(
+                "Streaming failed: %s",
+                error,
+            )
+
+
+            yield (
+
+                "event: error\n"
+
+                f"data: {json.dumps({'error': str(error)})}\n\n"
+
+            )
+
+
+    return StreamingResponse(
+
+        event_generator(),
+
+        media_type="text/event-stream",
+
+    )
+
+
+# =========================================================
+# DOCUMENT VALIDATION
+# =========================================================
+
+def validate_upload(
+    file: UploadFile
+) -> str:
+
     if not file.filename:
+
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Uploaded file must have a valid filename.",
+
+            status_code=400,
+
+            detail="Invalid filename.",
+
         )
-    suffix = Path(file.filename).suffix.lower()
-    if suffix not in SUPPORTED_EXTENSIONS:
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail=f"Unsupported file type '{suffix}'. Supported formats: {', '.join(sorted(SUPPORTED_EXTENSIONS))}",
-        )
-    return suffix
 
 
-async def store_upload(file: UploadFile) -> Path:
-    """
-    Validates upload, enforces size limits, safely creates destination directory,
-    and stores uploaded file to disk with path traversal sanitization.
-    """
+    extension = (
+        Path(file.filename)
+        .suffix
+        .lower()
+    )
+
+
+    if extension not in SUPPORTED_EXTENSIONS:
+
+        raise HTTPException(
+
+            status_code=415,
+
+            detail=(
+                "Unsupported file type. "
+                "Supported: "
+                + ", ".join(
+                    sorted(
+                        SUPPORTED_EXTENSIONS
+                    )
+                )
+            ),
+
+        )
+
+
+    return extension
+
+
+# =========================================================
+# STORE UPLOAD
+# =========================================================
+
+async def store_upload(
+    file: UploadFile
+) -> Path:
+
     validate_upload(file)
-    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Sanitize path to prevent directory traversal attacks (e.g. ../../etc/passwd)
-    safe_filename = Path(file.filename).name
-    if not safe_filename or safe_filename.startswith("."):
-        safe_filename = f"upload_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}{Path(file.filename).suffix.lower()}"
 
-    path = UPLOAD_DIR / safe_filename
+    UPLOAD_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
-    # Read binary content
+
+    filename = Path(
+        file.filename
+    ).name
+
+
+    path = (
+        UPLOAD_DIR
+        / filename
+    )
+
+
     content = await file.read()
 
-    # Reject empty files (0 bytes) with 400 Bad Request
-    if len(content) == 0:
+
+    if not content:
+
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Uploaded file is empty (0 bytes).",
+
+            status_code=400,
+
+            detail="Uploaded file is empty.",
+
         )
 
-    # Reject oversized files with 413 Content Too Large
+
     if len(content) > MAX_UPLOAD_SIZE_BYTES:
+
         raise HTTPException(
+
             status_code=413,
-            detail=f"Uploaded file exceeds maximum allowed size of {MAX_UPLOAD_SIZE_BYTES // (1024 * 1024)}MB.",
+
+            detail="File exceeds 10MB limit.",
+
         )
 
-    path.write_bytes(content)
+
+    path.write_bytes(
+        content
+    )
+
+
     return path
 
 
-def process_uploaded_document(path: Path) -> Dict[str, Any]:
-    """
-    Runs the uploaded document through the complete RAG ingestion pipeline:
-      1. Load raw text (format-specific extraction for .txt, .md, .pdf, .html)
-      2. Clean & normalize (whitespace, boilerplate stripping)
-      3. Token chunking (250 tokens, 50 overlap)
-      4. Tag chunks with source, section, content hash, and timestamp
-      5. Embed chunks using active embedding service
-      6. Index/upsert chunks into the active vector database
-    """
+# =========================================================
+# PROCESS DOCUMENT
+# =========================================================
+
+def process_uploaded_document(
+    path: Path
+) -> Dict[str, Any]:
+
     state = get_pipeline()
-    vs = state.get("vector_store")
-    embed_svc = state.get("embedding_service")
 
-    if vs is None or embed_svc is None:
+
+    vector_store = state.get(
+        "vector_store"
+    )
+
+
+    embedding_service = state.get(
+        "embedding_service"
+    )
+
+
+    if vector_store is None:
+
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Vector store or embedding service is not initialized.",
+
+            status_code=503,
+
+            detail="Vector database unavailable.",
+
         )
 
-    ext = path.suffix.lower()
+
+    extension = (
+        path.suffix.lower()
+    )
+
+
     raw_text = ""
-    page_numbers = None
 
-    # 1. Load Raw Text
-    try:
-        if ext in [".txt", ".md"]:
-            try:
-                raw_text = path.read_text(encoding="utf-8")
-            except UnicodeDecodeError:
-                raw_text = path.read_text(encoding="latin-1", errors="replace")
 
-        elif ext in [".html", ".htm"]:
-            html_content = path.read_text(encoding="utf-8", errors="replace")
-            try:
-                from bs4 import BeautifulSoup
-                soup = BeautifulSoup(html_content, "html.parser")
-                for tag in soup(["script", "style", "noscript"]):
-                    tag.decompose()
-                raw_text = soup.get_text(separator="\n").strip()
-            except ImportError:
-                raw_text = re.sub(r"<[^>]+>", " ", html_content).strip()
+    # -----------------------------------------------------
+    # TXT / MD
+    # -----------------------------------------------------
 
-        elif ext == ".pdf":
-            try:
-                from pypdf import PdfReader
-                reader = PdfReader(str(path))
-                text_parts = []
-                page_numbers = []
-                offset = 0
-                for p_idx, page in enumerate(reader.pages, start=1):
-                    page_text = page.extract_text()
-                    if page_text:
-                        clean_p = page_text.strip()
-                        page_numbers.append((p_idx, offset))
-                        text_parts.append(clean_p)
-                        offset += len(clean_p) + 1
-                raw_text = "\n".join(text_parts).strip()
-            except Exception as pdf_err:
-                raise HTTPException(
-                    status_code=422,
-                    detail=f"Unable to read or parse PDF file: {pdf_err}",
-                )
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                detail=f"Unsupported format: {ext}",
+    if extension in [
+
+        ".txt",
+
+        ".md",
+
+    ]:
+
+        raw_text = path.read_text(
+
+            encoding="utf-8",
+
+            errors="replace",
+
+        )
+
+
+    # -----------------------------------------------------
+    # HTML
+    # -----------------------------------------------------
+
+    elif extension in [
+
+        ".html",
+
+        ".htm",
+
+    ]:
+
+        html = path.read_text(
+
+            encoding="utf-8",
+
+            errors="replace",
+
+        )
+
+
+        try:
+
+            from bs4 import BeautifulSoup
+
+
+            soup = BeautifulSoup(
+
+                html,
+
+                "html.parser",
+
             )
-    except HTTPException:
-        raise
-    except Exception as read_err:
+
+
+            for tag in soup([
+
+                "script",
+
+                "style",
+
+                "noscript",
+
+            ]):
+
+                tag.decompose()
+
+
+            raw_text = soup.get_text(
+
+                separator="\n"
+
+            )
+
+
+        except Exception:
+
+            raw_text = re.sub(
+
+                r"<[^>]+>",
+
+                " ",
+
+                html,
+
+            )
+
+
+    # -----------------------------------------------------
+    # PDF
+    # -----------------------------------------------------
+
+    elif extension == ".pdf":
+
+        try:
+
+            from pypdf import PdfReader
+
+
+            reader = PdfReader(
+                str(path)
+            )
+
+
+            pages = []
+
+
+            for page in reader.pages:
+
+                text = page.extract_text()
+
+
+                if text:
+
+                    pages.append(
+                        text
+                    )
+
+
+            raw_text = "\n".join(
+                pages
+            )
+
+
+        except Exception as error:
+
+            raise HTTPException(
+
+                status_code=422,
+
+                detail=f"PDF error: {error}",
+
+            )
+
+
+    else:
+
         raise HTTPException(
-            status_code=422,
-            detail=f"Failed to read uploaded file: {read_err}",
+
+            status_code=415,
+
+            detail="Unsupported document.",
+
         )
 
-    # 2. Clean
-    cleaned = clean_text(raw_text)
-    if not cleaned or not cleaned.strip():
+
+    # -----------------------------------------------------
+    # CLEAN
+    # -----------------------------------------------------
+
+    cleaned_text = clean_text(
+        raw_text
+    )
+
+
+    if not cleaned_text:
+
         raise HTTPException(
+
             status_code=422,
-            detail="Uploaded document contains no readable text after cleaning.",
+
+            detail="No readable text found.",
+
         )
 
-    # 3. Chunk
-    doc_dict = {
+
+    # -----------------------------------------------------
+    # CHUNK
+    # -----------------------------------------------------
+
+    document = {
+
         "filename": path.name,
-        "filepath": str(path).replace("\\", "/"),
-        "content": cleaned,
-        "page_numbers": page_numbers,
+
+        "filepath": str(path),
+
+        "content": cleaned_text,
+
     }
-    raw_chunks = chunk_document_by_tokens(
-        doc=doc_dict,
+
+
+    chunks = chunk_document_by_tokens(
+
+        doc=document,
+
         chunk_size_tokens=250,
+
         overlap_tokens=50,
-        model_name="gpt-4o-mini",
+
     )
 
-    if not raw_chunks:
-        raw_chunks = [{
-            "text": cleaned,
-            "metadata": {
-                "source": path.name,
-                "chunk_index": 0,
-                "section": "General Overview",
-                "page": 1,
-                "token_count": len(cleaned.split()),
-            },
-        }]
 
-    # 4. Tag Chunks
-    content_hash = hashlib.sha256(cleaned.encode("utf-8")).hexdigest()[:16]
-    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    tagged_chunks = []
+    if not chunks:
 
-    for idx, c in enumerate(raw_chunks):
-        cid = f"{path.stem}:chunk:{idx + 1}"
-        meta = dict(c.get("metadata", {}))
-        meta["source"] = path.name
-        meta["filepath"] = str(path).replace("\\", "/")
-        meta["content_hash"] = content_hash
-        meta["doc_format"] = ext
-        meta["ingestion_time"] = now_iso
+        chunks = [
 
-        tagged_chunks.append({
-            "id": cid,
-            "chunk_id": cid,
-            "text": c["text"],
-            "content": c["text"],
-            "metadata": meta,
-        })
+            {
 
-    # 5. Embed Chunks
-    chunk_texts = [c["text"] for c in tagged_chunks]
-    embeddings = embed_svc.embed_texts(chunk_texts)
+                "text": cleaned_text,
 
-    # 6. Index into VectorStore
-    records_to_upsert = []
-    for c, vec in zip(tagged_chunks, embeddings):
-        records_to_upsert.append({
-            "id": c["id"],
-            "vector": vec,
-            "text": c["text"],
-            "metadata": c["metadata"],
-        })
+                "metadata": {
 
-    indexed_count = vs.upsert_batch(records_to_upsert)
-    logger.info(
-        "Successfully indexed document '%s': %d chunks into VectorStore (total records: %d)",
-        path.name, indexed_count, vs.count()
+                    "source": path.name,
+
+                    "section": "General Overview",
+
+                },
+
+            }
+
+        ]
+
+
+    # -----------------------------------------------------
+    # METADATA
+    # -----------------------------------------------------
+
+    document_hash = hashlib.sha256(
+
+        cleaned_text.encode()
+
+    ).hexdigest()[:16]
+
+
+    timestamp = (
+
+        datetime.datetime.now(
+
+            datetime.timezone.utc
+
+        ).isoformat()
+
     )
 
-    # Return structured summary with normalized forward-slash path
-    doc_display_path = str(path).replace("\\", "/")
-    return {
-        "document": doc_display_path,
-        "chunks": len(tagged_chunks),
-        "indexed": indexed_count,
-    }
+
+    records = []
 
 
-# ─── Document Endpoints (Tasks 1, 2, 3, 4) ───────────────────────────────────
+    for index, chunk in enumerate(
+        chunks
+    ):
 
-@app.post("/documents", response_model=DocumentUploadResponse, tags=["Document Ingestion"])
-async def upload_document(file: UploadFile = File(...)):
-    """
-    Accepts a document file (.txt, .md, .pdf, .html), stores it safely,
-    runs it through the full ingestion pipeline (clean, chunk, embed, index),
-    and makes the new content searchable immediately at runtime.
-    """
-    try:
-        path = await store_upload(file)
-        summary = process_uploaded_document(path)
-        return {
-            "status": "indexed",
-            "filename": file.filename,
-            "summary": summary,
-        }
-    except HTTPException:
-        raise
-    except Exception as exc:
-        logger.exception("Document indexing failed: %s", exc)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Document indexing failed",
+        chunk_id = (
+
+            f"{path.stem}:"
+            f"chunk:"
+            f"{index + 1}"
         )
 
 
-@app.get("/documents", tags=["Document Ingestion"])
-def list_documents():
-    """Returns list of uploaded documents currently stored in the uploads directory."""
-    if not UPLOAD_DIR.exists():
-        return {"documents": [], "total": 0}
-    docs = []
-    for f in sorted(UPLOAD_DIR.iterdir()):
-        if f.is_file():
-            docs.append({
-                "filename": f.name,
-                "size_bytes": f.stat().st_size,
-                "path": str(f).replace("\\", "/"),
-            })
-    return {"documents": docs, "total": len(docs)}
+        metadata = dict(
 
+            chunk.get(
+                "metadata",
+                {},
+            )
+
+        )
+
+
+        metadata.update({
+
+            "source": path.name,
+
+            "section": metadata.get(
+
+                "section",
+
+                "General Overview",
+
+            ),
+
+            "content_hash": document_hash,
+
+            "ingestion_time": timestamp,
+
+            "scheme_name": metadata.get(
+
+                "scheme_name",
+
+                path.stem.replace(
+                    "_",
+                    " "
+                ).title(),
+
+            ),
+
+        })
+
+
+        records.append({
+
+            "id": chunk_id,
+
+            "text": chunk["text"],
+
+            "metadata": metadata,
+
+        })
+
+
+    # -----------------------------------------------------
+    # EMBEDDINGS
+    # -----------------------------------------------------
+
+    texts = [
+
+        record["text"]
+
+        for record in records
+
+    ]
+
+
+    embeddings = embedding_service.embed_texts(
+        texts
+    )
+
+
+    # -----------------------------------------------------
+    # VECTOR RECORDS
+    # -----------------------------------------------------
+
+    vector_records = []
+
+
+    for record, vector in zip(
+
+        records,
+
+        embeddings,
+
+    ):
+
+        vector_records.append({
+
+            "id": record["id"],
+
+            "vector": vector,
+
+            "text": record["text"],
+
+            "metadata": record["metadata"],
+
+        })
+
+
+    indexed = vector_store.upsert_batch(
+
+        vector_records
+    )
+
+
+    logger.info(
+
+        "Document indexed: %s | %d chunks",
+
+        path.name,
+
+        indexed,
+
+    )
+
+
+    # -----------------------------------------------------
+    # REFRESH RETRIEVER
+    # -----------------------------------------------------
+
+    pipeline_state["retriever"] = None
+
+
+    try:
+
+        get_retriever()
+
+    except Exception as error:
+
+        logger.warning(
+
+            "Retriever refresh warning: %s",
+
+            error,
+
+        )
+
+
+    return {
+
+        "document": str(path),
+
+        "chunks": len(records),
+
+        "indexed": indexed,
+
+    }
+
+
+# =========================================================
+# UPLOAD DOCUMENT
+# =========================================================
+
+@app.post(
+
+    "/api/documents",
+
+    response_model=DocumentUploadResponse,
+
+)
+
+@app.post(
+
+    "/documents",
+
+    response_model=DocumentUploadResponse,
+
+)
+
+async def upload_document(
+
+    file: UploadFile = File(...)
+
+):
+
+    path = await store_upload(
+        file
+    )
+
+
+    summary = process_uploaded_document(
+        path
+    )
+
+
+    return {
+
+        "status": "indexed",
+
+        "filename": file.filename,
+
+        "summary": summary,
+
+    }
+
+
+# =========================================================
+# LIST DOCUMENTS
+# =========================================================
+
+@app.get(
+    "/api/documents"
+)
+
+@app.get(
+    "/documents"
+)
+
+def list_documents():
+
+    if not UPLOAD_DIR.exists():
+
+        return {
+
+            "documents": [],
+
+            "total": 0,
+
+        }
+
+
+    documents = []
+
+
+    for file in UPLOAD_DIR.iterdir():
+
+        if file.is_file():
+
+            documents.append({
+
+                "filename": file.name,
+
+                "size_bytes": file.stat().st_size,
+
+                "path": str(file),
+
+            })
+
+
+    return {
+
+        "documents": documents,
+
+        "total": len(documents),
+
+    }
+
+
+# =========================================================
+# START SERVER
+# =========================================================
 
 def start():
-    """Entrypoint to run API server using uvicorn."""
-    import uvicorn
-    logger.info("Starting uvicorn server on %s:%d...", API_HOST, API_PORT)
-    uvicorn.run("src.api:app", host=API_HOST, port=API_PORT, reload=False)
 
+    import uvicorn
+
+
+    logger.info(
+
+        "Starting SchemeAssist on %s:%d",
+
+        API_HOST,
+
+        API_PORT,
+
+    )
+
+
+    uvicorn.run(
+
+        "src.api:app",
+
+        host=API_HOST,
+
+        port=API_PORT,
+
+        reload=False,
+
+    )
+
+
+# =========================================================
+# MAIN
+# =========================================================
 
 if __name__ == "__main__":
+
     start()

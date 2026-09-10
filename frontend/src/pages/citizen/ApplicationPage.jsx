@@ -16,10 +16,15 @@ import Badge from '../../components/ui/Badge';
 import Input from '../../components/ui/Input';
 import { SCHEMES } from '../../data/schemesData';
 import { DEFAULT_CITIZEN } from '../../data/mockCitizenData';
+import { useAuth } from '../../context/AuthContext';
 
 export function ApplicationPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const citizenName = user?.name || DEFAULT_CITIZEN.name;
+  const citizenPhone = user?.phone || DEFAULT_CITIZEN.phone;
+  const citizenState = user?.state || DEFAULT_CITIZEN.location.state;
   const [currentStep, setCurrentStep] = useState(1);
   const [appId] = useState(`APP-2026-${Math.floor(10000 + Math.random() * 90000)}`);
 
@@ -92,10 +97,10 @@ export function ApplicationPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <Input label="Applicant Name" value={DEFAULT_CITIZEN.name} readOnly disabled />
-              <Input label="Aadhaar Linked Phone" value={DEFAULT_CITIZEN.phone} readOnly disabled />
+              <Input label="Applicant Name" value={citizenName} readOnly disabled />
+              <Input label="Aadhaar Linked Phone" value={citizenPhone} readOnly disabled />
               <Input label="Date of Birth" value={DEFAULT_CITIZEN.dob} readOnly disabled />
-              <Input label="State & District" value={`${DEFAULT_CITIZEN.location.district}, ${DEFAULT_CITIZEN.location.state}`} readOnly disabled />
+              <Input label="State & District" value={`${DEFAULT_CITIZEN.location.district}, ${citizenState}`} readOnly disabled />
               <Input label="Annual Family Income" value={`₹${DEFAULT_CITIZEN.financial.familyIncome.toLocaleString()}`} readOnly disabled />
               <Input label="Verified Occupation" value={DEFAULT_CITIZEN.financial.occupation} readOnly disabled />
             </div>
@@ -168,7 +173,7 @@ export function ApplicationPage() {
               </div>
               <div className="flex justify-between pb-1 border-b border-slate-200">
                 <span className="text-slate-muted">Applicant:</span>
-                <span className="font-bold text-navy">{DEFAULT_CITIZEN.name}</span>
+                <span className="font-bold text-navy">{citizenName}</span>
               </div>
               <div className="flex justify-between pb-1 border-b border-slate-200">
                 <span className="text-slate-muted">Direct Benefit Amount:</span>

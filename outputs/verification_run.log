@@ -1,4 +1,8 @@
-Verification Run Successful.
-Model: gpt-4o-mini
-Documents Ingested: 9
-Chunks Indexed: 43
+SchemeAssist Verification Run Successful.
+
+Model: gemini-3.6-flash
+Documents Ingested: 7
+Chunks Generated: 22
+Chunking Strategy: Token Based
+Chunk Size: 250 tokens
+Chunk Overlap: 50 tokens

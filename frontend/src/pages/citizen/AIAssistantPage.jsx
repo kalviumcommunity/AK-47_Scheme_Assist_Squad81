@@ -17,14 +17,14 @@ import Button from '../../components/ui/Button';
 import { ChatMessage, ChatInput } from '../../components/chat/ChatMessage';
 import { SuggestedQuestions } from '../../components/chat/SourceCitation';
 import { UploadModal } from '../../components/documents/DocumentCard';
-import { askRagQuestion, getSystemHealth } from '../../services/api';
+import { askRagQuestion, chatWithSchemeAssist, getSystemHealth } from '../../services/api';
 
 export function AIAssistantPage() {
   const [messages, setMessages] = useState([
     {
       id: 1,
       sender: 'assistant',
-      text: `Hello! 👋\n\nI am your SchemeAssist AI.\n\nI can help you:\n• Find government welfare schemes tailored to your family\n• Check eligibility criteria & income limits\n• Understand benefits, subsidies, and payment schedules\n• Explain required certificates and application processes\n• Answer questions directly grounded in official ministry circulars`,
+      text: `Hello! 👋\n\nI am your SchemeAssist AI, connected live to official government welfare scheme circulars.\n\nI can help you:\n• Check eligibility criteria & income limits (PM-KISAN, Ayushman Bharat, etc.)\n• Understand financial benefits, subsidies, and payment schedules\n• View required documents & certificates\n• Step-by-step application guidance directly grounded in government circulars`,
       sources: []
     }
   ]);
@@ -36,7 +36,9 @@ export function AIAssistantPage() {
 
   useEffect(() => {
     // Check backend health
-    getSystemHealth().then((health) => setBackendHealth(health));
+    getSystemHealth()
+      .then((health) => setBackendHealth(health))
+      .catch((err) => setBackendHealth({ status: 'offline', error: err.message }));
   }, []);
 
   const scrollToBottom = () => {
@@ -62,11 +64,16 @@ export function AIAssistantPage() {
     setIsLoading(true);
 
     try {
-      const response = await askRagQuestion(text);
+      const response = await chatWithSchemeAssist(text);
       const assistantMsg = {
         id: Date.now() + 1,
         sender: 'assistant',
-        text: response.answer || "I could not locate verified information for this inquiry.",
+        text: response.answer || "I could not find this information in the available scheme documents.",
+        answer: response.answer || "",
+        eligibility: response.eligibility || "",
+        benefits: response.benefits || "",
+        application_process: response.application_process || [],
+        documents_required: response.documents_required || [],
         sources: response.sources || [],
         status: response.status || 'answered'
       };
@@ -75,7 +82,7 @@ export function AIAssistantPage() {
       const errorMsg = {
         id: Date.now() + 1,
         sender: 'assistant',
-        text: `Error connecting to RAG service: ${err.message}. Please ensure the FastAPI backend is running on port 8000.`,
+        text: `${err.message || 'Error communicating with the SchemeAssist backend service.'}`,
         isError: true,
         sources: []
       };

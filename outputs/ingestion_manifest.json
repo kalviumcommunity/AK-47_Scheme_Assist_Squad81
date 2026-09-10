@@ -1,7 +1,7 @@
 {
   "manifest_version": "1.0",
-  "last_updated": "2026-09-07T05:45:05.600580+00:00",
-  "total_files": 7,
+  "last_updated": "2026-09-10T08:24:43.109594+00:00",
+  "total_files": 8,
   "processed_documents": {
     "ayushman_bharat_healthcare.md": {
       "filepath": "data\\ayushman_bharat_healthcare.md",
@@ -33,6 +33,14 @@
       "content_hash": "8c7d4203474df14e",
       "chunks_count": 7,
       "tokens": 1251,
+      "status": "SUCCESS"
+    },
+    "sample_new_policy.md": {
+      "filepath": "data\\sample_new_policy.md",
+      "format": ".md",
+      "content_hash": "29bb3d415ae40431",
+      "chunks_count": 4,
+      "tokens": 723,
       "status": "SUCCESS"
     },
     "scholarship_welfare_circular.md": {

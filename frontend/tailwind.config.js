@@ -7,6 +7,19 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Phase 1 Design System Tokens
+        'primary-navy': '#0F2B46',
+        'primary-blue': '#2563EB',
+        'light-blue': '#EFF6FF',
+        'background': '#F8FAFC',
+        'card-bg': '#FFFFFF',
+        'text-primary': '#1E293B',
+        'text-secondary': '#64748B',
+        'border-color': '#E2E8F0',
+        'success': '#16A34A',
+        'warning': '#F59E0B',
+        'error': '#DC2626',
+        // Preserved contextual color scales
         navy: {
           900: '#0A1E31',
           DEFAULT: '#0F2B46',

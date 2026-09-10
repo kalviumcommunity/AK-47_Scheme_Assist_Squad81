@@ -2,14 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --primary-navy: #0F2B46;
+  --primary-blue: #2563EB;
+  --light-blue: #EFF6FF;
+  --background: #F8FAFC;
+  --card-bg: #FFFFFF;
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
+  --border-color: #E2E8F0;
+  --success: #16A34A;
+  --warning: #F59E0B;
+  --error: #DC2626;
+}
+
 @layer base {
   body {
-    @apply bg-slate-bg text-slate-text antialiased;
+    background-color: var(--background);
+    color: var(--text-primary);
+    @apply antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply text-navy font-bold tracking-tight;
+    @apply font-bold tracking-tight text-primary-navy;
   }
 }
 

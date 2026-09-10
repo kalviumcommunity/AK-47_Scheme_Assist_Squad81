@@ -1,19 +1,19 @@
 {
-  "total_files_discovered": 7,
-  "total_documents_ingested": 6,
-  "total_chunks_created": 18,
+  "total_files_discovered": 8,
+  "total_documents_ingested": 7,
+  "total_chunks_created": 22,
   "total_failures": 1,
-  "total_corpus_tokens": 3110,
-  "avg_chunk_tokens": 206.11,
+  "total_corpus_tokens": 3833,
+  "avg_chunk_tokens": 208.32,
   "formats_breakdown": {
-    ".md": 4,
+    ".md": 5,
     ".html": 1,
     ".txt": 1,
     ".xyz": 1
   },
   "completeness_reconciled": true,
-  "reconciliation_equation": "7 (Discovered Files) == 6 (Ingested Docs) + 1 (Recorded Failures)",
-  "ingestion_timestamp": "2026-09-07T05:45:05.600580+00:00",
+  "reconciliation_equation": "8 (Discovered Files) == 7 (Ingested Docs) + 1 (Recorded Failures)",
+  "ingestion_timestamp": "2026-09-10T08:24:43.109594+00:00",
   "ingested_documents": [
     {
       "filename": "ayushman_bharat_healthcare.md",
@@ -60,6 +60,17 @@
       "status": "SUCCESS"
     },
     {
+      "filename": "sample_new_policy.md",
+      "filepath": "data\\sample_new_policy.md",
+      "format": ".md",
+      "raw_chars": 3193,
+      "cleaned_chars": 3186,
+      "total_tokens": 723,
+      "chunks_created": 4,
+      "content_hash": "29bb3d415ae40431",
+      "status": "SUCCESS"
+    },
+    {
       "filename": "scholarship_welfare_circular.md",
       "filepath": "data\\scholarship_welfare_circular.md",
       "format": ".md",
@@ -89,7 +100,7 @@
       "format": ".xyz",
       "error_type": "ValueError",
       "error_message": "Unsupported file extension: '.xyz' (Expected .txt, .md, .html, .pdf)",
-      "timestamp": "2026-09-07T05:45:05.600580+00:00"
+      "timestamp": "2026-09-10T08:24:43.109594+00:00"
     }
   ]
 }

@@ -2,20 +2,20 @@
   SCHEMEASSIST RAG - CORPUS INGESTION & VALIDATION AUDIT REPORT
 ================================================================================
 
-Timestamp (UTC)            : 2026-09-07T05:45:05.600580+00:00
-Total Source Files on Disk : 7
-Successfully Ingested Docs : 6
-Total Chunks Generated     : 18
+Timestamp (UTC)            : 2026-09-10T08:24:43.109594+00:00
+Total Source Files on Disk : 8
+Successfully Ingested Docs : 7
+Total Chunks Generated     : 22
 Total Failures / Skipped   : 1
-Total Corpus Tokens        : 3110
-Average Chunk Tokens       : 206.11 tokens
+Total Corpus Tokens        : 3833
+Average Chunk Tokens       : 208.32 tokens
 Completeness Status        : PASSED (Zero Silent Drops)
-Reconciliation Proof       : 7 (Discovered Files) == 6 (Ingested Docs) + 1 (Recorded Failures)
+Reconciliation Proof       : 8 (Discovered Files) == 7 (Ingested Docs) + 1 (Recorded Failures)
 
 FORMATS BREAKDOWN:
 ----------------------------------------
   • .html      : 1 file(s)
-  • .md        : 4 file(s)
+  • .md        : 5 file(s)
   • .txt       : 1 file(s)
   • .xyz       : 1 file(s)
 
@@ -25,8 +25,9 @@ SUCCESSFULLY INGESTED DOCUMENTS:
 2. housing_welfare_guidelines.html [.html] - 1526 chars | 353 tokens | 2 chunks (Hash: 8aa4b9768132b2e5)
 3. pmkisan_scheme_doc.md [.md] - 2159 chars | 460 tokens | 3 chunks (Hash: 7a0df3d80029d2c4)
 4. sample_doc.md [.md] - 6304 chars | 1251 tokens | 7 chunks (Hash: 8c7d4203474df14e)
-5. scholarship_welfare_circular.md [.md] - 1357 chars | 291 tokens | 2 chunks (Hash: 421810e99839dd26)
-6. senior_citizen_pension_scheme.txt [.txt] - 1522 chars | 330 tokens | 2 chunks (Hash: 661fb5304cb2a6f1)
+5. sample_new_policy.md [.md] - 3186 chars | 723 tokens | 4 chunks (Hash: 29bb3d415ae40431)
+6. scholarship_welfare_circular.md [.md] - 1357 chars | 291 tokens | 2 chunks (Hash: 421810e99839dd26)
+7. senior_citizen_pension_scheme.txt [.txt] - 1522 chars | 330 tokens | 2 chunks (Hash: 661fb5304cb2a6f1)
 
 RECORDED INGESTION FAILURES & SKIPPED FILES:
 --------------------------------------------------------------------------------

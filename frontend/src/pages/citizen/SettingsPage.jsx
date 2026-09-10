@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   User,
-  Shield,
   Bell,
   Globe,
-  Lock,
+  Shield,
+  FileCheck2,
   Save,
   CheckCircle2
 } from 'lucide-react';
@@ -13,14 +13,34 @@ import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import Button from '../../components/ui/Button';
 import { DEFAULT_CITIZEN } from '../../data/mockCitizenData';
+import { useAuth } from '../../context/AuthContext';
 
 export function SettingsPage() {
+  const { user, login } = useAuth();
+  const [fullName, setFullName] = useState(user?.name || DEFAULT_CITIZEN.name);
+  const [phone, setPhone] = useState(user?.phone || DEFAULT_CITIZEN.phone);
+  const [email, setEmail] = useState(user?.email || DEFAULT_CITIZEN.email);
+  const [occupation, setOccupation] = useState(DEFAULT_CITIZEN.financial.occupation);
   const [saved, setSaved] = useState(false);
   const [language, setLanguage] = useState('English');
   const [smsAlerts, setSmsAlerts] = useState(true);
 
+  useEffect(() => {
+    if (user?.name) setFullName(user.name);
+    if (user?.email) setEmail(user.email);
+    if (user?.phone) setPhone(user.phone);
+  }, [user]);
+
   const handleSave = (e) => {
     e.preventDefault();
+    if (user) {
+      login({
+        ...user,
+        name: fullName.trim() || user.name,
+        phone: phone.trim(),
+        email: email.trim(),
+      });
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
@@ -43,10 +63,28 @@ export function SettingsPage() {
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <Input label="Full Name" defaultValue={DEFAULT_CITIZEN.name} />
-            <Input label="Aadhaar Registered Phone" defaultValue={DEFAULT_CITIZEN.phone} />
-            <Input label="Email Address" defaultValue={DEFAULT_CITIZEN.email} />
-            <Input label="Current Occupation" defaultValue={DEFAULT_CITIZEN.financial.occupation} />
+            <Input
+              label="Full Name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+            />
+            <Input
+              label="Aadhaar Registered Phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+            <Input
+              label="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Input
+              label="Current Occupation"
+              value={occupation}
+              onChange={(e) => setOccupation(e.target.value)}
+            />
           </div>
         </Card>
 
@@ -82,7 +120,7 @@ export function SettingsPage() {
         <div className="flex items-center justify-between pt-2">
           {saved && (
             <span className="text-xs font-bold text-gov-success flex items-center gap-1.5 animate-fadeIn">
-              <CheckCircle2 className="w-4 h-4" /> Preferences saved successfully!
+              <CheckCircle2 className="w-4 h-4" /> Profile & preferences updated successfully!
             </span>
           )}
           <div className="ml-auto">

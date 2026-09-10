@@ -2,7 +2,7 @@
         SCHEMEASSIST: EMBEDDING QUALITY CHECKS & SANITY REPORT (3.29)
 ================================================================================
 
-Timestamp       : 2026-09-07T05:45:04.997351+00:00
+Timestamp       : 2026-09-10T08:24:42.730309+00:00
 Embedding Model : text-embedding-3-small
 Active Provider : offline
 Corpus Chunks   : 18

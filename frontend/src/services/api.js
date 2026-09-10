@@ -1,11 +1,12 @@
 /**
- * api.js - Backend API client for SchemeAssist RAG & Ingestion service
+ * api.js - Core Axios Client for SchemeAssist Services
+ * Handles baseURL configuration, auth token injection, and unified error handling.
  */
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_RAG_API_URL || 'http://localhost:8000';
+export const API_BASE_URL = import.meta.env.VITE_RAG_API_URL || 'http://127.0.0.1:8000';
 
-const client = axios.create({
+const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -13,78 +14,60 @@ const client = axios.create({
   timeout: 30000,
 });
 
-/**
- * Fetch system health and vector index count
- */
-export async function getSystemHealth() {
-  try {
-    const response = await client.get('/health');
-    return response.data;
-  } catch (error) {
-    console.warn('Backend /health unreachable, falling back to simulated state:', error.message);
-    return {
-      status: 'offline',
-      embedding_model: 'offline-mode',
-      chat_model: 'gpt-4o-mini',
-      vector_db_url: 'chroma_db',
-      collection_name: 'schemeassist_chunks',
-      openai_configured: false,
-      indexed_chunks: 26,
+// Request interceptor: attach bearer token if available
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('schemeassist_auth_token');
+    if (token && !config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor: normalize error messages
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const normalizedError = {
+      status: error.response?.status || 500,
+      message:
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        error.message ||
+        'An unexpected network error occurred.',
+      data: error.response?.data || null,
+      raw: error,
     };
+    return Promise.reject(normalizedError);
   }
+);
+
+// Backwards-compatible utility wrappers that delegate to specialized services
+export async function getSystemHealth() {
+  const { checkHealth } = await import('./ragService');
+  return checkHealth();
 }
 
-/**
- * Ask question to SchemeAssist RAG pipeline
- * POST /query
- */
 export async function askRagQuestion(question) {
-  try {
-    const response = await client.post('/query', { question });
-    return response.data;
-  } catch (error) {
-    if (error.response?.data?.detail) {
-      throw new Error(error.response.data.detail);
-    }
-    throw new Error(error.message || 'Failed to communicate with SchemeAssist RAG service.');
-  }
+  const { queryRag } = await import('./ragService');
+  return queryRag(question);
 }
 
-/**
- * Ingest document into knowledge base
- * POST /documents
- */
+export async function chatWithSchemeAssist(question) {
+  const { chatWithSchemeAssist: chatFn } = await import('./ragService');
+  return chatFn(question);
+}
+
 export async function uploadDocument(file) {
-  const formData = new FormData();
-  formData.append('file', file);
-
-  try {
-    const response = await client.post('/documents', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  } catch (error) {
-    if (error.response?.data?.detail) {
-      throw new Error(error.response.data.detail);
-    }
-    throw new Error(error.message || 'Failed to upload document.');
-  }
+  const { uploadDocumentFile } = await import('./documentService');
+  return uploadDocumentFile(file);
 }
 
-/**
- * List uploaded documents from backend
- * GET /documents
- */
 export async function listUploadedDocuments() {
-  try {
-    const response = await client.get('/documents');
-    return response.data;
-  } catch (error) {
-    console.warn('Failed to fetch /documents:', error.message);
-    return { documents: [], total: 0 };
-  }
+  const { fetchDocuments } = await import('./documentService');
+  return fetchDocuments();
 }
 
-export default client;
+export default apiClient;
