@@ -32,6 +32,7 @@ import SettingsPage from './pages/citizen/SettingsPage';
 
 // Admin Pages
 import AdminOverviewPage from './pages/admin/AdminOverviewPage';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminSchemesPage from './pages/admin/AdminSchemesPage';
 import AdminCitizensPage from './pages/admin/AdminCitizensPage';
 import AdminApplicationsPage from './pages/admin/AdminApplicationsPage';
@@ -81,7 +82,7 @@ export function App() {
         {/* ─── Protected Admin Routes with Dedicated Admin Layout & Sidebar ─── */}
         <Route element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
-            <Route path="/admin" element={<AdminOverviewPage />} />
+            <Route path="/admin" element={<AdminDashboardPage />} />
             <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
             <Route path="/admin/schemes" element={<AdminSchemesPage />} />
             <Route path="/admin/citizens" element={<AdminCitizensPage />} />

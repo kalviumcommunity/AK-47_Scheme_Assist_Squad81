@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ShieldAlert,
   Users,
@@ -30,11 +30,20 @@ import {
   ADMIN_APPLICATIONS_LIST
 } from '../../data/adminData';
 
+const SCHEME_STORAGE_KEY = 'schemeassist_admin_schemes';
+
 export function AdminDashboardPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [applications, setApplications] = useState(ADMIN_APPLICATIONS_LIST);
-  const [schemes, setSchemes] = useState(ADMIN_SCHEMES_LIST);
+  const [schemes, setSchemes] = useState(() => {
+    const savedSchemes = localStorage.getItem(SCHEME_STORAGE_KEY);
+    return savedSchemes ? JSON.parse(savedSchemes) : ADMIN_SCHEMES_LIST;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(SCHEME_STORAGE_KEY, JSON.stringify(schemes));
+  }, [schemes]);
 
   const tabs = [
     { id: 'overview', label: 'Executive Overview' },
@@ -55,8 +64,31 @@ export function AdminDashboardPage() {
     );
   };
 
-  const handleAddScheme = () => {
-    alert("New Scheme onboarding modal initialized.");
+  const handleAddScheme = (newScheme) => {
+    setSchemes((prev) => [
+      {
+        id: newScheme.id || `scheme-${Date.now()}`,
+        name: newScheme.name,
+        category: newScheme.category,
+        government: newScheme.government,
+        status: newScheme.status,
+        applications: Number(newScheme.applications || 0),
+        budget: newScheme.budget,
+        documents: newScheme.documents || [],
+        lastUpdated: new Date().toISOString().split('T')[0]
+      },
+      ...prev
+    ]);
+  };
+
+  const handleEditScheme = (updatedScheme) => {
+    setSchemes((prev) =>
+      prev.map((scheme) => (scheme.id === updatedScheme.id ? updatedScheme : scheme))
+    );
+  };
+
+  const handleDeleteScheme = (schemeId) => {
+    setSchemes((prev) => prev.filter((scheme) => scheme.id !== schemeId));
   };
 
   return (
@@ -115,6 +147,8 @@ export function AdminDashboardPage() {
         <SchemeManagementTable
           schemes={schemes}
           onAddScheme={handleAddScheme}
+          onEditScheme={handleEditScheme}
+          onDeleteScheme={handleDeleteScheme}
         />
       )}
 

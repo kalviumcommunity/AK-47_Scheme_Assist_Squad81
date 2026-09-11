@@ -44,7 +44,13 @@ export const ADMIN_SCHEMES_LIST = [
     status: "Active",
     applications: 3410,
     lastUpdated: "2026-09-01",
-    budget: "₹60,000 Cr"
+    budget: "₹60,000 Cr",
+    documents: [
+      "Aadhaar Card",
+      "Landholding Ownership Record",
+      "Bank Account Passbook",
+      "Mobile Number"
+    ]
   },
   {
     id: "ayushman-bharat",
@@ -54,7 +60,13 @@ export const ADMIN_SCHEMES_LIST = [
     status: "Active",
     applications: 2150,
     lastUpdated: "2026-08-28",
-    budget: "₹7,200 Cr"
+    budget: "₹7,200 Cr",
+    documents: [
+      "Aadhaar Card or Ration Card",
+      "SECC Family Identity Proof",
+      "Ayushman Golden Card",
+      "Hospital Registration Slip"
+    ]
   },
   {
     id: "pm-awas-yojana",
@@ -64,7 +76,13 @@ export const ADMIN_SCHEMES_LIST = [
     status: "Active",
     applications: 1420,
     lastUpdated: "2026-08-15",
-    budget: "₹54,000 Cr"
+    budget: "₹54,000 Cr",
+    documents: [
+      "Aadhaar Card",
+      "Income Certificate",
+      "Bank Details",
+      "Land Record / Construction Proof"
+    ]
   },
   {
     id: "pm-vishwakarma",
@@ -74,7 +92,13 @@ export const ADMIN_SCHEMES_LIST = [
     status: "Active",
     applications: 850,
     lastUpdated: "2026-09-05",
-    budget: "₹13,000 Cr"
+    budget: "₹13,000 Cr",
+    documents: [
+      "Aadhaar Card",
+      "Bank Account Details",
+      "Mobile Linked to Aadhaar",
+      "Ration Card / Family Proof"
+    ]
   },
   {
     id: "senior-citizen-pension",
@@ -84,7 +108,13 @@ export const ADMIN_SCHEMES_LIST = [
     status: "Active",
     applications: 310,
     lastUpdated: "2026-07-20",
-    budget: "₹9,500 Cr"
+    budget: "₹9,500 Cr",
+    documents: [
+      "Age Certificate",
+      "BPL / Income Proof",
+      "Bank Passbook",
+      "Residence Proof"
+    ]
   }
 ];
 
