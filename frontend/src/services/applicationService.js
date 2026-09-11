@@ -3,16 +3,15 @@
  * Manages scheme applications, multi-step submissions, and status tracking.
  */
 import apiClient from './api';
-import { MOCK_APPLICATIONS } from '../data/demoCitizen';
 
 const STORAGE_KEY = 'schemeassist_local_applications';
 
 function getStoredApplications() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : MOCK_APPLICATIONS;
+    return raw ? JSON.parse(raw) : [];
   } catch (e) {
-    return MOCK_APPLICATIONS;
+    return [];
   }
 }
 
@@ -37,6 +36,10 @@ export async function getApplications() {
     // Fallback to local storage / demo dataset
   }
 
+  return getStoredApplications();
+}
+
+export async function getAllApplications() {
   return getStoredApplications();
 }
 
@@ -79,6 +82,11 @@ export async function submitApplication(applicationData) {
     benefit: applicationData.benefit || 'Welfare Support',
     category: applicationData.category || 'General',
     submittedDate: new Date().toISOString().split('T')[0],
+    citizenId: applicationData.citizenId || '',
+    citizenEmail: applicationData.citizenEmail || '',
+    citizenName: applicationData.citizenName || 'Citizen',
+    state: applicationData.state || '',
+    scheme: applicationData.schemeName || 'Government Welfare Scheme',
     status: 'Under Review',
     statusCode: 'under_review',
     currentStep: 2,
@@ -100,8 +108,31 @@ export async function submitApplication(applicationData) {
   return newApp;
 }
 
+export async function updateApplicationStatus(applicationId, status) {
+  const applications = getStoredApplications();
+  const updated = applications.map((application) => (
+    application.id === applicationId
+      ? {
+        ...application,
+        status,
+        statusCode: status.toLowerCase().replace(/\s+/g, '_'),
+        reviewedAt: new Date().toISOString(),
+        timeline: (application.timeline || []).map((stage, index) => ({
+          ...stage,
+          done: status === 'Approved' ? true : index === 0 || stage.done,
+          date: index === 2 && status !== 'Under Review' ? new Date().toISOString().split('T')[0] : stage.date,
+        })),
+      }
+      : application
+  ));
+  saveStoredApplications(updated);
+  return updated.find((application) => application.id === applicationId) || null;
+}
+
 export default {
   getApplications,
+  getAllApplications,
   getApplicationById,
   submitApplication,
+  updateApplicationStatus,
 };

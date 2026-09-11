@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   FolderLock,
   UploadCloud,
@@ -11,20 +11,94 @@ import {
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
+import Modal from '../../components/ui/Modal';
 import { DocumentCard, UploadModal } from '../../components/documents/DocumentCard';
-import { MOCK_DOCUMENTS } from '../../data/mockCitizenData';
+import { listUploadedDocuments } from '../../services/api';
+import { deleteDocumentFile, fetchDocumentFile } from '../../services/documentService';
+
+function normalizeDocument(document) {
+  const filename = document.filename || document.name || 'Unnamed document';
+  return {
+    ...document,
+    id: filename,
+    name: filename.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' '),
+    filename,
+    type: filename.split('.').pop()?.toUpperCase() || 'FILE',
+    size: `${(Number(document.size_bytes || 0) / (1024 * 1024)).toFixed(2)} MB`,
+    uploadDate: document.upload_date || 'Available in backend',
+    status: document.status || 'Pending Review',
+  };
+}
 
 export function DocumentsPage() {
-  const [documents, setDocuments] = useState(MOCK_DOCUMENTS);
+  const [documents, setDocuments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [previewDoc, setPreviewDoc] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [previewError, setPreviewError] = useState(null);
+
+  const loadDocuments = async () => {
+    setIsLoading(true);
+    try {
+      const result = await listUploadedDocuments();
+      setDocuments((result.documents || []).map(normalizeDocument));
+      setError(null);
+    } catch (err) {
+      setError(err.message || 'Unable to load your documents.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDocuments();
+    const refresh = () => loadDocuments();
+    window.addEventListener('storage', refresh);
+    const interval = setInterval(refresh, 3000);
+    return () => {
+      window.removeEventListener('storage', refresh);
+      clearInterval(interval);
+    };
+  }, []);
 
   const totalCount = documents.length;
-  const verifiedCount = documents.filter((d) => d.status === 'Verified' || d.verified).length;
-  const pendingCount = totalCount - verifiedCount;
+  const approvedCount = documents.filter((d) => d.status === 'Approved').length;
+  const rejectedCount = documents.filter((d) => d.status === 'Rejected').length;
 
   const handleUploadSuccess = (newDoc) => {
-    setDocuments((prev) => [newDoc, ...prev]);
+    loadDocuments();
+  };
+
+  const handleView = async (document) => {
+    setPreviewError(null);
+    try {
+      const file = await fetchDocumentFile(document.filename);
+      const isText = /\.(txt|md|html?)$/i.test(document.filename);
+      setPreview({
+        document,
+        isText,
+        ...(isText ? { text: await file.text() } : { url: URL.createObjectURL(file) }),
+      });
+    } catch (err) {
+      setPreviewError(err.message || 'Unable to preview this document.');
+    }
+  };
+
+  const handleDelete = async (document) => {
+    if (!window.confirm(`Delete ${document.filename}? This removes the file and its indexed knowledge-base chunks.`)) return;
+    try {
+      await deleteDocumentFile(document.filename);
+      await loadDocuments();
+    } catch (err) {
+      setError(err.message || 'Unable to delete this document.');
+    }
+  };
+
+  const closePreview = () => {
+    if (preview?.url) URL.revokeObjectURL(preview.url);
+    setPreview(null);
+    setPreviewError(null);
   };
 
   return (
@@ -49,6 +123,14 @@ export function DocumentsPage() {
         </Button>
       </div>
 
+      <div className="bg-primary-50/70 border border-primary/20 rounded-card p-4 flex items-start gap-3 text-xs text-primary">
+        <ShieldCheck className="w-5 h-5 shrink-0 mt-0.5" />
+        <div>
+          <p className="font-bold text-navy">Your documents are for scheme applications</p>
+          <p className="mt-1 leading-relaxed">Upload only the documents needed to apply for a government scheme. Your uploaded documents are stored in the SchemeAssist knowledge base and are visible to authorized administrators for application review.</p>
+        </div>
+      </div>
+
       {/* Document Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="flex items-center gap-4">
@@ -66,8 +148,8 @@ export function DocumentsPage() {
             <CheckCircle2 className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-muted uppercase tracking-wider">Verified Documents</p>
-            <h3 className="text-2xl font-black text-navy mt-0.5">{verifiedCount}</h3>
+            <p className="text-xs font-semibold text-slate-muted uppercase tracking-wider">Approved Documents</p>
+            <h3 className="text-2xl font-black text-navy mt-0.5">{approvedCount}</h3>
           </div>
         </Card>
 
@@ -76,8 +158,8 @@ export function DocumentsPage() {
             <Clock className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-muted uppercase tracking-wider">Pending Review</p>
-            <h3 className="text-2xl font-black text-navy mt-0.5">{pendingCount}</h3>
+            <p className="text-xs font-semibold text-slate-muted uppercase tracking-wider">Rejected Documents</p>
+            <h3 className="text-2xl font-black text-navy mt-0.5">{rejectedCount}</h3>
           </div>
         </Card>
       </div>
@@ -85,24 +167,28 @@ export function DocumentsPage() {
       {/* Document Security Notice */}
       <div className="bg-primary-50/60 border border-primary/20 rounded-card p-4 flex items-center gap-3 text-xs text-primary">
         <ShieldCheck className="w-5 h-5 shrink-0" />
-        <span>All uploaded documents are encrypted with AES-256 and integrated directly with Digilocker & state revenue databases.</span>
+        <span>Documents are sent to the SchemeAssist knowledge base for processing. Do not upload information that is not required for your scheme question.</span>
       </div>
+
+      {error && <div className="p-3 rounded-card bg-gov-error-light border border-gov-error/20 text-xs text-gov-error">{error}</div>}
 
       {/* Document Cards Grid */}
       <div>
-        <h2 className="text-sm font-bold text-navy uppercase tracking-wider mb-4">
-          Repository Certificates ({totalCount})
+        <h2 className="text-sm font-bold text-navy uppercase tracking-wider mb-1">
+          Scheme Application Documents ({totalCount})
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <p className="text-xs text-slate-muted mb-4">Documents uploaded here can be reviewed by authorized administrators when processing applications.</p>
+        {isLoading ? <div className="py-10 text-center text-xs text-slate-muted">Loading documents from SchemeAssist...</div> : documents.length === 0 ? <div className="py-10 text-center text-xs text-slate-muted">No documents have been uploaded yet.</div> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {documents.map((doc, idx) => (
             <DocumentCard
               key={doc.id || idx}
               doc={doc}
-              onView={(d) => setPreviewDoc(d)}
+              onView={handleView}
+              onDelete={handleDelete}
               onReplace={(d) => setUploadModalOpen(true)}
             />
           ))}
-        </div>
+        </div>}
       </div>
 
       {/* Upload Modal connected to FastAPI /documents */}
@@ -111,6 +197,11 @@ export function DocumentsPage() {
         onClose={() => setUploadModalOpen(false)}
         onUploadSuccess={handleUploadSuccess}
       />
+      <Modal isOpen={Boolean(preview || previewError)} onClose={closePreview} title={preview?.document?.filename || 'Document preview'} subtitle="Your uploaded scheme application document" maxWidth="max-w-5xl">
+        {previewError && <p className="text-xs text-gov-error">{previewError}</p>}
+        {preview?.isText && <pre className="max-h-[65vh] overflow-auto whitespace-pre-wrap rounded-btn bg-slate-950 p-4 text-xs text-slate-100">{preview.text}</pre>}
+        {preview && !preview.isText && <iframe title={`Preview of ${preview.document.filename}`} src={preview.url} className="h-[65vh] w-full rounded-btn border border-slate-border" />}
+      </Modal>
     </div>
   );
 }

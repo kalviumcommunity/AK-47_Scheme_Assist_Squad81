@@ -7,6 +7,8 @@ export function SourceCitation({ sources = [] }) {
 
   if (!sources || sources.length === 0) return null;
 
+  const sortedSources = [...sources].sort((first, second) => Number(second.score || 0) - Number(first.score || 0));
+
   return (
     <div className="mt-3 pt-3 border-t border-slate-border">
       <button
@@ -22,7 +24,7 @@ export function SourceCitation({ sources = [] }) {
 
       {isOpen && (
         <div className="mt-2 space-y-2 animate-fadeIn">
-          {sources.map((src, idx) => {
+          {sortedSources.map((src, idx) => {
             const schemeName = src.scheme || (src.source ? src.source.replace(/\.[^/.]+$/, '').replace(/_/g, ' ').toUpperCase() : 'Official Scheme');
             const docName = src.source || 'Official Guidelines';
             const secName = src.section || 'General Overview';
@@ -42,8 +44,8 @@ export function SourceCitation({ sources = [] }) {
                     </span>
                   </div>
                   {src.score !== undefined && src.score !== null && (
-                    <Badge variant="primary" size="sm" className="shrink-0 font-mono">
-                      Match: {Number(src.score).toFixed(3)}
+                    <Badge variant={Number(src.score) < 0.5 ? 'warning' : 'success'} size="sm" className="shrink-0 font-mono">
+                      {Number(src.score) < 0.5 ? 'Low relevance' : 'Verified source'} · Match: {(Number(src.score) * 100).toFixed(1)}%
                     </Badge>
                   )}
                 </div>

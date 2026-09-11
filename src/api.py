@@ -1,43 +1,15 @@
 # -*- coding: utf-8 -*-
+
 """
-src/api.py - SchemeAssist Backend API Service
-================================================
+SchemeAssist Backend API
 
-SchemeAssist supports two answer modes:
-
-1. VERIFIED RAG MODE
-   - Searches ChromaDB
-   - Uses uploaded / indexed scheme documents
-   - Returns source citations
-
-2. GENERAL SCHEME AI MODE
-   - Used when the requested scheme is not available
-     in the local ChromaDB knowledge base
-   - Gemini answers general government scheme questions
-   - Clearly marks the response as AI generated
-
-Architecture:
-
-Frontend
-   |
-   v
-FastAPI
-   |
-   v
-Scheme Query Detection
-   |
-   +----------------------------+
-   |                            |
-   v                            v
-ChromaDB RAG               Gemini General Knowledge
-   |                            |
-   v                            v
-Verified Answer             General Scheme Answer
-   |                            |
-   +-------------+--------------+
-                 |
-                 v
-          Structured JSON
+Features:
+- Verified RAG using ChromaDB
+- AI fallback for schemes not available locally
+- Document upload and indexing
+- Source filtering
+- Scheme-aware retrieval
+- Removes sample/test documents from production answers
 """
 
 import os
@@ -48,26 +20,25 @@ import logging
 import hashlib
 import datetime
 import asyncio
+import mimetypes
 
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from contextlib import asynccontextmanager
 
-# ---------------------------------------------------------
+# =========================================================
 # ROOT PATH
-# ---------------------------------------------------------
+# =========================================================
 
-sys.path.append(
-    os.path.dirname(
-        os.path.dirname(
-            os.path.abspath(__file__)
-        )
-    )
-)
+ROOT_DIR = Path(__file__).resolve().parent.parent
 
-# ---------------------------------------------------------
+if str(ROOT_DIR) not in sys.path:
+    sys.path.append(str(ROOT_DIR))
+
+
+# =========================================================
 # FASTAPI
-# ---------------------------------------------------------
+# =========================================================
 
 from fastapi import (
     FastAPI,
@@ -75,32 +46,30 @@ from fastapi import (
     Request,
     UploadFile,
     File,
-    status,
 )
+
+from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi.exceptions import RequestValidationError
 
 from fastapi.responses import (
     JSONResponse,
-    HTMLResponse,
     StreamingResponse,
+    FileResponse,
 )
-
-from fastapi.middleware.cors import CORSMiddleware
 
 from pydantic import BaseModel, Field
 
 
-# ---------------------------------------------------------
+# =========================================================
 # SCHEMEASSIST IMPORTS
-# ---------------------------------------------------------
+# =========================================================
 
 from src.config import (
     GEMINI_API_KEY,
     GEMINI_MODEL,
     CHAT_MODEL,
     EMBED_MODEL,
-    VECTOR_DB_URL,
     CHROMA_PERSIST_DIR,
     COLLECTION_NAME,
     API_HOST,
@@ -114,10 +83,8 @@ from src.vector_store import VectorStore
 from src.retrieval import (
     SchemeRetriever,
     is_scheme_related_query,
-    get_guardrail_response,
     is_retrieval_strong,
     MIN_RETRIEVAL_SCORE,
-    WEAK_CONTEXT_MESSAGE,
 )
 
 from src.cleaning import clean_text
@@ -129,19 +96,10 @@ from src.llm_client import (
     make_completion,
 )
 
-from prompts.answer import (
-    ANSWER_V2,
-    render,
-)
 
-from prompts.templates import (
-    SYSTEM_SCHEME_ASSIST_TEMPLATE,
-)
-
-
-# ---------------------------------------------------------
+# =========================================================
 # LOGGER
-# ---------------------------------------------------------
+# =========================================================
 
 logging.basicConfig(
     level=logging.INFO,
@@ -151,11 +109,11 @@ logging.basicConfig(
 logger = logging.getLogger("schemeassist_api")
 
 
-# ---------------------------------------------------------
+# =========================================================
 # CONFIGURATION
-# ---------------------------------------------------------
+# =========================================================
 
-UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR = ROOT_DIR / "uploads"
 
 SUPPORTED_EXTENSIONS = {
     ".txt",
@@ -168,9 +126,22 @@ SUPPORTED_EXTENSIONS = {
 MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024
 
 
-# ---------------------------------------------------------
+# =========================================================
+# DOCUMENTS TO EXCLUDE FROM PRODUCTION RAG
+# =========================================================
+
+EXCLUDED_DOCUMENTS = {
+    "sample_doc.md",
+    "sample_doc.txt",
+    "test_doc.md",
+    "test.txt",
+    "demo.md",
+}
+
+
+# =========================================================
 # PIPELINE STATE
-# ---------------------------------------------------------
+# =========================================================
 
 pipeline_state: Dict[str, Any] = {
 
@@ -186,6 +157,71 @@ pipeline_state: Dict[str, Any] = {
 
 
 # =========================================================
+# SCHEME DETECTION
+# =========================================================
+
+KNOWN_SCHEMES = {
+
+    "pm-kisan": [
+        "pm-kisan",
+        "pm kisan",
+        "kisan samman",
+        "pradhan mantri kisan",
+        "kisan samman nidhi",
+    ],
+
+    "ayushman_bharat": [
+        "ayushman",
+        "pmjay",
+        "pm-jay",
+        "ayushman bharat",
+        "jan arogya",
+    ],
+
+    "pm_awas": [
+        "pmay",
+        "pm awas",
+        "pradhan mantri awas",
+        "awas yojana",
+    ],
+
+    "ujjwala": [
+        "ujjwala",
+        "pmuy",
+        "gas subsidy",
+    ],
+
+    "mudra": [
+        "mudra",
+        "mudra loan",
+        "pmmy",
+    ],
+
+    "mgnrega": [
+        "mgnrega",
+        "nrega",
+        "mnrega",
+        "mahatma gandhi employment",
+    ],
+
+}
+
+
+def detect_scheme(question: str) -> Optional[str]:
+
+    text = question.lower()
+
+    for scheme, keywords in KNOWN_SCHEMES.items():
+
+        for keyword in keywords:
+
+            if keyword in text:
+                return scheme
+
+    return None
+
+
+# =========================================================
 # PIPELINE INITIALIZATION
 # =========================================================
 
@@ -197,9 +233,7 @@ def get_pipeline() -> Dict[str, Any]:
 
     if pipeline_state["embedding_service"] is None:
 
-        logger.info(
-            "Initializing embedding service..."
-        )
+        logger.info("Initializing embedding service...")
 
         pipeline_state["embedding_service"] = EmbeddingService(
 
@@ -216,96 +250,21 @@ def get_pipeline() -> Dict[str, Any]:
 
     if pipeline_state["vector_store"] is None:
 
-        logger.info(
-            "Connecting to ChromaDB..."
+        logger.info("Connecting to ChromaDB...")
+
+        vector_store = VectorStore(
+
+            persist_dir=CHROMA_PERSIST_DIR,
+
+            collection_name=COLLECTION_NAME,
+
         )
 
-        candidates = [
-
-            (
-                CHROMA_PERSIST_DIR,
-                COLLECTION_NAME,
-            ),
-
-            (
-                "chroma_db",
-                "scheme_assist_corpus",
-            ),
-
-            (
-                "chroma_db",
-                "schemeassist_chunks",
-            ),
-
-            (
-                "data/chroma_db",
-                "scheme_assist_corpus",
-            ),
-
-        ]
-
-        vector_store = None
-
-
-        for persist_dir, collection_name in candidates:
-
-            try:
-
-                if os.path.exists(persist_dir):
-
-                    candidate = VectorStore(
-
-                        persist_dir=persist_dir,
-
-                        collection_name=collection_name,
-
-                    )
-
-                    count = candidate.count()
-
-
-                    if count > 0:
-
-                        vector_store = candidate
-
-                        logger.info(
-
-                            "Connected to ChromaDB '%s' collection '%s' with %d records.",
-
-                            persist_dir,
-
-                            collection_name,
-
-                            count,
-
-                        )
-
-                        break
-
-
-            except Exception as error:
-
-                logger.warning(
-
-                    "ChromaDB candidate failed: %s",
-
-                    error,
-
-                )
-
-
-        # Create if nothing found
-
-        if vector_store is None:
-
-            vector_store = VectorStore(
-
-                persist_dir=CHROMA_PERSIST_DIR,
-
-                collection_name=COLLECTION_NAME,
-
-            )
-
+        logger.info(
+            "Connected to ChromaDB: %s | Collection: %s",
+            CHROMA_PERSIST_DIR,
+            COLLECTION_NAME,
+        )
 
         pipeline_state["vector_store"] = vector_store
 
@@ -326,50 +285,48 @@ def get_pipeline() -> Dict[str, Any]:
 
             )
 
-            logger.info(
-                "SchemeRetriever initialized."
-            )
+            logger.info("SchemeRetriever initialized.")
 
         except Exception as error:
 
-            logger.warning(
-
-                "SchemeRetriever initialization warning: %s",
-
+            logger.error(
+                "Retriever initialization failed: %s",
                 error,
-
             )
 
 
     # -----------------------------------------------------
-    # GEMINI
+    # GEMINI CLIENT
     # -----------------------------------------------------
 
     if pipeline_state["gemini_client"] is None:
 
-        api_key = GEMINI_API_KEY or os.getenv(
-            "GEMINI_API_KEY"
+        api_key = (
+            GEMINI_API_KEY
+            or os.getenv("GEMINI_API_KEY")
         )
 
+        if not api_key:
 
-        if api_key:
+            logger.warning(
+                "GEMINI_API_KEY not configured."
+            )
+
+        else:
 
             try:
 
                 pipeline_state["gemini_client"] = build_client()
 
                 logger.info(
-                    "Gemini client initialized."
+                    "AI client initialized successfully."
                 )
 
             except Exception as error:
 
-                logger.warning(
-
-                    "Gemini initialization warning: %s",
-
+                logger.exception(
+                    "AI client initialization failed: %s",
                     error,
-
                 )
 
 
@@ -384,7 +341,6 @@ def get_retriever() -> SchemeRetriever:
 
     state = get_pipeline()
 
-
     if state["retriever"] is None:
 
         state["retriever"] = SchemeRetriever(
@@ -395,29 +351,26 @@ def get_retriever() -> SchemeRetriever:
 
         )
 
-
     return state["retriever"]
 
 
 # =========================================================
-# GET GEMINI CLIENT
+# GET AI CLIENT
 # =========================================================
 
-def get_gemini_client():
+def get_ai_client():
 
     state = get_pipeline()
-
 
     if state["gemini_client"] is None:
 
         state["gemini_client"] = build_client()
 
-
     return state["gemini_client"]
 
 
 # =========================================================
-# APPLICATION LIFESPAN
+# LIFESPAN
 # =========================================================
 
 @asynccontextmanager
@@ -427,7 +380,6 @@ async def lifespan(app: FastAPI):
         "Starting SchemeAssist AI service..."
     )
 
-
     try:
 
         get_pipeline()
@@ -435,16 +387,11 @@ async def lifespan(app: FastAPI):
     except Exception as error:
 
         logger.warning(
-
-            "Pipeline warmup warning: %s",
-
+            "Pipeline startup warning: %s",
             error,
-
         )
 
-
     yield
-
 
     logger.info(
         "Shutting down SchemeAssist..."
@@ -460,11 +407,11 @@ app = FastAPI(
     title="SchemeAssist API",
 
     description=(
-        "AI powered Government Scheme Assistant "
-        "using Gemini and ChromaDB RAG."
+        "AI Powered Government Scheme Assistant "
+        "with Verified RAG"
     ),
 
-    version="2.0.0",
+    version="3.0.0",
 
     lifespan=lifespan,
 
@@ -479,7 +426,13 @@ app.add_middleware(
 
     CORSMiddleware,
 
-    allow_origins=["*"],
+    allow_origins=[
+
+        "http://localhost:3000",
+
+        "http://127.0.0.1:3000",
+
+    ],
 
     allow_credentials=True,
 
@@ -491,17 +444,7 @@ app.add_middleware(
 
 
 # =========================================================
-# STATIC DIRECTORY
-# =========================================================
-
-STATIC_DIR = (
-    Path(__file__).parent.parent
-    / "static"
-)
-
-
-# =========================================================
-# REQUEST MODELS
+# MODELS
 # =========================================================
 
 class ChatRequest(BaseModel):
@@ -513,8 +456,6 @@ class ChatRequest(BaseModel):
         min_length=3,
 
         max_length=2000,
-
-        description="Government scheme question.",
 
     )
 
@@ -532,10 +473,6 @@ class QueryRequest(BaseModel):
     )
 
 
-# =========================================================
-# SOURCE MODEL
-# =========================================================
-
 class ChatSource(BaseModel):
 
     scheme: str
@@ -548,10 +485,6 @@ class ChatSource(BaseModel):
 
     score: Optional[float] = None
 
-
-# =========================================================
-# CHAT RESPONSE
-# =========================================================
 
 class ChatResponse(BaseModel):
 
@@ -578,10 +511,6 @@ class ChatResponse(BaseModel):
     answer_mode: str = "general_ai"
 
 
-# =========================================================
-# HEALTH RESPONSE
-# =========================================================
-
 class HealthResponse(BaseModel):
 
     status: str
@@ -596,12 +525,6 @@ class HealthResponse(BaseModel):
 
     gemini_configured: bool
 
-    openai_configured: bool = False
-
-
-# =========================================================
-# DOCUMENT MODELS
-# =========================================================
 
 class DocumentSummary(BaseModel):
 
@@ -655,32 +578,13 @@ async def validation_exception_handler(
 # =========================================================
 
 @app.get("/")
-
 def root():
 
     return {
 
         "service": "SchemeAssist",
 
-        "version": "2.0.0",
-
-        "provider": "Google Gemini",
-
-        "features": [
-
-            "Government Scheme AI",
-
-            "RAG Search",
-
-            "ChromaDB",
-
-            "Document Upload",
-
-            "Hybrid Retrieval",
-
-            "General Scheme Knowledge",
-
-        ],
+        "version": "3.0.0",
 
         "chat_url": "/api/chat",
 
@@ -688,13 +592,11 @@ def root():
 
         "documents_url": "/api/documents",
 
-        "docs_url": "/docs",
-
     }
 
 
 # =========================================================
-# HEALTH CHECK
+# HEALTH
 # =========================================================
 
 @app.get(
@@ -711,36 +613,17 @@ def health_check():
 
     state = get_pipeline()
 
-
     vector_store = state.get(
         "vector_store"
     )
 
-
     indexed_chunks = 0
 
-
-    if vector_store is not None:
-
-        indexed_chunks = vector_store.count()
-
-
-    retriever = state.get(
-        "retriever"
-    )
-
-
-    if retriever:
+    if vector_store:
 
         try:
 
-            indexed_chunks = max(
-
-                indexed_chunks,
-
-                retriever.record_count,
-
-            )
+            indexed_chunks = vector_store.count()
 
         except Exception:
 
@@ -754,7 +637,6 @@ def health_check():
         "embedding_model": EMBED_MODEL,
 
         "chat_model": (
-
             CHAT_MODEL
             or GEMINI_MODEL
         ),
@@ -764,17 +646,17 @@ def health_check():
         "indexed_chunks": indexed_chunks,
 
         "gemini_configured": bool(
+
             GEMINI_API_KEY
             or os.getenv("GEMINI_API_KEY")
-        ),
 
-        "openai_configured": False,
+        ),
 
     }
 
 
 # =========================================================
-# SCHEME QUESTION DETECTION
+# GOVERNMENT SCHEME QUESTION DETECTION
 # =========================================================
 
 def is_government_scheme_question(
@@ -783,8 +665,6 @@ def is_government_scheme_question(
 
     text = question.lower()
 
-
-    # Clearly unrelated questions
 
     unrelated_keywords = [
 
@@ -810,8 +690,6 @@ def is_government_scheme_question(
 
         "coding",
 
-        "weather",
-
         "bitcoin",
 
     ]
@@ -820,11 +698,8 @@ def is_government_scheme_question(
     for keyword in unrelated_keywords:
 
         if keyword in text:
-
             return False
 
-
-    # Scheme related keywords
 
     scheme_keywords = [
 
@@ -834,33 +709,19 @@ def is_government_scheme_question(
 
         "government",
 
-        "govt",
-
         "benefit",
-
-        "benefits",
-
-        "subsidy",
-
-        "subsidies",
 
         "eligibility",
 
         "eligible",
 
-        "apply",
-
-        "application",
-
-        "financial assistance",
+        "subsidy",
 
         "pension",
 
         "farmer",
 
         "agriculture",
-
-        "student scholarship",
 
         "scholarship",
 
@@ -878,8 +739,6 @@ def is_government_scheme_question(
 
         "pm-",
 
-        "pm ",
-
         "pradhan mantri",
 
         "ayushman",
@@ -894,83 +753,450 @@ def is_government_scheme_question(
 
         "mgnrega",
 
-        "atal",
-
-        "startup india",
-
-        "digital india",
-
-        "india",
-
     ]
 
 
     for keyword in scheme_keywords:
 
         if keyword in text:
-
             return True
 
-
-    # Existing RAG detector
 
     try:
 
-        if is_scheme_related_query(question):
-
-            return True
+        return is_scheme_related_query(question)
 
     except Exception:
 
-        pass
-
-
-    return False
+        return False
 
 
 # =========================================================
-# GENERAL GEMINI SCHEME ANSWER
+# FILTER RETRIEVAL RESULTS
+# =========================================================
+
+def filter_retrieval_results(
+    results: List[Dict[str, Any]],
+    question: str,
+) -> List[Dict[str, Any]]:
+
+    detected_scheme = detect_scheme(
+        question
+    )
+
+    filtered = []
+
+    seen_sources = set()
+
+
+    for result in results:
+
+        metadata = result.get(
+            "metadata",
+            {}
+        )
+
+        source = (
+
+            metadata.get("source")
+
+            or result.get("source")
+
+            or ""
+
+        )
+
+        source_lower = source.lower()
+
+
+        # ---------------------------------------------
+        # REMOVE SAMPLE / TEST DOCUMENTS
+        # ---------------------------------------------
+
+        if source_lower in EXCLUDED_DOCUMENTS:
+
+            logger.info(
+                "Excluded test document: %s",
+                source,
+            )
+
+            continue
+
+
+        # ---------------------------------------------
+        # GET TEXT
+        # ---------------------------------------------
+
+        text = (
+
+            result.get("text")
+
+            or result.get("content")
+
+            or ""
+
+        ).lower()
+
+
+        scheme_name = (
+
+            metadata.get("scheme_name")
+
+            or ""
+
+        ).lower()
+
+
+        searchable = (
+
+            source_lower
+            + " "
+            + text
+            + " "
+            + scheme_name
+
+        )
+
+
+        # ---------------------------------------------
+        # SCHEME MATCH FILTER
+        # ---------------------------------------------
+
+        if detected_scheme:
+
+            keywords = KNOWN_SCHEMES.get(
+                detected_scheme,
+                []
+            )
+
+            matches_scheme = any(
+
+                keyword in searchable
+
+                for keyword in keywords
+
+            )
+
+
+            if not matches_scheme:
+
+                logger.info(
+
+                    "Excluded unrelated source: %s",
+
+                    source,
+
+                )
+
+                continue
+
+
+        # ---------------------------------------------
+        # DUPLICATE SOURCE + SECTION
+        # ---------------------------------------------
+
+        section = metadata.get(
+            "section",
+            "General Overview"
+        )
+
+        unique_key = (
+            source,
+            section
+        )
+
+
+        if unique_key in seen_sources:
+
+            continue
+
+
+        seen_sources.add(
+            unique_key
+        )
+
+
+        filtered.append(
+            result
+        )
+
+
+    # ---------------------------------------------
+    # SORT BY SCORE
+    # ---------------------------------------------
+
+    filtered.sort(
+
+        key=lambda item: float(
+
+            item.get(
+                "hybrid_score",
+
+                item.get(
+                    "score",
+                    0
+                )
+
+            )
+
+            or 0
+
+        ),
+
+        reverse=True,
+
+    )
+
+
+    logger.info(
+
+        "Retrieval results: %d -> %d",
+
+        len(results),
+
+        len(filtered),
+
+    )
+
+
+    return filtered
+
+
+# =========================================================
+# SAFE JSON PARSER
+# =========================================================
+
+def parse_ai_response(
+    reply: str
+) -> Dict[str, Any]:
+
+    if not reply:
+
+        raise ValueError(
+            "Empty AI response"
+        )
+
+
+    cleaned = reply.strip()
+
+
+    cleaned = re.sub(
+
+        r"^```json\s*",
+
+        "",
+
+        cleaned,
+
+        flags=re.IGNORECASE,
+
+    )
+
+
+    cleaned = re.sub(
+
+        r"^```\s*",
+
+        "",
+
+        cleaned,
+
+    )
+
+
+    cleaned = re.sub(
+
+        r"\s*```$",
+
+        "",
+
+        cleaned,
+
+    ).strip()
+
+
+    try:
+
+        return json.loads(
+            cleaned
+        )
+
+    except Exception:
+
+        # Try extracting JSON object
+
+        match = re.search(
+
+            r"\{.*\}",
+
+            cleaned,
+
+            flags=re.DOTALL,
+
+        )
+
+
+        if match:
+
+            try:
+
+                return json.loads(
+                    match.group()
+                )
+
+            except Exception:
+
+                pass
+
+
+        return {
+
+            "answer": cleaned,
+
+            "eligibility": "",
+
+            "benefits": "",
+
+            "application_process": [],
+
+            "documents_required": [],
+
+        }
+
+
+# =========================================================
+# NORMALIZE RESPONSE
+# =========================================================
+
+def normalize_response(
+    parsed: Dict[str, Any]
+) -> Dict[str, Any]:
+
+    application_process = parsed.get(
+
+        "application_process",
+
+        []
+
+    )
+
+
+    documents_required = parsed.get(
+
+        "documents_required",
+
+        []
+
+    )
+
+
+    if isinstance(
+        application_process,
+        str
+    ):
+
+        application_process = [
+
+            application_process
+
+        ]
+
+
+    if isinstance(
+        documents_required,
+        str
+    ):
+
+        documents_required = [
+
+            documents_required
+
+        ]
+
+
+    return {
+
+        "answer": str(
+
+            parsed.get(
+                "answer",
+                ""
+            )
+
+        ).strip(),
+
+        "eligibility": str(
+
+            parsed.get(
+                "eligibility",
+                ""
+            )
+
+        ).strip(),
+
+        "benefits": str(
+
+            parsed.get(
+                "benefits",
+                ""
+            )
+
+        ).strip(),
+
+        "application_process": [
+
+            str(item)
+
+            for item in application_process
+
+            if str(item).strip()
+
+        ],
+
+        "documents_required": [
+
+            str(item)
+
+            for item in documents_required
+
+            if str(item).strip()
+
+        ],
+
+    }
+
+
+# =========================================================
+# GENERAL AI ANSWER
 # =========================================================
 
 def generate_general_scheme_answer(
-    question: str,
-    client: Any,
-) -> Dict[str, Any]:
 
-    """
-    Answers government scheme questions that are
-    not available in the local ChromaDB database.
-    """
+    question: str,
+
+    client: Any,
+
+) -> Dict[str, Any]:
 
 
     system_prompt = """
 
-You are SchemeAssist, an AI assistant that helps citizens understand
-government welfare schemes and public benefit programs.
+You are SchemeAssist.
 
-You can answer questions about government schemes across India,
-including central and state government schemes when information
-is available.
+You help citizens understand Indian government schemes.
 
-Your responsibilities:
+Provide clear and accurate information.
 
-1. Explain government schemes clearly.
-2. Explain eligibility criteria.
-3. Explain benefits and financial assistance.
-4. Explain application processes.
-5. Explain required documents.
-6. Mention official portals when you are confident.
-7. Do not invent scheme details.
-8. Do not make up financial amounts.
-9. Do not present uncertain information as confirmed.
-10. If a scheme has state-specific rules, clearly mention that.
-11. If you are not sufficiently confident, say so.
+Rules:
 
-IMPORTANT:
+1. Do not invent information.
+2. Do not invent financial amounts.
+3. Clearly mention uncertainty.
+4. Mention state-specific differences where relevant.
+5. Keep language simple.
+6. Return ONLY valid JSON.
 
-Return ONLY valid JSON.
-
-Use exactly this format:
+Required JSON:
 
 {
     "answer": "",
@@ -979,25 +1205,6 @@ Use exactly this format:
     "application_process": [],
     "documents_required": []
 }
-
-If a field is unknown, use an empty string or empty array.
-
-Use simple citizen-friendly language.
-
-"""
-
-
-    user_prompt = f"""
-
-Citizen Question:
-
-{question}
-
-Provide accurate information about the government scheme.
-
-Do not discuss unrelated topics.
-
-Return JSON only.
 
 """
 
@@ -1016,26 +1223,69 @@ Return JSON only.
 
             "role": "user",
 
-            "content": user_prompt,
+            "content": question,
 
         },
 
     ]
 
 
-    reply = make_completion(
-        client,
-        messages,
-    )
+    try:
+
+        reply = make_completion(
+
+            client,
+
+            messages,
+
+        )
 
 
-    if not reply:
+        logger.info(
+            "General AI response received: %s",
+            bool(reply)
+        )
+
+
+        parsed = parse_ai_response(
+            reply
+        )
+
+
+        result = normalize_response(
+            parsed
+        )
+
+
+        return {
+
+            **result,
+
+            "sources": [],
+
+            "status": "answered",
+
+            "answer_mode": "general_ai",
+
+        }
+
+
+    except Exception as error:
+
+        logger.exception(
+
+            "General AI generation failed: %s",
+
+            error,
+
+        )
+
 
         return {
 
             "answer": (
-                "I am currently unable to generate "
-                "a response. Please try again."
+                "I could not generate a verified answer "
+                "at the moment. Please try again shortly."
             ),
 
             "eligibility": "",
@@ -1049,202 +1299,6 @@ Return JSON only.
             "sources": [],
 
             "status": "error",
-
-            "answer_mode": "general_ai",
-
-        }
-
-
-    # Remove markdown fences
-
-    cleaned_reply = reply.strip()
-
-
-    cleaned_reply = re.sub(
-
-        r"^```json\s*",
-
-        "",
-
-        cleaned_reply,
-
-        flags=re.IGNORECASE,
-
-    )
-
-
-    cleaned_reply = re.sub(
-
-        r"^```\s*",
-
-        "",
-
-        cleaned_reply,
-
-    )
-
-
-    cleaned_reply = re.sub(
-
-        r"\s*```$",
-
-        "",
-
-        cleaned_reply,
-
-    ).strip()
-
-
-    # Parse JSON
-
-    try:
-
-        parsed = json.loads(
-            cleaned_reply
-        )
-
-
-        application_process = parsed.get(
-            "application_process",
-            [],
-        )
-
-
-        documents_required = parsed.get(
-            "documents_required",
-            [],
-        )
-
-
-        if isinstance(
-            application_process,
-            str,
-        ):
-
-            application_process = [
-                application_process
-            ]
-
-
-        if isinstance(
-            documents_required,
-            str,
-        ):
-
-            documents_required = [
-                documents_required
-            ]
-
-
-        return {
-
-            "answer": str(
-
-                parsed.get(
-                    "answer",
-                    "",
-                )
-
-            ),
-
-            "eligibility": str(
-
-                parsed.get(
-                    "eligibility",
-                    "",
-                )
-
-            ),
-
-            "benefits": str(
-
-                parsed.get(
-                    "benefits",
-                    "",
-                )
-
-            ),
-
-            "application_process": [
-
-                str(item)
-
-                for item in application_process
-
-                if str(item).strip()
-
-            ],
-
-            "documents_required": [
-
-                str(item)
-
-                for item in documents_required
-
-                if str(item).strip()
-
-            ],
-
-            "sources": [
-
-                {
-
-                    "scheme": "General Government Scheme Information",
-
-                    "source": "Google Gemini AI",
-
-                    "section": "General Scheme Knowledge",
-
-                    "chunk_id": None,
-
-                    "score": None,
-
-                }
-
-            ],
-
-            "status": "answered",
-
-            "answer_mode": "general_ai",
-
-        }
-
-
-    except Exception:
-
-        # Plain text fallback
-
-        return {
-
-            "answer": cleaned_reply,
-
-            "eligibility": "",
-
-            "benefits": "",
-
-            "application_process": [],
-
-            "documents_required": [],
-
-            "sources": [
-
-                {
-
-                    "scheme": "General Government Scheme Information",
-
-                    "source": "Google Gemini AI",
-
-                    "section": "General Scheme Knowledge",
-
-                    "chunk_id": None,
-
-                    "score": None,
-
-                }
-
-            ],
-
-            "status": "answered",
 
             "answer_mode": "general_ai",
 
@@ -1280,8 +1334,11 @@ def generate_grounded_scheme_answer(
     ):
 
         metadata = chunk.get(
+
             "metadata",
-            {},
+
+            {}
+
         )
 
 
@@ -1306,17 +1363,24 @@ def generate_grounded_scheme_answer(
 
 
         scheme_name = metadata.get(
+
             "scheme_name"
+
         )
 
 
         if not scheme_name:
 
             scheme_name = (
+
                 Path(source)
+
                 .stem
+
                 .replace("_", " ")
+
                 .title()
+
             )
 
 
@@ -1343,9 +1407,10 @@ def generate_grounded_scheme_answer(
         context_blocks.append(
 
             f"""
---- SOURCE {index} ---
 
-Scheme:
+SOURCE {index}
+
+Scheme Name:
 {scheme_name}
 
 Document:
@@ -1354,8 +1419,9 @@ Document:
 Section:
 {section}
 
-Content:
+Verified Content:
 {text}
+
 """
 
         )
@@ -1383,7 +1449,7 @@ Content:
 
                     round(
                         float(score),
-                        4,
+                        4
                     )
 
                     if score is not None
@@ -1406,27 +1472,39 @@ Content:
 
 You are SchemeAssist.
 
-You are a government welfare scheme assistant.
+You answer questions about government schemes using ONLY
+the verified document context provided.
 
-Answer ONLY using the provided verified documents.
+IMPORTANT RULES:
 
-Rules:
+1. Use ONLY the provided verified context.
+2. Never use external knowledge.
+3. Never invent information.
+4. Do not combine different schemes.
+5. If eligibility is not available, return empty text.
+6. If benefits are not available, return empty text.
+7. If application steps are unavailable, return [].
+8. If documents are unavailable, return [].
+9. Return ONLY valid JSON.
+10. Do not return markdown.
+11. Do not return explanations outside JSON.
 
-1. Do not use outside knowledge.
-2. Do not invent information.
-3. Do not mix information from unrelated schemes.
-4. If application steps are not provided,
-   return an empty application_process array.
-5. If documents are not provided,
-   return an empty documents_required array.
-6. Return JSON only.
+JSON FORMAT:
+
+{
+    "answer": "",
+    "eligibility": "",
+    "benefits": "",
+    "application_process": [],
+    "documents_required": []
+}
 
 """
 
 
     user_prompt = f"""
 
-VERIFIED SCHEME DOCUMENTS:
+VERIFIED DOCUMENT CONTEXT:
 
 {context}
 
@@ -1436,15 +1514,7 @@ CITIZEN QUESTION:
 {question}
 
 
-Return ONLY JSON:
-
-{{
-    "answer": "",
-    "eligibility": "",
-    "benefits": "",
-    "application_process": [],
-    "documents_required": []
-}}
+Generate the answer strictly from the verified context.
 
 """
 
@@ -1470,19 +1540,118 @@ Return ONLY JSON:
     ]
 
 
-    reply = make_completion(
-        client,
-        messages,
-    )
+    try:
+
+        logger.info(
+            "Generating verified RAG answer..."
+        )
 
 
-    if not reply:
+        reply = make_completion(
+
+            client,
+
+            messages,
+
+        )
+
+
+        logger.info(
+            "RAG AI response received: %s",
+            bool(reply)
+        )
+
+
+        # -----------------------------------------
+        # EMPTY RESPONSE FALLBACK
+        # -----------------------------------------
+
+        if not reply:
+
+            logger.error(
+                "AI returned empty response."
+            )
+
+
+            return {
+
+                "answer": (
+                    "I found relevant verified government "
+                    "documents, but the AI response service "
+                    "did not return an answer. Please try again."
+                ),
+
+                "eligibility": "",
+
+                "benefits": "",
+
+                "application_process": [],
+
+                "documents_required": [],
+
+                "sources": sources,
+
+                "status": "generation_error",
+
+                "answer_mode": "verified_rag",
+
+            }
+
+
+        parsed = parse_ai_response(
+            reply
+        )
+
+
+        result = normalize_response(
+            parsed
+        )
+
+
+        # -----------------------------------------
+        # CHECK EMPTY ANSWER
+        # -----------------------------------------
+
+        if not result["answer"]:
+
+            result["answer"] = (
+
+                "Relevant information was found in the "
+                "verified scheme documents, but a complete "
+                "answer could not be generated."
+
+            )
+
+
+        return {
+
+            **result,
+
+            "sources": sources,
+
+            "status": "answered",
+
+            "answer_mode": "verified_rag",
+
+        }
+
+
+    except Exception as error:
+
+        logger.exception(
+
+            "Verified RAG generation failed: %s",
+
+            error,
+
+        )
+
 
         return {
 
             "answer": (
-                "Unable to generate an answer "
-                "at this moment."
+                "I found relevant verified documents but "
+                "could not process them into an answer."
             ),
 
             "eligibility": "",
@@ -1495,165 +1664,7 @@ Return ONLY JSON:
 
             "sources": sources,
 
-            "status": "error",
-
-            "answer_mode": "verified_rag",
-
-        }
-
-
-    cleaned_reply = reply.strip()
-
-
-    cleaned_reply = re.sub(
-
-        r"^```json\s*",
-
-        "",
-
-        cleaned_reply,
-
-        flags=re.IGNORECASE,
-
-    )
-
-
-    cleaned_reply = re.sub(
-
-        r"^```\s*",
-
-        "",
-
-        cleaned_reply,
-
-    )
-
-
-    cleaned_reply = re.sub(
-
-        r"\s*```$",
-
-        "",
-
-        cleaned_reply,
-
-    ).strip()
-
-
-    try:
-
-        parsed = json.loads(
-            cleaned_reply
-        )
-
-
-        application_process = parsed.get(
-            "application_process",
-            [],
-        )
-
-
-        documents_required = parsed.get(
-            "documents_required",
-            [],
-        )
-
-
-        if isinstance(
-            application_process,
-            str,
-        ):
-
-            application_process = [
-                application_process
-            ]
-
-
-        if isinstance(
-            documents_required,
-            str,
-        ):
-
-            documents_required = [
-                documents_required
-            ]
-
-
-        return {
-
-            "answer": str(
-
-                parsed.get(
-                    "answer",
-                    "",
-                )
-
-            ),
-
-            "eligibility": str(
-
-                parsed.get(
-                    "eligibility",
-                    "",
-                )
-
-            ),
-
-            "benefits": str(
-
-                parsed.get(
-                    "benefits",
-                    "",
-                )
-
-            ),
-
-            "application_process": [
-
-                str(item)
-
-                for item in application_process
-
-                if str(item).strip()
-
-            ],
-
-            "documents_required": [
-
-                str(item)
-
-                for item in documents_required
-
-                if str(item).strip()
-
-            ],
-
-            "sources": sources,
-
-            "status": "answered",
-
-            "answer_mode": "verified_rag",
-
-        }
-
-
-    except Exception:
-
-        return {
-
-            "answer": cleaned_reply,
-
-            "eligibility": "",
-
-            "benefits": "",
-
-            "application_process": [],
-
-            "documents_required": [],
-
-            "sources": sources,
-
-            "status": "answered",
+            "status": "generation_error",
 
             "answer_mode": "verified_rag",
 
@@ -1661,7 +1672,7 @@ Return ONLY JSON:
 
 
 # =========================================================
-# MAIN CHAT ENDPOINT
+# CHAT ENDPOINT
 # =========================================================
 
 @app.post(
@@ -1687,8 +1698,14 @@ def chat_ai(
     question = request.question.strip()
 
 
+    logger.info(
+        "QUESTION: %s",
+        question
+    )
+
+
     # -----------------------------------------------------
-    # VALIDATION
+    # VALIDATE QUESTION
     # -----------------------------------------------------
 
     if not question:
@@ -1697,19 +1714,13 @@ def chat_ai(
 
             status_code=400,
 
-            detail="Question cannot be empty.",
+            detail="Question cannot be empty."
 
         )
 
 
-    logger.info(
-        "CHAT QUESTION: %s",
-        question,
-    )
-
-
     # -----------------------------------------------------
-    # CHECK QUESTION TYPE
+    # GUARDRAIL
     # -----------------------------------------------------
 
     if not is_government_scheme_question(
@@ -1719,10 +1730,9 @@ def chat_ai(
         return {
 
             "answer": (
-                "I can assist with government welfare schemes, "
+                "I can help with Indian government schemes, "
                 "eligibility, benefits, subsidies, pensions, "
-                "scholarships, applications, and public schemes. "
-                "Please ask a government scheme related question."
+                "scholarships and applications."
             ),
 
             "eligibility": "",
@@ -1744,14 +1754,30 @@ def chat_ai(
 
     try:
 
-        client = get_gemini_client()
+        client = get_ai_client()
 
 
         # -------------------------------------------------
-        # TRY RAG FIRST
+        # DETECT SCHEME
         # -------------------------------------------------
 
-        retriever = None
+        detected_scheme = detect_scheme(
+            question
+        )
+
+
+        logger.info(
+
+            "Detected scheme: %s",
+
+            detected_scheme
+
+        )
+
+
+        # -------------------------------------------------
+        # RAG SEARCH
+        # -------------------------------------------------
 
         results = []
 
@@ -1764,22 +1790,49 @@ def chat_ai(
             if retriever.record_count > 0:
 
                 logger.info(
-                    "Trying verified RAG search..."
+                    "Searching verified documents..."
                 )
 
 
-                results = retriever.search(
+                raw_results = retriever.search(
 
                     query=question,
 
-                    top_k=4,
+                    top_k=10,
 
                 )
+
+
+                logger.info(
+
+                    "Raw RAG results: %d",
+
+                    len(raw_results)
+
+                )
+
+
+                # -----------------------------------------
+                # FILTER RESULTS
+                # -----------------------------------------
+
+                results = filter_retrieval_results(
+
+                    raw_results,
+
+                    question,
+
+                )
+
+
+                # Limit final results
+
+                results = results[:4]
 
 
         except Exception as error:
 
-            logger.warning(
+            logger.exception(
 
                 "RAG search failed: %s",
 
@@ -1789,42 +1842,29 @@ def chat_ai(
 
 
         # -------------------------------------------------
-        # STRONG RAG RESULT
+        # USE VERIFIED RAG
         # -------------------------------------------------
 
         if results:
 
-            try:
+            logger.info(
 
-                strong = is_retrieval_strong(
+                "Verified relevant documents found: %d",
 
-                    results,
+                len(results)
 
-                    min_score=MIN_RETRIEVAL_SCORE,
-
-                )
-
-            except Exception:
-
-                strong = False
+            )
 
 
-            if strong:
+            return generate_grounded_scheme_answer(
 
-                logger.info(
-                    "Using VERIFIED RAG mode."
-                )
+                question=question,
 
+                retrieved_chunks=results,
 
-                return generate_grounded_scheme_answer(
+                client=client,
 
-                    question=question,
-
-                    retrieved_chunks=results,
-
-                    client=client,
-
-                )
+            )
 
 
         # -------------------------------------------------
@@ -1832,7 +1872,11 @@ def chat_ai(
         # -------------------------------------------------
 
         logger.info(
-            "Using GENERAL SCHEME AI mode."
+            "No verified scheme documents found."
+        )
+
+        logger.info(
+            "Using General AI mode."
         )
 
 
@@ -1848,8 +1892,11 @@ def chat_ai(
     except Exception as error:
 
         logger.exception(
-            "Chat endpoint failed: %s",
+
+            "Chat failed: %s",
+
             error,
+
         )
 
 
@@ -1866,49 +1913,28 @@ def chat_ai(
 # QUERY ENDPOINT
 # =========================================================
 
-@app.post(
-    "/api/query"
-)
-
-@app.post(
-    "/query"
-)
+@app.post("/api/query")
+@app.post("/query")
 
 def query_rag(
     request: QueryRequest
 ):
 
-    """
-    Query endpoint.
-
-    Uses the same hybrid logic:
-
-    RAG if verified documents exist
-    ↓
-    General Gemini answer if scheme is not indexed
-    """
-
-    chat_request = ChatRequest(
-        question=request.question
-    )
-
-
     return chat_ai(
-        chat_request
+
+        ChatRequest(
+            question=request.question
+        )
+
     )
 
 
 # =========================================================
-# STREAMING ENDPOINT
+# STREAMING
 # =========================================================
 
-@app.post(
-    "/api/query_stream"
-)
-
-@app.post(
-    "/query_stream"
-)
+@app.post("/api/query_stream")
+@app.post("/query_stream")
 
 async def query_stream(
     request: QueryRequest
@@ -1921,8 +1947,6 @@ async def query_stream(
 
         try:
 
-            # Run normal chat
-
             response = chat_ai(
 
                 ChatRequest(
@@ -1932,23 +1956,21 @@ async def query_stream(
             )
 
 
-            # Metadata
-
             metadata = {
 
                 "sources": response.get(
                     "sources",
-                    [],
+                    []
                 ),
 
                 "status": response.get(
                     "status",
-                    "answered",
+                    "answered"
                 ),
 
                 "answer_mode": response.get(
                     "answer_mode",
-                    "general_ai",
+                    "general_ai"
                 ),
 
             }
@@ -1963,11 +1985,9 @@ async def query_stream(
             )
 
 
-            # Stream answer
-
             answer = response.get(
                 "answer",
-                "",
+                ""
             )
 
 
@@ -1979,24 +1999,21 @@ async def query_stream(
             ):
 
                 suffix = (
+
                     " "
+
                     if index < len(words) - 1
+
                     else ""
+
                 )
-
-
-                payload = {
-
-                    "token": word + suffix
-
-                }
 
 
                 yield (
 
                     "event: token\n"
 
-                    f"data: {json.dumps(payload)}\n\n"
+                    f"data: {json.dumps({'token': word + suffix})}\n\n"
 
                 )
 
@@ -2019,7 +2036,7 @@ async def query_stream(
 
             logger.exception(
                 "Streaming failed: %s",
-                error,
+                error
             )
 
 
@@ -2055,16 +2072,16 @@ def validate_upload(
 
             status_code=400,
 
-            detail="Invalid filename.",
+            detail="Invalid filename."
 
         )
 
 
-    extension = (
-        Path(file.filename)
-        .suffix
-        .lower()
-    )
+    extension = Path(
+
+        file.filename
+
+    ).suffix.lower()
 
 
     if extension not in SUPPORTED_EXTENSIONS:
@@ -2074,13 +2091,17 @@ def validate_upload(
             status_code=415,
 
             detail=(
+
                 "Unsupported file type. "
-                "Supported: "
+
                 + ", ".join(
+
                     sorted(
                         SUPPORTED_EXTENSIONS
                     )
+
                 )
+
             ),
 
         )
@@ -2097,24 +2118,28 @@ async def store_upload(
     file: UploadFile
 ) -> Path:
 
-    validate_upload(file)
+    validate_upload(
+        file
+    )
 
 
     UPLOAD_DIR.mkdir(
+
         parents=True,
+
         exist_ok=True,
+
     )
 
 
     filename = Path(
+
         file.filename
+
     ).name
 
 
-    path = (
-        UPLOAD_DIR
-        / filename
-    )
+    path = UPLOAD_DIR / filename
 
 
     content = await file.read()
@@ -2126,7 +2151,7 @@ async def store_upload(
 
             status_code=400,
 
-            detail="Uploaded file is empty.",
+            detail="Uploaded file is empty."
 
         )
 
@@ -2137,7 +2162,7 @@ async def store_upload(
 
             status_code=413,
 
-            detail="File exceeds 10MB limit.",
+            detail="File exceeds 10MB limit."
 
         )
 
@@ -2160,11 +2185,9 @@ def process_uploaded_document(
 
     state = get_pipeline()
 
-
     vector_store = state.get(
         "vector_store"
     )
-
 
     embedding_service = state.get(
         "embedding_service"
@@ -2177,15 +2200,12 @@ def process_uploaded_document(
 
             status_code=503,
 
-            detail="Vector database unavailable.",
+            detail="Vector database unavailable."
 
         )
 
 
-    extension = (
-        path.suffix.lower()
-    )
-
+    extension = path.suffix.lower()
 
     raw_text = ""
 
@@ -2195,11 +2215,8 @@ def process_uploaded_document(
     # -----------------------------------------------------
 
     if extension in [
-
         ".txt",
-
-        ".md",
-
+        ".md"
     ]:
 
         raw_text = path.read_text(
@@ -2216,11 +2233,8 @@ def process_uploaded_document(
     # -----------------------------------------------------
 
     elif extension in [
-
         ".html",
-
-        ".htm",
-
+        ".htm"
     ]:
 
         html = path.read_text(
@@ -2241,19 +2255,15 @@ def process_uploaded_document(
 
                 html,
 
-                "html.parser",
+                "html.parser"
 
             )
 
 
             for tag in soup([
-
                 "script",
-
                 "style",
-
-                "noscript",
-
+                "noscript"
             ]):
 
                 tag.decompose()
@@ -2274,7 +2284,7 @@ def process_uploaded_document(
 
                 " ",
 
-                html,
+                html
 
             )
 
@@ -2321,20 +2331,9 @@ def process_uploaded_document(
 
                 status_code=422,
 
-                detail=f"PDF error: {error}",
+                detail=f"PDF error: {error}"
 
             )
-
-
-    else:
-
-        raise HTTPException(
-
-            status_code=415,
-
-            detail="Unsupported document.",
-
-        )
 
 
     # -----------------------------------------------------
@@ -2352,7 +2351,7 @@ def process_uploaded_document(
 
             status_code=422,
 
-            detail="No readable text found.",
+            detail="No readable text found."
 
         )
 
@@ -2405,7 +2404,7 @@ def process_uploaded_document(
 
 
     # -----------------------------------------------------
-    # METADATA
+    # DOCUMENT HASH
     # -----------------------------------------------------
 
     document_hash = hashlib.sha256(
@@ -2415,15 +2414,11 @@ def process_uploaded_document(
     ).hexdigest()[:16]
 
 
-    timestamp = (
+    timestamp = datetime.datetime.now(
 
-        datetime.datetime.now(
+        datetime.timezone.utc
 
-            datetime.timezone.utc
-
-        ).isoformat()
-
-    )
+    ).isoformat()
 
 
     records = []
@@ -2436,8 +2431,11 @@ def process_uploaded_document(
         chunk_id = (
 
             f"{path.stem}:"
+
             f"chunk:"
+
             f"{index + 1}"
+
         )
 
 
@@ -2445,7 +2443,7 @@ def process_uploaded_document(
 
             chunk.get(
                 "metadata",
-                {},
+                {}
             )
 
         )
@@ -2459,7 +2457,7 @@ def process_uploaded_document(
 
                 "section",
 
-                "General Overview",
+                "General Overview"
 
             ),
 
@@ -2471,10 +2469,10 @@ def process_uploaded_document(
 
                 "scheme_name",
 
-                path.stem.replace(
-                    "_",
-                    " "
-                ).title(),
+                path.stem
+                .replace("_", " ")
+                .replace("-", " ")
+                .title()
 
             ),
 
@@ -2485,7 +2483,10 @@ def process_uploaded_document(
 
             "id": chunk_id,
 
-            "text": chunk["text"],
+            "text": chunk.get(
+                "text",
+                ""
+            ),
 
             "metadata": metadata,
 
@@ -2493,7 +2494,7 @@ def process_uploaded_document(
 
 
     # -----------------------------------------------------
-    # EMBEDDINGS
+    # CREATE EMBEDDINGS
     # -----------------------------------------------------
 
     texts = [
@@ -2502,7 +2503,20 @@ def process_uploaded_document(
 
         for record in records
 
+        if record["text"].strip()
+
     ]
+
+
+    if not texts:
+
+        raise HTTPException(
+
+            status_code=422,
+
+            detail="No valid chunks found."
+
+        )
 
 
     embeddings = embedding_service.embed_texts(
@@ -2517,11 +2531,22 @@ def process_uploaded_document(
     vector_records = []
 
 
+    valid_records = [
+
+        record
+
+        for record in records
+
+        if record["text"].strip()
+
+    ]
+
+
     for record, vector in zip(
 
-        records,
+        valid_records,
 
-        embeddings,
+        embeddings
 
     ):
 
@@ -2539,14 +2564,13 @@ def process_uploaded_document(
 
 
     indexed = vector_store.upsert_batch(
-
         vector_records
     )
 
 
     logger.info(
 
-        "Document indexed: %s | %d chunks",
+        "Document indexed: %s | Chunks: %d",
 
         path.name,
 
@@ -2581,7 +2605,7 @@ def process_uploaded_document(
 
         "document": str(path),
 
-        "chunks": len(records),
+        "chunks": len(valid_records),
 
         "indexed": indexed,
 
@@ -2639,13 +2663,8 @@ async def upload_document(
 # LIST DOCUMENTS
 # =========================================================
 
-@app.get(
-    "/api/documents"
-)
-
-@app.get(
-    "/documents"
-)
+@app.get("/api/documents")
+@app.get("/documents")
 
 def list_documents():
 
@@ -2683,6 +2702,183 @@ def list_documents():
         "documents": documents,
 
         "total": len(documents),
+
+    }
+
+
+# =========================================================
+# VIEW DOCUMENT
+# =========================================================
+
+@app.get("/api/documents/{filename}")
+@app.get("/documents/{filename}")
+
+def view_document(
+    filename: str
+):
+
+    upload_root = UPLOAD_DIR.resolve()
+
+    requested_file = (
+
+        UPLOAD_DIR / filename
+
+    ).resolve()
+
+
+    if (
+
+        upload_root not in requested_file.parents
+
+        or not requested_file.is_file()
+
+    ):
+
+        raise HTTPException(
+
+            status_code=404,
+
+            detail="Document not found."
+
+        )
+
+
+    media_type = (
+
+        mimetypes.guess_type(
+
+            requested_file.name
+
+        )[0]
+
+        or "application/octet-stream"
+
+    )
+
+
+    return FileResponse(
+
+        requested_file,
+
+        media_type=media_type,
+
+        content_disposition_type="inline",
+
+    )
+
+
+# =========================================================
+# DELETE DOCUMENT
+# =========================================================
+
+@app.delete("/api/documents/{filename}")
+@app.delete("/documents/{filename}")
+
+def delete_document(
+    filename: str
+):
+
+    upload_root = UPLOAD_DIR.resolve()
+
+    requested_file = (
+
+        UPLOAD_DIR / filename
+
+    ).resolve()
+
+
+    if (
+
+        upload_root not in requested_file.parents
+
+        or not requested_file.is_file()
+
+    ):
+
+        raise HTTPException(
+
+            status_code=404,
+
+            detail="Document not found."
+
+        )
+
+
+    vector_store = get_pipeline().get(
+        "vector_store"
+    )
+
+
+    deleted_chunks = 0
+
+
+    try:
+
+        if vector_store is not None:
+
+            records = vector_store.collection.get(
+
+                where={
+
+                    "source": requested_file.name
+
+                }
+
+            )
+
+
+            record_ids = (
+
+                records.get(
+                    "ids",
+                    []
+                )
+
+                if records
+
+                else []
+
+            )
+
+
+            if record_ids:
+
+                vector_store.collection.delete(
+
+                    ids=record_ids
+
+                )
+
+
+                deleted_chunks = len(
+                    record_ids
+                )
+
+
+    except Exception as error:
+
+        logger.warning(
+
+            "Vector deletion warning: %s",
+
+            error,
+
+        )
+
+
+    requested_file.unlink()
+
+
+    pipeline_state["retriever"] = None
+
+
+    return {
+
+        "status": "deleted",
+
+        "filename": requested_file.name,
+
+        "deleted_chunks": deleted_chunks,
 
     }
 

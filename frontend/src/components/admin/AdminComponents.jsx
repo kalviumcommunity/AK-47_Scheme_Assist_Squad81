@@ -111,9 +111,8 @@ export function AnalyticsVisual({ analytics }) {
               <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                 <div
                   style={{ width: `${s.percentage}%` }}
-                  className={`h-full rounded-full ${
-                    idx === 0 ? 'bg-primary' : idx === 1 ? 'bg-gov-success' : 'bg-navy-700'
-                  }`}
+                  className={`h-full rounded-full ${idx === 0 ? 'bg-primary' : idx === 1 ? 'bg-gov-success' : 'bg-navy-700'
+                    }`}
                 />
               </div>
             </div>
@@ -197,6 +196,13 @@ export function CitizenManagementTable({ citizens }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
+            {citizens.length === 0 && (
+              <tr>
+                <td colSpan="6" className="py-10 text-center text-xs text-slate-muted">
+                  No citizens have registered or logged in yet.
+                </td>
+              </tr>
+            )}
             {citizens.map((c) => (
               <tr key={c.id} className="hover:bg-slate-50 transition-colors">
                 <td className="py-3 px-4">
@@ -215,7 +221,7 @@ export function CitizenManagementTable({ citizens }) {
                   </div>
                 </td>
                 <td className="py-3 px-4">
-                  <Badge variant={c.status === 'Verified' ? 'success' : 'warning'} size="sm" dot>
+                  <Badge variant={c.status === 'Verified' || c.status === 'Active' ? 'success' : 'warning'} size="sm" dot>
                     {c.status}
                   </Badge>
                 </td>
@@ -263,10 +269,10 @@ export function ApplicationManagementTable({ applications, onApprove, onReject }
                       app.status === 'Approved'
                         ? 'success'
                         : app.status === 'Pending'
-                        ? 'warning'
-                        : app.status === 'Rejected'
-                        ? 'danger'
-                        : 'primary'
+                          ? 'warning'
+                          : app.status === 'Rejected'
+                            ? 'danger'
+                            : 'primary'
                     }
                     size="sm"
                     dot

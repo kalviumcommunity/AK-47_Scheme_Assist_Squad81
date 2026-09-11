@@ -40,6 +40,7 @@ import AdminHelpdeskPage from './pages/admin/AdminHelpdeskPage';
 import AdminAnalyticsPage from './pages/admin/AdminAnalyticsPage';
 import SystemLogsPage from './pages/admin/SystemLogsPage';
 import AdminSettingsPage from './pages/admin/AdminSettingsPage';
+import AdminSystemHealthPage from './pages/admin/AdminSystemHealthPage';
 
 export function App() {
   return (
@@ -67,6 +68,7 @@ export function App() {
             <Route path="/schemes" element={<SchemeDiscoveryPage />} />
             <Route path="/schemes/:id" element={<SchemeDetailPage />} />
             <Route path="/ai-analysis" element={<AIAnalysisPage />} />
+            <Route path="/eligibility" element={<AIAnalysisPage />} />
             <Route path="/apply/:id" element={<ApplicationPage />} />
             <Route path="/applications" element={<ApplicationTrackingPage />} />
             <Route path="/documents" element={<DocumentsPage />} />
@@ -85,6 +87,9 @@ export function App() {
             <Route path="/admin/citizens" element={<AdminCitizensPage />} />
             <Route path="/admin/applications" element={<AdminApplicationsPage />} />
             <Route path="/admin/documents" element={<AdminDocumentsPage />} />
+            <Route path="/admin/knowledge-base" element={<AdminSystemHealthPage />} />
+            <Route path="/admin/ai-monitoring" element={<AdminSystemHealthPage />} />
+            <Route path="/admin/system-health" element={<AdminSystemHealthPage />} />
             <Route path="/admin/helpdesk" element={<AdminHelpdeskPage />} />
             <Route path="/admin/logs" element={<SystemLogsPage />} />
             <Route path="/admin/settings" element={<AdminSettingsPage />} />

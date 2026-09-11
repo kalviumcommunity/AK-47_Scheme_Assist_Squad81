@@ -17,6 +17,7 @@ import Input from '../../components/ui/Input';
 import { SCHEMES } from '../../data/schemesData';
 import { DEFAULT_CITIZEN } from '../../data/mockCitizenData';
 import { useAuth } from '../../context/AuthContext';
+import { submitApplication } from '../../services/applicationService';
 
 export function ApplicationPage() {
   const { id } = useParams();
@@ -27,8 +28,32 @@ export function ApplicationPage() {
   const citizenState = user?.state || DEFAULT_CITIZEN.location.state;
   const [currentStep, setCurrentStep] = useState(1);
   const [appId] = useState(`APP-2026-${Math.floor(10000 + Math.random() * 90000)}`);
+  const [submittedApplication, setSubmittedApplication] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const scheme = SCHEMES.find((s) => s.id === id) || SCHEMES[0];
+
+  const handleSubmit = async () => {
+    if (isSubmitting || submittedApplication) return;
+    setIsSubmitting(true);
+    try {
+      const application = await submitApplication({
+        id: appId,
+        citizenId: user?.id,
+        citizenEmail: user?.email,
+        citizenName,
+        state: citizenState,
+        schemeId: scheme.id,
+        schemeName: scheme.name,
+        category: scheme.category,
+        benefit: scheme.benefit,
+      });
+      setSubmittedApplication(application);
+      setCurrentStep(5);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const steps = [
     "Personal Details",
@@ -63,19 +88,17 @@ export function ApplicationPage() {
           return (
             <div key={idx} className="relative z-10 flex flex-col items-center">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all shadow-subtle ${
-                  isDone
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all shadow-subtle ${isDone
                     ? 'bg-gov-success text-white'
                     : isCurrent
-                    ? 'bg-primary text-white ring-4 ring-primary/20'
-                    : 'bg-white border border-slate-300 text-slate-400'
-                }`}
+                      ? 'bg-primary text-white ring-4 ring-primary/20'
+                      : 'bg-white border border-slate-300 text-slate-400'
+                  }`}
               >
                 {isDone ? <Check className="w-4 h-4" /> : stepNum}
               </div>
-              <span className={`text-[10px] sm:text-xs font-semibold mt-1.5 whitespace-nowrap ${
-                isCurrent ? 'text-primary' : isDone ? 'text-navy' : 'text-slate-400'
-              }`}>
+              <span className={`text-[10px] sm:text-xs font-semibold mt-1.5 whitespace-nowrap ${isCurrent ? 'text-primary' : isDone ? 'text-navy' : 'text-slate-400'
+                }`}>
                 {label}
               </span>
             </div>
@@ -214,7 +237,7 @@ export function ApplicationPage() {
 
             <div className="inline-block p-4 rounded-card bg-slate-bg border border-slate-border text-center">
               <span className="text-xs text-slate-400 font-semibold block uppercase tracking-wider">Application Tracking ID</span>
-              <span className="text-xl font-black font-mono text-primary mt-1 block">{appId}</span>
+              <span className="text-xl font-black font-mono text-primary mt-1 block">{submittedApplication?.id || appId}</span>
             </div>
 
             <div className="pt-4 flex justify-center gap-3">
@@ -250,7 +273,9 @@ export function ApplicationPage() {
             <Button
               variant="primary"
               size="md"
-              onClick={() => setCurrentStep((prev) => prev + 1)}
+              onClick={currentStep === 4 ? handleSubmit : () => setCurrentStep((prev) => prev + 1)}
+              isLoading={currentStep === 4 && isSubmitting}
+              disabled={currentStep === 4 && isSubmitting}
             >
               {currentStep === 4 ? "Submit Application" : "Next"}
             </Button>

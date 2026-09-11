@@ -1,23 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  Sparkles,
-  Bot,
-  User,
-  Send,
-  Paperclip,
-  Mic,
-  AlertCircle,
-  HelpCircle,
-  RefreshCw,
-  FolderLock
-} from 'lucide-react';
-import Card from '../../components/ui/Card';
+import { RefreshCw, FolderLock } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import { ChatMessage, ChatInput } from '../../components/chat/ChatMessage';
 import { SuggestedQuestions } from '../../components/chat/SourceCitation';
 import { UploadModal } from '../../components/documents/DocumentCard';
-import { askRagQuestion, chatWithSchemeAssist, getSystemHealth } from '../../services/api';
+import { chatWithSchemeAssist, getSystemHealth } from '../../services/api';
+import { recordActivity } from '../../services/activityLogService';
 
 export function AIAssistantPage() {
   const [messages, setMessages] = useState([
@@ -33,6 +22,7 @@ export function AIAssistantPage() {
   const [backendHealth, setBackendHealth] = useState(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const messagesEndRef = useRef(null);
+  const requestInFlightRef = useRef(false);
 
   useEffect(() => {
     // Check backend health
@@ -51,7 +41,9 @@ export function AIAssistantPage() {
 
   const handleSend = async (queryText) => {
     const text = (queryText || input).trim();
-    if (!text || isLoading) return;
+    if (!text || isLoading || requestInFlightRef.current) return;
+
+    requestInFlightRef.current = true;
 
     // Add user message
     const userMsg = {
@@ -75,8 +67,15 @@ export function AIAssistantPage() {
         application_process: response.application_process || [],
         documents_required: response.documents_required || [],
         sources: response.sources || [],
+        answer_mode: response.answer_mode || 'general_ai',
         status: response.status || 'answered'
       };
+      recordActivity({
+        level: response.status === 'answered' ? 'SUCCESS' : 'WARN',
+        source: 'AI',
+        message: `User asked: ${text}`,
+        details: `User query:\n${text}\n\nAI response:\n${response.answer || 'No answer returned.'}\n\nAnswer mode: ${response.answer_mode || 'general_ai'}\nSources: ${(response.sources || []).map((source) => source.source || source.scheme || 'Unknown').join(', ') || 'None'}`,
+      });
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err) {
       const errorMsg = {
@@ -86,8 +85,15 @@ export function AIAssistantPage() {
         isError: true,
         sources: []
       };
+      recordActivity({
+        level: 'ERROR',
+        source: 'AI',
+        message: `AI request failed for user query: ${text}`,
+        details: `User query:\n${text}\n\nError:\n${err.message || 'Unknown AI service error.'}`,
+      });
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
+      requestInFlightRef.current = false;
       setIsLoading(false);
     }
   };
@@ -103,8 +109,8 @@ export function AIAssistantPage() {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-base font-extrabold text-navy leading-none">SchemeAssist AI</h2>
-              <Badge variant="success" size="sm" dot>
-                {backendHealth?.status === 'healthy' ? 'AI Online & Grounded' : 'AI Assistant Active'}
+              <Badge variant={backendHealth?.status === 'healthy' ? 'success' : 'warning'} size="sm" dot>
+                {backendHealth?.status === 'healthy' ? 'AI service online' : 'AI service unavailable'}
               </Badge>
             </div>
             <p className="text-xs text-slate-muted mt-1 leading-none">

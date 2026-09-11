@@ -1,70 +1,58 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  AdminStatsGrid, AnalyticsVisual, ApplicationManagementTable
-} from '../../components/admin/AdminComponents';
-import {
-  ADMIN_STATS, ADMIN_ANALYTICS, ADMIN_APPLICATIONS_LIST
-} from '../../data/adminData';
-import {
-  Users, BookOpen, FileCheck2, TrendingUp, IndianRupee,
-  Clock, ArrowUpRight, Activity, CheckCircle2, AlertCircle
+  Activity, CheckCircle2, Database, FileText, RefreshCw, Server, Sparkles
 } from 'lucide-react';
+import Badge from '../../components/ui/Badge';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import { useHealthCheck } from '../../hooks/useHealthCheck';
 
-const STAT_CARDS = [
-  {
-    label: 'Total Citizens', value: '10,245', delta: '+128 this week',
-    icon: Users, color: 'bg-blue-600', light: 'bg-blue-50', text: 'text-blue-700'
-  },
-  {
-    label: 'Active Schemes', value: '450', delta: '+3 new this month',
-    icon: BookOpen, color: 'bg-emerald-600', light: 'bg-emerald-50', text: 'text-emerald-700'
-  },
-  {
-    label: 'Pending Applications', value: '324', delta: '18 urgent',
-    icon: FileCheck2, color: 'bg-amber-500', light: 'bg-amber-50', text: 'text-amber-700'
-  },
-  {
-    label: 'Benefits Disbursed', value: '₹18.4 Cr', delta: '↑ 12% vs last month',
-    icon: IndianRupee, color: 'bg-violet-600', light: 'bg-violet-50', text: 'text-violet-700'
-  },
+const STATUS_ITEMS = [
+  ['Backend', Server, (health) => health?.status === 'healthy' ? 'Online' : 'Offline'],
+  ['Gemini', Sparkles, (health) => health?.gemini_configured ? 'Configured' : 'Not configured'],
+  ['Vector database', Database, (health) => health ? 'Connected' : 'Unavailable'],
 ];
 
 export function AdminOverviewPage() {
-  const [applications, setApplications] = useState(ADMIN_APPLICATIONS_LIST);
-
-  const handleApprove = (id) =>
-    setApplications((prev) => prev.map((a) => a.id === id ? { ...a, status: 'Approved' } : a));
-  const handleReject = (id) =>
-    setApplications((prev) => prev.map((a) => a.id === id ? { ...a, status: 'Rejected' } : a));
+  const { health, loading, error, refetch } = useHealthCheck(30000);
 
   return (
     <div className="space-y-6 animate-fadeIn pb-10">
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {STAT_CARDS.map((s) => (
-          <div key={s.label} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between mb-3">
-              <div className={`w-10 h-10 rounded-xl ${s.light} flex items-center justify-center`}>
-                <s.icon className={`w-5 h-5 ${s.text}`} />
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400" />
-            </div>
-            <p className="text-2xl font-black text-[#0F2B46]">{s.value}</p>
-            <p className="text-xs font-semibold text-slate-600 mt-0.5">{s.label}</p>
-            <p className="text-[10px] text-slate-400 mt-1">{s.delta}</p>
-          </div>
-        ))}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-black text-navy">System overview</h1>
+          <p className="text-xs text-slate-muted mt-1">Live status from the SchemeAssist backend and knowledge base.</p>
+        </div>
+        <Button variant="outline" size="sm" icon={RefreshCw} onClick={refetch} isLoading={loading}>Refresh</Button>
       </div>
 
-      {/* Analytics */}
-      <AnalyticsVisual analytics={ADMIN_ANALYTICS} />
+      {error && <div className="p-3 rounded-card bg-gov-error-light border border-gov-error/20 text-xs text-gov-error">SchemeAssist backend is unavailable. No system metrics were returned.</div>}
 
-      {/* Recent Applications Queue */}
-      <ApplicationManagementTable
-        applications={applications}
-        onApprove={handleApprove}
-        onReject={handleReject}
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {STATUS_ITEMS.map(([label, Icon, value]) => {
+          const current = value(health);
+          const healthy = current === 'Online' || current === 'Configured' || current === 'Connected';
+          return <Card key={label} className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-btn bg-slate-100 text-navy flex items-center justify-center"><Icon className="w-5 h-5" /></div>
+            <div><p className="text-xs text-slate-muted">{label}</p><div className="flex items-center gap-2 mt-1"><Badge variant={healthy ? 'success' : 'warning'} size="sm" dot>{current}</Badge></div></div>
+          </Card>;
+        })}
+      </div>
+
+      <Card>
+        <div className="flex items-center gap-2 mb-4"><Activity className="w-4 h-4 text-primary" /><h2 className="text-sm font-bold text-navy">Knowledge base status</h2></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <div><p className="text-slate-muted">Indexed chunks</p><p className="text-xl font-black text-navy mt-1">{health?.indexed_chunks ?? '—'}</p></div>
+          <div><p className="text-slate-muted">Embedding model</p><p className="font-semibold text-slate-700 mt-2 break-all">{health?.embedding_model || '—'}</p></div>
+          <div><p className="text-slate-muted">Chat model</p><p className="font-semibold text-slate-700 mt-2 break-all">{health?.chat_model || '—'}</p></div>
+          <div><p className="text-slate-muted">Collection</p><p className="font-semibold text-slate-700 mt-2 break-all">{health?.collection_name || '—'}</p></div>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex items-center gap-2"><FileText className="w-4 h-4 text-primary" /><h2 className="text-sm font-bold text-navy">Analytics</h2></div>
+        <p className="text-xs text-slate-muted mt-2">No analytics data available yet. Query metrics can be connected when the backend exposes an analytics endpoint.</p>
+      </Card>
     </div>
   );
 }

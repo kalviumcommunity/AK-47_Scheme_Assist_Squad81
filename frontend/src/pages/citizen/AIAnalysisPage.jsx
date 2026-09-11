@@ -32,8 +32,8 @@ const STATES = [
   'Uttarakhand', 'West Bengal', 'Delhi', 'Jammu & Kashmir', 'Ladakh',
 ];
 
-const inputCls = 'w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white';
-const labelCls = 'block text-sm font-medium text-slate-700 mb-1.5';
+const inputCls = 'w-full px-3.5 py-2.5 border border-slate-200 rounded-btn text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition bg-white';
+const labelCls = 'block text-xs font-bold uppercase tracking-wide text-slate-600 mb-1.5';
 const selectCls = inputCls + ' cursor-pointer';
 
 function FieldGroup({ children, cols = 2 }) {
@@ -69,7 +69,7 @@ function calculateEligibility(profile, ragResult) {
   const land = parseFloat(profile.landHolding) || 0;
   const occupation = (profile.occupation || '').toLowerCase();
   const gender = (profile.gender || '').toLowerCase();
-  const category = (profile.category || '').toUpperCase();
+  const category = (profile.category || '').toUpperCase().split(' ')[0];
   const isBPL = !!profile.hasBPL;
   const isRation = !!profile.hasRationCard;
   const isFarmer = !!profile.hasFarmerCard || occupation.includes('farm') || occupation.includes('agri') || land > 0;
@@ -400,37 +400,40 @@ export function AIAnalysisPage() {
 
   // ── UI ────────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6 animate-fadeIn max-w-4xl mx-auto">
+    <div className="space-y-6 animate-fadeIn max-w-6xl mx-auto pb-12">
       {/* Header */}
-      <div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold uppercase tracking-wider mb-2">
-          <Sparkles className="w-3.5 h-3.5" />
-          AI Eligibility Engine
+      <div className="relative overflow-hidden rounded-card bg-navy p-6 md:p-8 text-white shadow-elevated">
+        <div className="absolute right-0 top-0 h-full w-1/3 bg-primary/10 [clip-path:polygon(35%_0,100%_0,100%_100%,0_100%)]" />
+        <div className="relative max-w-3xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-badge bg-white/10 text-blue-100 border border-white/15 text-[11px] font-bold uppercase tracking-wider mb-3">
+            <Sparkles className="w-3.5 h-3.5" />
+            Government scheme matching
+          </div>
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white">Find schemes that fit your profile</h1>
+          <p className="text-sm text-blue-100/80 mt-2 max-w-2xl leading-relaxed">
+            Share only the information needed for eligibility guidance. SchemeAssist compares your profile with available scheme rules and explains the next steps.
+          </p>
         </div>
-        <h1 className="text-3xl font-black text-slate-900 tracking-tight">AI Eligibility Analysis</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Tell us about yourself and our AI will find every government scheme you qualify for.
-        </p>
       </div>
 
       {/* Step Progress */}
-      <div className="flex items-center gap-0">
+      <div className="bg-white border border-slate-border rounded-card p-4 md:p-5 shadow-subtle flex items-center gap-0">
         {STEPS.map((s, i) => (
           <React.Fragment key={i}>
             <div className="flex flex-col items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all
-                ${i < step ? 'bg-blue-600 border-blue-600 text-white'
-                  : i === step ? 'bg-white border-blue-600 text-blue-600'
-                  : 'bg-white border-slate-200 text-slate-400'}`}
+              <div className={`w-9 h-9 rounded-btn flex items-center justify-center text-xs font-bold border-2 transition-all
+                ${i < step ? 'bg-gov-success border-gov-success text-white'
+                  : i === step ? 'bg-primary border-primary text-white'
+                    : 'bg-white border-slate-200 text-slate-400'}`}
               >
                 {i < step ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
               </div>
-              <span className={`text-[11px] font-semibold mt-1 hidden sm:block ${i === step ? 'text-blue-600' : i < step ? 'text-slate-600' : 'text-slate-400'}`}>
+              <span className={`text-[11px] font-semibold mt-1 hidden sm:block ${i === step ? 'text-primary' : i < step ? 'text-slate-600' : 'text-slate-400'}`}>
                 {s}
               </span>
             </div>
             {i < STEPS.length - 1 && (
-              <div className={`flex-1 h-0.5 mb-4 mx-1 transition-colors ${i < step ? 'bg-blue-600' : 'bg-slate-200'}`} />
+              <div className={`flex-1 h-0.5 mb-4 mx-1 transition-colors ${i < step ? 'bg-gov-success' : 'bg-slate-200'}`} />
             )}
           </React.Fragment>
         ))}
@@ -438,13 +441,13 @@ export function AIAnalysisPage() {
 
       {/* ── STEP 0: Personal Info ── */}
       {step === 0 && (
-        <Card className="space-y-5">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-            <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-              <User className="w-4 h-4 text-blue-600" />
+        <Card className="space-y-6 border-slate-border shadow-subtle">
+          <div className="flex items-center gap-3 pb-4 border-b border-slate-border">
+            <div className="w-10 h-10 bg-primary-50 rounded-btn flex items-center justify-center border border-primary/20">
+              <User className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">Personal Information</h2>
+              <h2 className="text-base font-bold text-navy">Personal Information</h2>
               <p className="text-xs text-slate-500">Basic details to match schemes for your demographic</p>
             </div>
           </div>
@@ -490,7 +493,7 @@ export function AIAnalysisPage() {
             <button
               onClick={() => setStep(1)}
               disabled={!canProceedStep0}
-              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-semibold rounded-lg text-sm transition-colors"
+              className="flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary-dark disabled:bg-slate-200 disabled:text-slate-400 text-white font-semibold rounded-btn text-sm transition-colors"
             >
               Next <ArrowRight className="w-4 h-4" />
             </button>
@@ -500,13 +503,13 @@ export function AIAnalysisPage() {
 
       {/* ── STEP 1: Financial Info ── */}
       {step === 1 && (
-        <Card className="space-y-5">
+        <Card className="space-y-6 border-slate-border shadow-subtle">
           <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-            <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
-              <Wallet className="w-4 h-4 text-green-600" />
+            <div className="w-10 h-10 bg-gov-success-light rounded-btn flex items-center justify-center border border-gov-success/20">
+              <Wallet className="w-5 h-5 text-gov-success" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">Financial Information</h2>
+              <h2 className="text-base font-bold text-navy">Financial Information</h2>
               <p className="text-xs text-slate-500">Income and occupation data for scheme eligibility matching</p>
             </div>
           </div>
@@ -548,7 +551,7 @@ export function AIAnalysisPage() {
               <p className="text-xs text-slate-400 mt-1">Relevant for PM-KISAN and farmer welfare schemes</p>
             </div>
 
-            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 space-y-3">
+            <div className="p-4 bg-slate-bg rounded-card border border-slate-border space-y-3">
               <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Government Cards / Documents</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <CheckBox id="bpl" label="BPL Card (Below Poverty Line)" checked={profile.hasBPL} onChange={set('hasBPL')} />
@@ -565,7 +568,7 @@ export function AIAnalysisPage() {
             <button
               onClick={() => setStep(2)}
               disabled={!canProceedStep1}
-              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-semibold rounded-lg text-sm transition-colors"
+              className="flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary-dark disabled:bg-slate-200 disabled:text-slate-400 text-white font-semibold rounded-btn text-sm transition-colors"
             >
               Next <ArrowRight className="w-4 h-4" />
             </button>
@@ -575,13 +578,13 @@ export function AIAnalysisPage() {
 
       {/* ── STEP 2: Family & Category ── */}
       {step === 2 && (
-        <Card className="space-y-5">
+        <Card className="space-y-6 border-slate-border shadow-subtle">
           <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-            <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center">
-              <Users className="w-4 h-4 text-purple-600" />
+            <div className="w-10 h-10 bg-gov-warning-light rounded-btn flex items-center justify-center border border-gov-warning/20">
+              <Users className="w-5 h-5 text-gov-warning" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">Family & Social Category</h2>
+              <h2 className="text-base font-bold text-navy">Family & Social Category</h2>
               <p className="text-xs text-slate-500">Category and family details unlock reserved and targeted schemes</p>
             </div>
           </div>
@@ -616,9 +619,9 @@ export function AIAnalysisPage() {
             </div>
 
             {/* Profile Preview */}
-            <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
-              <p className="text-xs font-bold text-blue-700 mb-2 uppercase tracking-wider">Your Profile Summary</p>
-              <p className="text-xs text-blue-800 leading-relaxed">{buildQuestion()}</p>
+            <div className="p-4 bg-primary-50 border border-primary/20 rounded-card">
+              <p className="text-xs font-bold text-primary mb-2 uppercase tracking-wider">Review before analysis</p>
+              <p className="text-xs text-slate-700 leading-relaxed">{buildQuestion()}</p>
             </div>
           </div>
 
@@ -629,7 +632,7 @@ export function AIAnalysisPage() {
             <button
               onClick={runAnalysis}
               disabled={!canProceedStep2}
-              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-semibold rounded-lg text-sm transition-colors"
+              className="flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary-dark disabled:bg-slate-200 disabled:text-slate-400 text-white font-semibold rounded-btn text-sm transition-colors"
             >
               <Sparkles className="w-4 h-4" /> Run AI Analysis
             </button>
@@ -762,7 +765,7 @@ export function AIAnalysisPage() {
               {/* Header Banner */}
               <div className="bg-gradient-to-r from-[#0F2B46] to-blue-900 text-white rounded-2xl p-6 shadow-md border border-blue-800/40 relative overflow-hidden">
                 <div className="absolute -right-6 -top-6 w-44 h-44 bg-blue-500/15 rounded-full blur-2xl pointer-events-none" />
-                
+
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
                   <div>
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-blue-200 border border-blue-400/30 text-xs font-bold uppercase tracking-wider mb-2">
@@ -773,8 +776,14 @@ export function AIAnalysisPage() {
                       Schemes You Are Eligible For
                     </h2>
                     <p className="text-blue-100/80 text-xs sm:text-sm mt-1 max-w-xl leading-relaxed">
-                      Based on your profile data ({profile.occupation || 'citizen'}, age {profile.age || 'N/A'}, {profile.state || 'India'}) and AI RAG matching, here are all the government welfare schemes you qualify for:
+                      Based on the details you provided, these schemes have the strongest eligibility match. Review each reason before applying through the official authority.
                     </p>
+                    <div className="flex flex-wrap gap-2 mt-4 text-[11px] text-blue-100">
+                      <span className="px-2.5 py-1 rounded-badge bg-white/10 border border-white/15">Age: {profile.age || 'Not provided'}</span>
+                      <span className="px-2.5 py-1 rounded-badge bg-white/10 border border-white/15">State: {profile.state || 'Not provided'}</span>
+                      <span className="px-2.5 py-1 rounded-badge bg-white/10 border border-white/15">Occupation: {profile.occupation || 'Not provided'}</span>
+                      <span className="px-2.5 py-1 rounded-badge bg-white/10 border border-white/15">Income: {profile.annualIncome ? `₹${Number(profile.annualIncome).toLocaleString('en-IN')}` : 'Not provided'}</span>
+                    </div>
                   </div>
 
                   {/* Summary Metric Badges */}
@@ -789,9 +798,9 @@ export function AIAnalysisPage() {
                       <span className="text-[10px] uppercase font-bold text-emerald-300 block">Max Benefit Potential</span>
                       <span className="text-base font-black text-emerald-300 truncate block">
                         ₹{eligibleSchemes
-                            .filter((s) => s.isEligible)
-                            .reduce((acc, s) => acc + (s.benefitAmount || 0), 0)
-                            .toLocaleString('en-IN')}
+                          .filter((s) => s.isEligible)
+                          .reduce((acc, s) => acc + (s.benefitAmount || 0), 0)
+                          .toLocaleString('en-IN')}
                       </span>
                     </div>
                   </div>
@@ -804,21 +813,19 @@ export function AIAnalysisPage() {
                 <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg overflow-x-auto text-xs font-semibold">
                   <button
                     onClick={() => setActiveFilter('all')}
-                    className={`px-3 py-1.5 rounded-md transition-colors whitespace-nowrap ${
-                      activeFilter === 'all'
+                    className={`px-3 py-1.5 rounded-md transition-colors whitespace-nowrap ${activeFilter === 'all'
                         ? 'bg-white text-blue-600 shadow-sm font-bold'
                         : 'text-slate-600 hover:text-slate-900'
-                    }`}
+                      }`}
                   >
                     All Eligible ({eligibleSchemes.filter((s) => s.isEligible).length})
                   </button>
                   <button
                     onClick={() => setActiveFilter('high')}
-                    className={`px-3 py-1.5 rounded-md transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-                      activeFilter === 'high'
+                    className={`px-3 py-1.5 rounded-md transition-colors whitespace-nowrap flex items-center gap-1.5 ${activeFilter === 'high'
                         ? 'bg-white text-emerald-600 shadow-sm font-bold'
                         : 'text-slate-600 hover:text-slate-900'
-                    }`}
+                      }`}
                   >
                     <span>Highly Eligible (≥85%)</span>
                     <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-emerald-100 text-emerald-700">
@@ -827,11 +834,10 @@ export function AIAnalysisPage() {
                   </button>
                   <button
                     onClick={() => setActiveFilter('potential')}
-                    className={`px-3 py-1.5 rounded-md transition-colors whitespace-nowrap ${
-                      activeFilter === 'potential'
+                    className={`px-3 py-1.5 rounded-md transition-colors whitespace-nowrap ${activeFilter === 'potential'
                         ? 'bg-white text-blue-600 shadow-sm font-bold'
                         : 'text-slate-600 hover:text-slate-900'
-                    }`}
+                      }`}
                   >
                     Explore More ({eligibleSchemes.length})
                   </button>

@@ -7,6 +7,18 @@ const USER_KEY = 'schemeassist_user';
 const AUTH_USER_KEY = 'schemeassist_auth_user';
 const AUTH_TOKEN_KEY = 'schemeassist_auth_token';
 
+export function getRegisteredCitizens() {
+  try {
+    const raw = localStorage.getItem(USERS_DB_KEY);
+    const users = raw ? JSON.parse(raw) : {};
+    return Object.values(users).filter((storedUser) => (
+      storedUser.role === 'citizen' && (storedUser.registeredAt || storedUser.lastLoginAt)
+    ));
+  } catch {
+    return [];
+  }
+}
+
 // Seed default users if not already present
 function getStoredUsersDb() {
   try {
@@ -55,6 +67,7 @@ export function AuthProvider({ children }) {
       name: userData.name?.trim() || 'Citizen',
       email: userData.email?.trim() || '',
       role: userData.role || 'citizen',
+      lastLoginAt: new Date().toISOString(),
     };
 
     localStorage.setItem(USER_KEY, JSON.stringify(cleanUser));

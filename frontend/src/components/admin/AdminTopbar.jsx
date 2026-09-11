@@ -17,6 +17,9 @@ const PAGE_META = {
   '/admin/citizens': { title: 'Citizen Registry', breadcrumb: 'Citizens' },
   '/admin/applications': { title: 'Application Queue', breadcrumb: 'Applications' },
   '/admin/documents': { title: 'Document Repository', breadcrumb: 'Documents' },
+  '/admin/knowledge-base': { title: 'Knowledge Base', breadcrumb: 'Knowledge Base' },
+  '/admin/ai-monitoring': { title: 'AI Monitoring', breadcrumb: 'AI Monitoring' },
+  '/admin/system-health': { title: 'System Health', breadcrumb: 'System Health' },
   '/admin/helpdesk': { title: 'Helpdesk & Tickets', breadcrumb: 'Helpdesk' },
   '/admin/settings': { title: 'Admin Settings', breadcrumb: 'Settings' },
 };

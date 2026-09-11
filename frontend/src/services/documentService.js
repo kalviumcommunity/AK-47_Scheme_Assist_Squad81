@@ -6,6 +6,28 @@
  */
 import apiClient from './api';
 
+const REVIEW_STATUS_KEY = 'schemeassist_document_review_status';
+
+function getReviewStatuses() {
+  try {
+    return JSON.parse(localStorage.getItem(REVIEW_STATUS_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function saveReviewStatuses(statuses) {
+  localStorage.setItem(REVIEW_STATUS_KEY, JSON.stringify(statuses));
+}
+
+export function setDocumentReviewStatus(filename, status) {
+  const statuses = getReviewStatuses();
+  statuses[filename] = status;
+  saveReviewStatuses(statuses);
+  window.dispatchEvent(new StorageEvent('storage', { key: REVIEW_STATUS_KEY }));
+  return status;
+}
+
 /**
  * Upload a document file for runtime chunking, embedding, and vector indexing.
  *
@@ -47,14 +69,37 @@ export async function uploadDocumentFile(file, onUploadProgress) {
 export async function fetchDocuments() {
   try {
     const response = await apiClient.get('/documents');
-    return response.data || { documents: [], total: 0 };
+    const data = response.data || { documents: [], total: 0 };
+    const statuses = getReviewStatuses();
+    return {
+      ...data,
+      documents: (data.documents || []).map((document) => ({
+        ...document,
+        status: statuses[document.filename] || 'Pending Review',
+      })),
+    };
   } catch (error) {
     console.warn('Failed to fetch /documents from backend, falling back to empty list:', error.message);
     return { documents: [], total: 0 };
   }
 }
 
+export async function fetchDocumentFile(filename) {
+  const response = await apiClient.get(`/documents/${encodeURIComponent(filename)}`, {
+    responseType: 'blob',
+  });
+  return response.data;
+}
+
+export async function deleteDocumentFile(filename) {
+  const response = await apiClient.delete(`/documents/${encodeURIComponent(filename)}`);
+  return response.data || {};
+}
+
 export default {
   uploadDocumentFile,
   fetchDocuments,
+  fetchDocumentFile,
+  deleteDocumentFile,
+  setDocumentReviewStatus,
 };

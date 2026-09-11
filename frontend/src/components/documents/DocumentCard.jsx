@@ -16,7 +16,7 @@ import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 import { uploadDocument } from '../../services/api';
 
-export function DocumentCard({ doc, onReplace, onView }) {
+export function DocumentCard({ doc, onReplace, onView, onDelete }) {
   const isVerified = doc.verified || doc.status === 'Verified';
 
   return (
@@ -24,14 +24,13 @@ export function DocumentCard({ doc, onReplace, onView }) {
       <div>
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-btn flex items-center justify-center shrink-0 ${
-              isVerified ? 'bg-gov-success-light text-gov-success' : 'bg-gov-warning-light text-gov-warning'
-            }`}>
+            <div className={`w-10 h-10 rounded-btn flex items-center justify-center shrink-0 ${isVerified ? 'bg-gov-success-light text-gov-success' : 'bg-gov-warning-light text-gov-warning'
+              }`}>
               <FileText className="w-5 h-5" />
             </div>
             <div>
               <h4 className="text-sm font-bold text-navy leading-tight">{doc.name}</h4>
-              <span className="text-[10px] text-slate-400 block mt-0.5">{doc.type}</span>
+              <span className="text-[10px] text-slate-400 block mt-0.5">{doc.type} · For scheme application use</span>
             </div>
           </div>
           <Badge variant={isVerified ? 'success' : 'warning'} size="sm" dot>
@@ -64,14 +63,10 @@ export function DocumentCard({ doc, onReplace, onView }) {
         >
           View Preview
         </button>
-        <Button
-          variant="outline"
-          size="sm"
-          icon={RefreshCw}
-          onClick={() => onReplace && onReplace(doc)}
-        >
-          Replace
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="outline" size="sm" icon={RefreshCw} onClick={() => onReplace && onReplace(doc)}>Replace</Button>
+          <Button variant="danger" size="sm" icon={Trash2} onClick={() => onDelete && onDelete(doc)}>Delete</Button>
+        </div>
       </div>
     </Card>
   );
@@ -109,8 +104,8 @@ export function UploadModal({ isOpen, onClose, onUploadSuccess }) {
           filename: file.name,
           size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
           uploadDate: new Date().toISOString().split('T')[0],
-          status: "Verified",
-          verified: true
+          status: "Pending Review",
+          verified: false
         });
       }
     } catch (err) {
@@ -131,8 +126,8 @@ export function UploadModal({ isOpen, onClose, onUploadSuccess }) {
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Upload & Ingest Policy Document"
-      subtitle="Supported formats: .txt, .md, .pdf, .html (Max size 10MB)"
+      title="Upload Scheme Application Document"
+      subtitle="Upload only documents needed for your scheme application. Supported formats: .txt, .md, .pdf, .html (Max size 10MB)"
     >
       <div className="space-y-4">
         {successResult ? (
@@ -141,9 +136,9 @@ export function UploadModal({ isOpen, onClose, onUploadSuccess }) {
               <Check className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-navy">Document Successfully Indexed!</h4>
+              <h4 className="text-sm font-bold text-navy">Document uploaded successfully</h4>
               <p className="text-xs text-slate-muted mt-1">
-                Generated {successResult.summary?.chunks || 0} chunks and indexed directly into ChromaDB.
+                Your document is available in your Documents section and can be reviewed by authorized administrators for scheme application processing. Generated {successResult.summary?.chunks || 0} knowledge-base chunks.
               </p>
             </div>
             <Button variant="primary" size="sm" onClick={handleClose} className="w-full">
@@ -186,7 +181,7 @@ export function UploadModal({ isOpen, onClose, onUploadSuccess }) {
                 disabled={!file || isUploading}
                 onClick={handleUpload}
               >
-                Ingest into RAG Vector Store
+                Upload
               </Button>
             </div>
           </>

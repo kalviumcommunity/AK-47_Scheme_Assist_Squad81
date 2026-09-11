@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FileCheck2,
@@ -14,15 +14,21 @@ import {
 import { StatsCard, ProfileProgress } from '../../components/dashboard/StatsCard';
 import { SchemeCard, ActivityFeed } from '../../components/dashboard/SchemeCard';
 import Button from '../../components/ui/Button';
-import { DEFAULT_CITIZEN, MOCK_APPLICATIONS } from '../../data/mockCitizenData';
+import { DEFAULT_CITIZEN } from '../../data/mockCitizenData';
 import { SCHEMES } from '../../data/schemesData';
 import { useAuth } from '../../context/AuthContext';
+import { getApplications } from '../../services/applicationService';
+import { listUploadedDocuments } from '../../services/api';
+import { getTickets } from '../../services/helpdeskService';
 
 export function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const citizenName = user?.name || DEFAULT_CITIZEN.name;
   const [savedSchemes, setSavedSchemes] = useState(['pm-kisan', 'ayushman-bharat']);
+  const [applications, setApplications] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [tickets, setTickets] = useState([]);
 
   const handleToggleSave = (id) => {
     setSavedSchemes((prev) =>
@@ -30,12 +36,41 @@ export function DashboardPage() {
     );
   };
 
-  const recentActivities = [
-    { title: "Application APP-2026-97814 Submitted", subtitle: "PM Vishwakarma Modern Toolkit under review", time: "2 hours ago" },
-    { title: "AI Eligibility Analysis Completed", subtitle: "Scanned 450+ schemes; 12 matches identified", time: "5 hours ago" },
-    { title: "New Scheme Recommendation", subtitle: "PMAY Credit Linked Subsidy Scheme added", time: "Yesterday" },
-    { title: "Document Uploaded", subtitle: "Land Revenue Record (Khasra-Khatauni) indexed", time: "3 days ago" },
-  ];
+  const loadUserActivity = async () => {
+    const [allApplications, documentResult] = await Promise.all([
+      getApplications(),
+      listUploadedDocuments(),
+    ]);
+    setApplications(allApplications.filter((application) => application.citizenEmail === user?.email || application.citizenId === user?.id));
+    setDocuments(documentResult.documents || []);
+    setTickets(getTickets().filter((ticket) => ticket.citizenEmail === user?.email || ticket.citizenId === user?.id));
+  };
+
+  useEffect(() => {
+    loadUserActivity();
+    const refresh = () => loadUserActivity();
+    window.addEventListener('storage', refresh);
+    const interval = setInterval(refresh, 5000);
+    return () => { window.removeEventListener('storage', refresh); clearInterval(interval); };
+  }, [user?.email, user?.id]);
+
+  const recentActivities = useMemo(() => [
+    ...applications.map((application) => ({
+      title: `Application ${application.id} ${application.status}`,
+      subtitle: application.schemeName || application.scheme || 'Government scheme application',
+      time: application.submittedDate || 'Recently',
+    })),
+    ...documents.map((document) => ({
+      title: `Document ${document.status || 'uploaded'}`,
+      subtitle: document.filename,
+      time: document.upload_date || 'Recently',
+    })),
+    ...tickets.map((ticket) => ({
+      title: `Helpdesk ticket ${ticket.status}`,
+      subtitle: ticket.subject,
+      time: ticket.createdDate || 'Recently',
+    })),
+  ].slice(0, 6), [applications, documents, tickets]);
 
   const recommended = SCHEMES.slice(0, 4);
 
@@ -74,23 +109,23 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title="Eligible Schemes"
-          value="12"
-          subtitle="5 Highly recommended"
+          value={recommended.length.toString()}
+          subtitle="Explore verified scheme guidance"
           icon={Award}
           color="green"
         />
         <StatsCard
           title="Active Applications"
-          value={MOCK_APPLICATIONS.length.toString()}
-          subtitle="1 Approved, 2 In review"
+          value={applications.length.toString()}
+          subtitle={`${applications.filter((application) => application.status === 'Approved').length} approved · ${applications.filter((application) => application.status === 'Under Review').length} under review`}
           icon={FileCheck2}
           color="blue"
         />
         <StatsCard
-          title="Saved Schemes"
-          value={savedSchemes.length.toString()}
-          subtitle="Quick access bookmarks"
-          icon={Bookmark}
+          title="My Documents"
+          value={documents.length.toString()}
+          subtitle={`${documents.filter((document) => document.status === 'Approved').length} approved for review`}
+          icon={FolderLock}
           color="orange"
         />
         <StatsCard
@@ -139,8 +174,20 @@ export function DashboardPage() {
             onComplete={() => navigate('/documents')}
           />
 
-          <ActivityFeed activities={recentActivities} />
+          <ActivityFeed activities={recentActivities.length ? recentActivities : [{ title: 'No recent activity', subtitle: 'Your applications, documents, and tickets will appear here.', time: '—' }]} />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <button onClick={() => navigate('/applications')} className="text-left bg-white border border-slate-border rounded-card p-4 hover:border-primary/40 transition-colors">
+          <p className="text-xs font-bold text-navy">Application status</p><p className="text-xs text-slate-muted mt-1">Track approval decisions and timelines.</p>
+        </button>
+        <button onClick={() => navigate('/documents')} className="text-left bg-white border border-slate-border rounded-card p-4 hover:border-primary/40 transition-colors">
+          <p className="text-xs font-bold text-navy">Document review</p><p className="text-xs text-slate-muted mt-1">View uploaded documents and review status.</p>
+        </button>
+        <button onClick={() => navigate('/helpdesk')} className="text-left bg-white border border-slate-border rounded-card p-4 hover:border-primary/40 transition-colors">
+          <p className="text-xs font-bold text-navy">Helpdesk tickets</p><p className="text-xs text-slate-muted mt-1">{tickets.length} ticket{tickets.length === 1 ? '' : 's'} raised by you.</p>
+        </button>
       </div>
     </div>
   );

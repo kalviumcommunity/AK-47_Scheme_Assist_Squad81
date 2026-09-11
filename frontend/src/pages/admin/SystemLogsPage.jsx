@@ -2,83 +2,32 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   ScrollText, Download, RefreshCw, Search, Filter,
   CheckCircle2, AlertCircle, Info, AlertTriangle,
-  User, BookOpen, FileCheck2, Database, Cpu, Shield,
-  ChevronDown, ChevronUp, Pause, Play, Trash2
+  ChevronDown, ChevronUp, Trash2
 } from 'lucide-react';
-
-/* ── Realistic mock log generator ──────────────────────────── */
-const LOG_TEMPLATES = [
-  { level: 'INFO',    source: 'AUTH',     message: 'Citizen login successful — CIT-{id}',        icon: User },
-  { level: 'INFO',    source: 'AUTH',     message: 'Admin session authenticated — nodal officer', icon: Shield },
-  { level: 'INFO',    source: 'API',      message: 'POST /query — RAG pipeline triggered',        icon: Cpu },
-  { level: 'INFO',    source: 'API',      message: 'GET /schemes — 10 schemes returned',          icon: BookOpen },
-  { level: 'INFO',    source: 'DB',       message: 'ChromaDB similarity search completed — {ms}ms latency', icon: Database },
-  { level: 'SUCCESS', source: 'APP',      message: 'Application APP-2026-{id} approved by nodal officer', icon: FileCheck2 },
-  { level: 'SUCCESS', source: 'API',      message: 'Eligibility analysis completed for CIT-{id}', icon: Cpu },
-  { level: 'SUCCESS', source: 'DB',       message: 'Document uploaded — {docs} docs indexed in ChromaDB', icon: Database },
-  { level: 'WARN',    source: 'API',      message: 'Rate limit approaching — 80% of quota used',  icon: AlertTriangle },
-  { level: 'WARN',    source: 'AUTH',     message: 'Failed login attempt from IP 192.168.{ip}',   icon: Shield },
-  { level: 'WARN',    source: 'DB',       message: 'Slow query detected — took {ms}ms',           icon: Database },
-  { level: 'ERROR',   source: 'API',      message: 'LLM API timeout — retrying (attempt {n}/3)',  icon: Cpu },
-  { level: 'ERROR',   source: 'DB',       message: 'ChromaDB connection refused — port 8001',     icon: Database },
-  { level: 'INFO',    source: 'SCHEME',   message: 'Scheme PM-KISAN eligibility rules recalculated', icon: BookOpen },
-  { level: 'INFO',    source: 'HELPDESK', message: 'Ticket HELP-{id} created by citizen',         icon: User },
-  { level: 'SUCCESS', source: 'HELPDESK', message: 'Ticket HELP-{id} resolved — SLA met',         icon: CheckCircle2 },
-  { level: 'INFO',    source: 'SYSTEM',   message: 'Scheduled backup completed — 14.2 MB',        icon: Database },
-  { level: 'INFO',    source: 'SYSTEM',   message: 'Health check passed — all services nominal',  icon: CheckCircle2 },
-];
-
-let logCounter = 1000;
-
-function generateLog() {
-  const tpl = LOG_TEMPLATES[Math.floor(Math.random() * LOG_TEMPLATES.length)];
-  const id = String(Math.floor(Math.random() * 90000) + 10000);
-  const ms = String(Math.floor(Math.random() * 1800) + 50);
-  const ip = String(Math.floor(Math.random() * 255));
-  const n = String(Math.floor(Math.random() * 2) + 1);
-  const docs = String(Math.floor(Math.random() * 12) + 1);
-  const helpId = String(Math.floor(Math.random() * 9000) + 1000);
-  const msg = tpl.message
-    .replace('{id}', id).replace('{ms}', ms).replace('{ip}', ip)
-    .replace('{n}', n).replace('{docs}', docs);
-  return {
-    id: ++logCounter,
-    level: tpl.level,
-    source: tpl.source,
-    message: msg,
-    icon: tpl.icon,
-    timestamp: new Date(),
-    details: `RequestID: req-${id}-${Date.now().toString(36)}  |  Env: production  |  Node: worker-01`,
-  };
-}
-
-const INITIAL_LOGS = Array.from({ length: 40 }, (_, i) => {
-  const log = generateLog();
-  log.timestamp = new Date(Date.now() - (40 - i) * 7000 - Math.random() * 5000);
-  return log;
-}).reverse();
+import { clearActivityLogs, getActivityLogs } from '../../services/activityLogService';
 
 /* ── Helpers ────────────────────────────────────────────────── */
 const LEVEL_CONFIG = {
-  INFO:    { bg: 'bg-blue-50',   text: 'text-blue-700',   dot: 'bg-blue-500',   border: 'border-blue-200' },
-  SUCCESS: { bg: 'bg-emerald-50',text: 'text-emerald-700',dot: 'bg-emerald-500',border: 'border-emerald-200' },
-  WARN:    { bg: 'bg-amber-50',  text: 'text-amber-700',  dot: 'bg-amber-400',  border: 'border-amber-200' },
-  ERROR:   { bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500',    border: 'border-red-200' },
+  INFO: { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500', border: 'border-blue-200' },
+  SUCCESS: { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500', border: 'border-emerald-200' },
+  WARN: { bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-400', border: 'border-amber-200' },
+  ERROR: { bg: 'bg-red-50', text: 'text-red-700', dot: 'bg-red-500', border: 'border-red-200' },
 };
 
-const SOURCES = ['All Sources', 'AUTH', 'API', 'DB', 'APP', 'SCHEME', 'HELPDESK', 'SYSTEM'];
-const LEVELS  = ['All Levels', 'INFO', 'SUCCESS', 'WARN', 'ERROR'];
+const SOURCES = ['All Sources', 'AI', 'AUTH', 'APP', 'DB', 'HELPDESK', 'SYSTEM'];
+const LEVELS = ['All Levels', 'INFO', 'SUCCESS', 'WARN', 'ERROR'];
 
 function fmtTime(d) {
+  d = new Date(d);
   return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 }
 function fmtDate(d) {
+  d = new Date(d);
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
 }
 
 export function SystemLogsPage() {
-  const [logs, setLogs] = useState(INITIAL_LOGS);
-  const [live, setLive] = useState(true);
+  const [logs, setLogs] = useState(getActivityLogs());
   const [search, setSearch] = useState('');
   const [filterLevel, setFilterLevel] = useState('All Levels');
   const [filterSource, setFilterSource] = useState('All Sources');
@@ -86,14 +35,15 @@ export function SystemLogsPage() {
   const [autoScroll, setAutoScroll] = useState(true);
   const bottomRef = useRef(null);
 
-  /* Live feed — adds a new log every ~4s when live=true */
   useEffect(() => {
-    if (!live) return;
-    const timer = setInterval(() => {
-      setLogs((prev) => [generateLog(), ...prev.slice(0, 499)]);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [live]);
+    const refresh = () => setLogs(getActivityLogs());
+    window.addEventListener('storage', refresh);
+    const timer = setInterval(refresh, 3000);
+    return () => {
+      window.removeEventListener('storage', refresh);
+      clearInterval(timer);
+    };
+  }, []);
 
   /* Auto-scroll */
   useEffect(() => {
@@ -106,8 +56,7 @@ export function SystemLogsPage() {
   const filtered = logs.filter((l) => {
     if (filterLevel !== 'All Levels' && l.level !== filterLevel) return false;
     if (filterSource !== 'All Sources' && l.source !== filterSource) return false;
-    if (search && !l.message.toLowerCase().includes(search.toLowerCase()) &&
-        !l.source.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !`${l.message} ${l.source} ${l.details}`.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
@@ -133,44 +82,26 @@ export function SystemLogsPage() {
           <div className="flex items-center gap-2 mb-1">
             <ScrollText className="w-5 h-5 text-blue-600" />
             <h1 className="text-xl font-black text-[#0F2B46] tracking-tight">System Activity Logs</h1>
-            <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-              live ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-slate-100 text-slate-500 border-slate-300'
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${live ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
-              {live ? 'Live Feed' : 'Paused'}
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border bg-emerald-50 text-emerald-700 border-emerald-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live activity
             </span>
           </div>
-          <p className="text-xs text-slate-500">Real-time RAG pipeline, API, auth, and database event stream.</p>
+          <p className="text-xs text-slate-500">Verified activity recorded from user sessions and backend interactions.</p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={() => setLogs(INITIAL_LOGS)}
+            onClick={() => { clearActivityLogs(); setLogs([]); }}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 border border-red-200 rounded-lg transition-colors"
           >
             <Trash2 className="w-3.5 h-3.5" /> Clear
-          </button>
-          <button
-            onClick={() => setLogs((p) => [generateLog(), ...p])}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
-          >
-            <RefreshCw className="w-3.5 h-3.5" /> Simulate
           </button>
           <button
             onClick={downloadLogs}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 border border-blue-200 rounded-lg transition-colors"
           >
             <Download className="w-3.5 h-3.5" /> Export
-          </button>
-          <button
-            onClick={() => setLive((v) => !v)}
-            className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-lg border transition-colors ${
-              live
-                ? 'bg-[#0F2B46] text-white border-[#0F2B46] hover:bg-blue-900'
-                : 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700'
-            }`}
-          >
-            {live ? <><Pause className="w-3.5 h-3.5" /> Pause</> : <><Play className="w-3.5 h-3.5" /> Resume</>}
           </button>
         </div>
       </div>
@@ -183,11 +114,10 @@ export function SystemLogsPage() {
             <button
               key={level}
               onClick={() => setFilterLevel(filterLevel === level ? 'All Levels' : level)}
-              className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
-                filterLevel === level
+              className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${filterLevel === level
                   ? `${cfg.bg} ${cfg.border} ring-2 ring-offset-1 ring-current ${cfg.text}`
                   : 'bg-white border-slate-200 hover:border-slate-300'
-              }`}
+                }`}
             >
               <div>
                 <p className={`text-[10px] font-bold uppercase tracking-wider ${filterLevel === level ? cfg.text : 'text-slate-500'}`}>
@@ -279,9 +209,8 @@ export function SystemLogsPage() {
                 <div
                   key={log.id}
                   onClick={() => setExpandedId(isExpanded ? null : log.id)}
-                  className={`border-b border-white/5 cursor-pointer transition-colors hover:bg-white/5 ${
-                    isExpanded ? 'bg-white/8' : ''
-                  }`}
+                  className={`border-b border-white/5 cursor-pointer transition-colors hover:bg-white/5 ${isExpanded ? 'bg-white/8' : ''
+                    }`}
                 >
                   <div className="grid grid-cols-12 gap-2 px-4 py-2.5 text-[11px] items-start">
                     {/* Timestamp */}

@@ -26,6 +26,7 @@ export function ChatMessage({ message }) {
   const applicationProcess = Array.isArray(message.application_process) ? message.application_process : [];
   const documentsRequired = Array.isArray(message.documents_required) ? message.documents_required : [];
   const sources = Array.isArray(message.sources) ? message.sources : [];
+  const answerMode = message.answer_mode || 'general_ai';
 
   return (
     <div className={`flex gap-3 my-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -36,13 +37,12 @@ export function ChatMessage({ message }) {
       )}
 
       <div
-        className={`max-w-2xl rounded-card p-4 shadow-subtle ${
-          isUser
+        className={`max-w-2xl rounded-card p-4 shadow-subtle ${isUser
             ? 'bg-primary text-white rounded-tr-none'
             : isError
-            ? 'bg-red-50/80 border border-red-200 text-red-900 rounded-tl-none'
-            : 'bg-white border border-slate-border text-slate-text rounded-tl-none'
-        }`}
+              ? 'bg-red-50/80 border border-red-200 text-red-900 rounded-tl-none'
+              : 'bg-white border border-slate-border text-slate-text rounded-tl-none'
+          }`}
       >
         {/* Header tag for AI status */}
         {!isUser && !isError && (
@@ -55,9 +55,13 @@ export function ChatMessage({ message }) {
               <Badge variant="warning" size="sm">
                 Policy Refusal / Out of Scope
               </Badge>
-            ) : (
+            ) : answerMode === 'verified_rag' ? (
               <Badge variant="success" size="sm" dot>
-                Live OpenAI Grounded
+                Verified Government Document
+              </Badge>
+            ) : (
+              <Badge variant="warning" size="sm" dot>
+                AI Generated Information
               </Badge>
             )}
           </div>
@@ -86,6 +90,11 @@ export function ChatMessage({ message }) {
         {/* Structured Welfare Sections */}
         {!isUser && !isError && !isRefusal && (
           <div className="mt-3.5 space-y-3">
+            {answerMode === 'general_ai' && (
+              <p className="text-[11px] leading-relaxed text-amber-800 bg-amber-50 border border-amber-200 rounded-card px-3 py-2">
+                This answer uses general scheme knowledge. Verify important details with the official government authority.
+              </p>
+            )}
             {/* 1. Eligibility Criteria */}
             {eligibility && (
               <div className="p-3 rounded-card bg-emerald-50/60 border border-emerald-200 text-xs">

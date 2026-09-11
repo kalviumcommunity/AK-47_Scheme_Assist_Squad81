@@ -1,20 +1,35 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
-import { Headphones, Search, CheckCircle2, Clock, AlertTriangle, MessageSquare } from 'lucide-react';
-
-const MOCK_TICKETS = [
-  { id: 'TKT-9912', citizen: 'Ramesh Kumar Sharma', subject: 'PM Vishwakarma Aadhaar verification failed on OTP step', priority: 'High', status: 'Open', date: '2026-09-07 14:32' },
-  { id: 'TKT-9854', citizen: 'Sunita Devi Verma', subject: 'Ayushman Card hospital empanelment list not showing local district', priority: 'Medium', status: 'In Progress', date: '2026-09-06 10:15' },
-  { id: 'TKT-9801', citizen: 'Anil Chandra Gowda', subject: 'PM-KISAN 16th installment credit confirmation SMS not received', priority: 'Low', status: 'Resolved', date: '2026-09-05 16:40' },
-  { id: 'TKT-9762', citizen: 'Meenakshi Sundaram', subject: 'Eligibility evaluation query regarding single woman criteria', priority: 'Medium', status: 'Open', date: '2026-09-04 11:20' },
-];
+import { Headphones, Search, CheckCircle2, Clock, MessageSquare, Eye } from 'lucide-react';
+import Button from '../../components/ui/Button';
+import Modal from '../../components/ui/Modal';
+import Textarea from '../../components/ui/Textarea';
+import { getTickets, resolveTicket } from '../../services/helpdeskService';
 
 export function AdminHelpdeskPage() {
-  const [tickets, setTickets] = useState(MOCK_TICKETS);
+  const [tickets, setTickets] = useState([]);
   const [filterPriority, setFilterPriority] = useState('All');
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [adminResponse, setAdminResponse] = useState('');
+
+  useEffect(() => {
+    const loadTickets = () => setTickets(getTickets());
+    loadTickets();
+    window.addEventListener('storage', loadTickets);
+    const interval = setInterval(loadTickets, 3000);
+    return () => { window.removeEventListener('storage', loadTickets); clearInterval(interval); };
+  }, []);
 
   const filtered = tickets.filter(t => filterPriority === 'All' || t.priority === filterPriority);
+
+  const openTicket = (ticket) => { setSelectedTicket(ticket); setAdminResponse(ticket.adminResponse || ''); };
+  const handleResolve = () => {
+    if (!selectedTicket) return;
+    resolveTicket(selectedTicket.id, adminResponse.trim());
+    setSelectedTicket(null);
+    setTickets(getTickets());
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -27,7 +42,7 @@ export function AdminHelpdeskPage() {
           <p className="text-xs text-slate-500 mt-1">Manage citizen inquiries, technical disputes, and scheme application complaints</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="warning" size="sm">2 Open Escalations</Badge>
+          <Badge variant="warning" size="sm">{tickets.filter((ticket) => ticket.status === 'Open').length} Open Tickets</Badge>
         </div>
       </div>
 
@@ -38,7 +53,7 @@ export function AdminHelpdeskPage() {
           </div>
           <div>
             <p className="text-xs text-slate-500 font-semibold uppercase">Pending Resolution</p>
-            <h4 className="text-lg font-bold text-slate-800">2 Tickets</h4>
+            <h4 className="text-lg font-bold text-slate-800">{tickets.filter((ticket) => ticket.status === 'Open').length} Tickets</h4>
           </div>
         </Card>
         <Card className="p-4 flex items-center gap-3">
@@ -47,7 +62,7 @@ export function AdminHelpdeskPage() {
           </div>
           <div>
             <p className="text-xs text-slate-500 font-semibold uppercase">In Progress</p>
-            <h4 className="text-lg font-bold text-slate-800">1 Ticket</h4>
+            <h4 className="text-lg font-bold text-slate-800">{tickets.filter((ticket) => ticket.status === 'Resolved').length} Tickets</h4>
           </div>
         </Card>
         <Card className="p-4 flex items-center gap-3">
@@ -56,7 +71,7 @@ export function AdminHelpdeskPage() {
           </div>
           <div>
             <p className="text-xs text-slate-500 font-semibold uppercase">Resolved (This Week)</p>
-            <h4 className="text-lg font-bold text-slate-800">14 Tickets</h4>
+            <h4 className="text-lg font-bold text-slate-800">{tickets.filter((ticket) => ticket.status === 'Closed').length} Tickets</h4>
           </div>
         </Card>
       </div>
@@ -93,9 +108,7 @@ export function AdminHelpdeskPage() {
                   </td>
                   <td className="py-3.5 px-4 text-slate-500">{t.date}</td>
                   <td className="py-3.5 px-4 text-right">
-                    <button className="px-3 py-1 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                      Respond
-                    </button>
+                    <Button variant="outline" size="sm" icon={Eye} onClick={() => openTicket(t)}>Details</Button>
                   </td>
                 </tr>
               ))}
@@ -103,6 +116,9 @@ export function AdminHelpdeskPage() {
           </table>
         </div>
       </div>
+      <Modal isOpen={Boolean(selectedTicket)} onClose={() => setSelectedTicket(null)} title={selectedTicket ? `Ticket ${selectedTicket.id}` : 'Ticket details'} subtitle={selectedTicket ? `${selectedTicket.citizen} · ${selectedTicket.category}` : ''}>
+        {selectedTicket && <div className="space-y-4 text-xs"><div><p className="font-bold text-navy">{selectedTicket.subject}</p><p className="mt-2 text-slate-700 whitespace-pre-wrap">{selectedTicket.description}</p></div><Textarea label="Resolution details" value={adminResponse} onChange={(event) => setAdminResponse(event.target.value)} placeholder="Explain the action taken or guidance provided..." rows={4} /><div className="flex justify-end gap-2"><Button variant="ghost" size="sm" onClick={() => setSelectedTicket(null)}>Close</Button>{selectedTicket.status !== 'Closed' && <Button variant="success" size="sm" icon={CheckCircle2} onClick={handleResolve}>Mark Resolved</Button>}</div></div>}
+      </Modal>
     </div>
   );
 }

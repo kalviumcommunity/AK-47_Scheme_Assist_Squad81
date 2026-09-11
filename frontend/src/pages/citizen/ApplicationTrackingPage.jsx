@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   FileCheck2,
   CheckCircle2,
@@ -14,11 +14,28 @@ import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
-import { MOCK_APPLICATIONS } from '../../data/mockCitizenData';
+import { getApplications } from '../../services/applicationService';
+import { useAuth } from '../../context/AuthContext';
 
 export function ApplicationTrackingPage() {
-  const [applications, setApplications] = useState(MOCK_APPLICATIONS);
+  const { user } = useAuth();
+  const [applications, setApplications] = useState([]);
   const [selectedApp, setSelectedApp] = useState(null);
+
+  const loadApplications = async () => {
+    const allApplications = await getApplications();
+    setApplications(allApplications.filter((application) => (
+      application.citizenEmail === user?.email || application.citizenId === user?.id
+    )));
+  };
+
+  useEffect(() => {
+    loadApplications();
+    const refresh = () => loadApplications();
+    window.addEventListener('storage', refresh);
+    const interval = setInterval(refresh, 3000);
+    return () => { window.removeEventListener('storage', refresh); clearInterval(interval); };
+  }, [user?.email, user?.id]);
 
   const totalCount = applications.length;
   const approvedCount = applications.filter((a) => a.status === 'Approved').length;
@@ -114,7 +131,7 @@ export function ApplicationTrackingPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {applications.map((app) => (
+              {applications.length === 0 ? <tr><td colSpan="6" className="py-10 text-center text-xs text-slate-muted">No applications submitted yet.</td></tr> : applications.map((app) => (
                 <tr key={app.id} className="hover:bg-slate-50 transition-colors">
                   <td className="py-4 px-4">
                     <span className="font-bold text-navy block">{app.schemeName}</span>
@@ -167,9 +184,8 @@ export function ApplicationTrackingPage() {
                 {selectedApp.timeline.map((stage, idx) => (
                   <div key={idx} className="relative group">
                     <span
-                      className={`absolute -left-[23px] top-0 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white ring-4 ring-white ${
-                        stage.done ? 'bg-gov-success' : 'bg-slate-300'
-                      }`}
+                      className={`absolute -left-[23px] top-0 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white ring-4 ring-white ${stage.done ? 'bg-gov-success' : 'bg-slate-300'
+                        }`}
                     >
                       {stage.done ? '✓' : idx + 1}
                     </span>

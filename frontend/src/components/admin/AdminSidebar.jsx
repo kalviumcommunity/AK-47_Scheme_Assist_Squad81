@@ -10,8 +10,10 @@ import {
   BarChart3,
   ScrollText,
   Settings,
-  LogOut,
+  Database,
+  Activity,
   ShieldAlert,
+  LogOut,
   ChevronRight,
   X,
 } from 'lucide-react';
@@ -33,6 +35,9 @@ const NAV_SECTIONS = [
       { name: 'Citizens', path: '/admin/citizens', icon: Users },
       { name: 'Applications', path: '/admin/applications', icon: FileCheck2 },
       { name: 'Documents', path: '/admin/documents', icon: FolderOpen },
+      { name: 'Knowledge Base', path: '/admin/knowledge-base', icon: Database },
+      { name: 'AI Monitoring', path: '/admin/ai-monitoring', icon: Activity },
+      { name: 'System Health', path: '/admin/system-health', icon: ShieldAlert },
     ],
   },
   {
@@ -98,10 +103,9 @@ export function AdminSidebar({ className = '', onCloseMobile }) {
                   end={item.end}
                   onClick={onCloseMobile}
                   className={({ isActive }) =>
-                    `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-150 group ${
-                      isActive
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-white/60 hover:bg-white/8 hover:text-white'
+                    `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-150 group ${isActive
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-white/60 hover:bg-white/8 hover:text-white'
                     }`
                   }
                 >
@@ -109,28 +113,25 @@ export function AdminSidebar({ className = '', onCloseMobile }) {
                     <>
                       <div className="flex items-center gap-2.5">
                         <item.icon
-                          className={`w-4 h-4 transition-colors ${
-                            isActive ? 'text-white' : 'text-white/40 group-hover:text-white/80'
-                          }`}
+                          className={`w-4 h-4 transition-colors ${isActive ? 'text-white' : 'text-white/40 group-hover:text-white/80'
+                            }`}
                         />
                         <span>{item.name}</span>
                       </div>
                       {item.badge && (
                         <span
-                          className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wide ${
-                            isActive
+                          className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wide ${isActive
                               ? 'bg-white/20 text-white'
                               : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                          }`}
+                            }`}
                         >
                           {item.badge}
                         </span>
                       )}
                       {!item.badge && (
                         <ChevronRight
-                          className={`w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity ${
-                            isActive ? 'opacity-60' : ''
-                          }`}
+                          className={`w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity ${isActive ? 'opacity-60' : ''
+                            }`}
                         />
                       )}
                     </>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   HelpCircle,
   Plus,
@@ -13,13 +13,28 @@ import {
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
+import Modal from '../../components/ui/Modal';
 import { TicketTable, CreateTicketModal } from '../../components/helpdesk/TicketTable';
-import { MOCK_TICKETS } from '../../data/mockCitizenData';
+import { useAuth } from '../../context/AuthContext';
+import { confirmTicketResolution, createTicket, getTickets } from '../../services/helpdeskService';
 
 export function HelpdeskPage() {
-  const [tickets, setTickets] = useState(MOCK_TICKETS);
+  const { user } = useAuth();
+  const [tickets, setTickets] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
+
+  const loadTickets = () => {
+    setTickets(getTickets().filter((ticket) => ticket.citizenEmail === user?.email || ticket.citizenId === user?.id));
+  };
+
+  useEffect(() => {
+    loadTickets();
+    const refresh = () => loadTickets();
+    window.addEventListener('storage', refresh);
+    const interval = setInterval(refresh, 3000);
+    return () => { window.removeEventListener('storage', refresh); clearInterval(interval); };
+  }, [user?.email, user?.id]);
 
   const quickCategories = [
     { title: "Application Issues", desc: "Status delays, rejection queries & DBT tracking", icon: FileCheck2 },
@@ -29,7 +44,13 @@ export function HelpdeskPage() {
   ];
 
   const handleCreateTicket = (newTicket) => {
-    setTickets((prev) => [newTicket, ...prev]);
+    createTicket({
+      ...newTicket,
+      citizenId: user?.id || '',
+      citizenEmail: user?.email || '',
+      citizen: user?.name || 'Citizen',
+    });
+    loadTickets();
   };
 
   return (
@@ -104,7 +125,7 @@ export function HelpdeskPage() {
             <p className="text-xs text-slate-muted">Track resolutions submitted for your citizen profile</p>
           </div>
           <Badge variant="primary" size="sm">
-            {tickets.length} Active Tickets
+            {tickets.length} Tickets
           </Badge>
         </div>
 
@@ -115,13 +136,14 @@ export function HelpdeskPage() {
       </Card>
 
       {/* Ticket Details View Modal */}
-      {selectedTicket && (
-        <CreateTicketModal
-          isOpen={true}
-          onClose={() => setSelectedTicket(null)}
-          onSubmit={() => setSelectedTicket(null)}
-        />
-      )}
+      {selectedTicket && <Modal isOpen={true} onClose={() => setSelectedTicket(null)} title={`Ticket ${selectedTicket.id}`} subtitle={`${selectedTicket.category} · Created ${selectedTicket.createdDate}`}>
+        <div className="space-y-4 text-xs">
+          <div><p className="font-bold text-navy">{selectedTicket.subject}</p><p className="mt-2 text-slate-600 whitespace-pre-wrap">{selectedTicket.description}</p></div>
+          {selectedTicket.adminResponse && <div className="rounded-btn bg-primary-50 border border-primary/20 p-3"><p className="font-bold text-navy">Admin response</p><p className="mt-1 text-slate-700 whitespace-pre-wrap">{selectedTicket.adminResponse}</p></div>}
+          {selectedTicket.status === 'Resolved' && <div className="border-t border-slate-border pt-4"><p className="font-bold text-navy mb-2">Has your problem been resolved?</p><div className="flex gap-2"><Button variant="success" size="sm" onClick={() => { confirmTicketResolution(selectedTicket.id, true); setSelectedTicket(null); loadTickets(); }}>Yes, mark resolved</Button><Button variant="outline" size="sm" onClick={() => { confirmTicketResolution(selectedTicket.id, false); setSelectedTicket(null); loadTickets(); }}>No, still need help</Button></div></div>}
+          <div className="flex justify-end"><Button variant="ghost" size="sm" onClick={() => setSelectedTicket(null)}>Close</Button></div>
+        </div>
+      </Modal>}
 
       {/* Create Ticket Modal */}
       <CreateTicketModal
