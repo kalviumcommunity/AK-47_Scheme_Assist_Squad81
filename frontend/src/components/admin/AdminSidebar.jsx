@@ -51,12 +51,28 @@ const NAV_SECTIONS = [
 
 export function AdminSidebar({ className = '', onCloseMobile }) {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
     logout();
     navigate('/admin/login');
   };
+
+  const displayName = user?.name || (user?.email ? user.email.split('@')[0] : 'Administrator');
+  const displayRole = user?.department || (user?.role === 'admin' ? 'Nodal Officer' : 'Staff');
+  const displayEmail = user?.email || 'admin@schemeassist.gov.in';
+
+  const initials = (() => {
+    if (user?.name) {
+      const parts = user.name.trim().split(/\s+/);
+      if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.slice(0, 2).toUpperCase();
+    }
+    return 'AD';
+  })();
 
   return (
     <aside className={`w-64 bg-[#0F2B46] flex flex-col h-screen shrink-0 ${className}`}>
@@ -148,11 +164,11 @@ export function AdminSidebar({ className = '', onCloseMobile }) {
         <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center shrink-0 text-white text-xs font-bold">
-              AD
+              {initials}
             </div>
             <div className="truncate">
-              <p className="text-xs font-bold text-white truncate">Administrator</p>
-              <p className="text-[10px] text-white/40 truncate">Nodal Officer</p>
+              <p className="text-xs font-bold text-white truncate" title={displayName}>{displayName}</p>
+              <p className="text-[10px] text-white/40 truncate" title={displayEmail}>{displayRole}</p>
             </div>
           </div>
           <button

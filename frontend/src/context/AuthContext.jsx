@@ -11,8 +11,28 @@ export function getRegisteredCitizens() {
   try {
     const raw = localStorage.getItem(USERS_DB_KEY);
     const users = raw ? JSON.parse(raw) : {};
+
+    // Also include current logged-in user if they are a citizen
+    try {
+      const activeRaw = localStorage.getItem(USER_KEY);
+      if (activeRaw) {
+        const activeUser = JSON.parse(activeRaw);
+        if (activeUser && activeUser.role === 'citizen' && (activeUser.email || activeUser.id)) {
+          const key = (activeUser.email || activeUser.id).toLowerCase();
+          if (!users[key]) {
+            users[key] = activeUser;
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+
     return Object.values(users).filter((storedUser) => (
-      storedUser.role === 'citizen' && (storedUser.registeredAt || storedUser.lastLoginAt)
+      storedUser &&
+      storedUser.role === 'citizen' &&
+      storedUser.email !== 'rajesh.kumar@example.com' &&
+      storedUser.id !== 'CIT-784920'
     ));
   } catch {
     return [];
@@ -23,20 +43,20 @@ export function getRegisteredCitizens() {
 function getStoredUsersDb() {
   try {
     const raw = localStorage.getItem(USERS_DB_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Clean up legacy mock citizen if present
+      if (parsed['rajesh.kumar@example.com']) {
+        delete parsed['rajesh.kumar@example.com'];
+        localStorage.setItem(USERS_DB_KEY, JSON.stringify(parsed));
+      }
+      return parsed;
+    }
   } catch (e) {
     console.warn('Failed to parse users database:', e);
   }
 
   const initialDb = {
-    'rajesh.kumar@example.com': {
-      id: 'CIT-784920',
-      name: 'Rajesh Kumar',
-      email: 'rajesh.kumar@example.com',
-      phone: '+91 98765 43210',
-      state: 'Uttar Pradesh',
-      role: 'citizen',
-    },
     'admin@schemeassist.gov.in': {
       id: 'ADM-001',
       name: 'System Administrator',
@@ -83,6 +103,12 @@ export function AuthProvider({ children }) {
         ...cleanUser,
       };
       localStorage.setItem(USERS_DB_KEY, JSON.stringify(db));
+      try {
+        window.dispatchEvent(new StorageEvent('storage', { key: USERS_DB_KEY }));
+        window.dispatchEvent(new Event('storage'));
+      } catch {
+        // ignore
+      }
     }
 
     setUser(cleanUser);
@@ -100,10 +126,17 @@ export function AuthProvider({ children }) {
       state: newUserData.state || '',
       role: newUserData.role || 'citizen',
       registeredAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString(),
     };
 
     db[normalizedEmail] = fullUser;
     localStorage.setItem(USERS_DB_KEY, JSON.stringify(db));
+    try {
+      window.dispatchEvent(new StorageEvent('storage', { key: USERS_DB_KEY }));
+      window.dispatchEvent(new Event('storage'));
+    } catch {
+      // ignore
+    }
 
     login(fullUser);
     return fullUser;

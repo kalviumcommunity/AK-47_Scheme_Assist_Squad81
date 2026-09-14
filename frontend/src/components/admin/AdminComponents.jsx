@@ -67,6 +67,10 @@ export function AdminStatsGrid({ stats }) {
 }
 
 export function AnalyticsVisual({ analytics }) {
+  const monthly = analytics?.monthlyApplications || [];
+  const maxApps = Math.max(...monthly.map((m) => m.applications || 0), 5);
+  const popularity = analytics?.schemePopularity || [];
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       {/* Applications Growth */}
@@ -74,20 +78,24 @@ export function AnalyticsVisual({ analytics }) {
         <div className="flex items-center justify-between pb-3 border-b border-slate-border mb-4">
           <div>
             <h3 className="text-sm font-bold text-navy">Monthly Application Inflow</h3>
-            <p className="text-xs text-slate-muted">Growth across 2026 fiscal cycle</p>
+            <p className="text-xs text-slate-muted">Live application volume across recent months</p>
           </div>
-          <Badge variant="success" size="sm">+24% vs Last Qtr</Badge>
+          <Badge variant="success" size="sm">{analytics?.growthBadge || 'Live Inflow'}</Badge>
         </div>
 
         <div className="h-48 flex items-end justify-between gap-3 pt-4 px-2">
-          {analytics.monthlyApplications.map((m, idx) => {
-            const heightPct = Math.round((m.applications / 2500) * 100);
+          {monthly.map((m, idx) => {
+            const heightPct = m.applications > 0
+              ? Math.max(Math.round((m.applications / maxApps) * 100), 12)
+              : 0;
             return (
               <div key={idx} className="flex-1 flex flex-col items-center gap-2">
                 <span className="text-[10px] font-bold text-navy">{m.applications}</span>
                 <div
-                  style={{ height: `${heightPct}%` }}
-                  className="w-full bg-primary hover:bg-primary-dark rounded-t-btn transition-all duration-300"
+                  style={{ height: `${heightPct}%`, minHeight: m.applications > 0 ? '6px' : '2px' }}
+                  className={`w-full rounded-t-btn transition-all duration-300 ${
+                    m.applications > 0 ? 'bg-primary hover:bg-primary-dark' : 'bg-slate-200'
+                  }`}
                 />
                 <span className="text-[10px] font-semibold text-slate-500">{m.month}</span>
               </div>
@@ -106,21 +114,27 @@ export function AnalyticsVisual({ analytics }) {
         </div>
 
         <div className="space-y-3.5 pt-2">
-          {analytics.schemePopularity.map((s, idx) => (
-            <div key={idx}>
-              <div className="flex justify-between text-xs font-semibold mb-1">
-                <span className="text-navy">{s.name}</span>
-                <span className="text-slate-500">{s.count} ({s.percentage}%)</span>
-              </div>
-              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                <div
-                  style={{ width: `${s.percentage}%` }}
-                  className={`h-full rounded-full ${idx === 0 ? 'bg-primary' : idx === 1 ? 'bg-gov-success' : 'bg-navy-700'
-                    }`}
-                />
-              </div>
+          {popularity.length === 0 ? (
+            <div className="py-12 text-center text-xs text-slate-muted border border-dashed border-slate-200 rounded-card">
+              No scheme applications recorded yet.
             </div>
-          ))}
+          ) : (
+            popularity.map((s, idx) => (
+              <div key={idx}>
+                <div className="flex justify-between text-xs font-semibold mb-1">
+                  <span className="text-navy">{s.name}</span>
+                  <span className="text-slate-500">{s.count} ({s.percentage}%)</span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                  <div
+                    style={{ width: `${Math.min(s.percentage, 100)}%` }}
+                    className={`h-full rounded-full ${idx === 0 ? 'bg-primary' : idx === 1 ? 'bg-gov-success' : 'bg-navy-700'
+                      }`}
+                  />
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </Card>
     </div>
@@ -627,7 +641,14 @@ export function ApplicationManagementTable({ applications, onApprove, onReject }
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {applications.map((app) => (
+            {(!applications || applications.length === 0) && (
+              <tr>
+                <td colSpan="7" className="py-12 text-center text-xs text-slate-muted">
+                  No applications submitted yet. Citizen applications will appear here in real time.
+                </td>
+              </tr>
+            )}
+            {(applications || []).map((app) => (
               <tr key={app.id} className="hover:bg-slate-50 transition-colors">
                 <td className="py-3 px-4 font-mono font-bold text-navy">{app.id}</td>
                 <td className="py-3 px-4 font-semibold text-slate-700">{app.citizenName}</td>
@@ -652,7 +673,7 @@ export function ApplicationManagementTable({ applications, onApprove, onReject }
                   </Badge>
                 </td>
                 <td className="py-3 px-4 text-right">
-                  {app.status === 'Pending' || app.status === 'Under Review' ? (
+                  {(!app.status || app.status.toLowerCase() === 'pending' || app.status.toLowerCase().includes('review')) ? (
                     <div className="flex items-center justify-end gap-2">
                       <Button
                         variant="success"
@@ -672,7 +693,28 @@ export function ApplicationManagementTable({ applications, onApprove, onReject }
                       </Button>
                     </div>
                   ) : (
-                    <span className="text-[11px] text-slate-400 font-medium">Decided</span>
+                    <div className="flex items-center justify-end gap-2">
+                      <span className="text-[11px] font-semibold text-slate-500">{app.status}</span>
+                      <span className="text-slate-200">|</span>
+                      <button
+                        type="button"
+                        onClick={() => onApprove(app.id)}
+                        className={`text-[11px] font-semibold transition-colors ${
+                          app.status === 'Approved' ? 'text-emerald-700 underline font-bold' : 'text-slate-400 hover:text-emerald-600'
+                        }`}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onReject(app.id)}
+                        className={`text-[11px] font-semibold transition-colors ${
+                          app.status === 'Rejected' ? 'text-red-700 underline font-bold' : 'text-slate-400 hover:text-red-600'
+                        }`}
+                      >
+                        Reject
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>

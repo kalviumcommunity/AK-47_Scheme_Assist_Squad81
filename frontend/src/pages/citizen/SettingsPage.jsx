@@ -17,10 +17,10 @@ import { useAuth } from '../../context/AuthContext';
 
 export function SettingsPage() {
   const { user, login } = useAuth();
-  const [fullName, setFullName] = useState(user?.name || DEFAULT_CITIZEN.name);
-  const [phone, setPhone] = useState(user?.phone || DEFAULT_CITIZEN.phone);
-  const [email, setEmail] = useState(user?.email || DEFAULT_CITIZEN.email);
-  const [occupation, setOccupation] = useState(DEFAULT_CITIZEN.financial.occupation);
+  const [fullName, setFullName] = useState(user?.name || (user?.email ? user.email.split('@')[0] : 'Citizen'));
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [occupation, setOccupation] = useState(user?.occupation || 'Self-Employed / Agriculture');
   const [saved, setSaved] = useState(false);
   const [language, setLanguage] = useState('English');
   const [smsAlerts, setSmsAlerts] = useState(true);

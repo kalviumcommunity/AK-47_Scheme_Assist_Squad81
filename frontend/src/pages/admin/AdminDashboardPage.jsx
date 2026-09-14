@@ -1,19 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import {
-  ShieldAlert,
-  Users,
-  BookOpen,
-  FileCheck,
-  Clock,
-  Plus,
-  Search,
-  Filter,
-  ArrowLeft
-} from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
-import Card from '../../components/ui/Card';
-import Badge from '../../components/ui/Badge';
 import { Tabs } from '../../components/ui/Avatar';
 import {
   AdminStatsGrid,
@@ -22,24 +9,113 @@ import {
   CitizenManagementTable,
   ApplicationManagementTable
 } from '../../components/admin/AdminComponents';
-import {
-  ADMIN_STATS,
-  ADMIN_ANALYTICS,
-  ADMIN_SCHEMES_LIST,
-  ADMIN_CITIZENS_LIST,
-  ADMIN_APPLICATIONS_LIST
-} from '../../data/adminData';
+import { getAllApplications, updateApplicationStatus } from '../../services/applicationService';
+import { getRegisteredCitizens } from '../../context/AuthContext';
+import { SCHEMES } from '../../data/schemesData';
+import { recordActivity } from '../../services/activityLogService';
 
 const SCHEME_STORAGE_KEY = 'schemeassist_admin_schemes';
 
 export function AdminDashboardPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
-  const [applications, setApplications] = useState(ADMIN_APPLICATIONS_LIST);
+  const [applications, setApplications] = useState([]);
+  const [citizens, setCitizens] = useState([]);
   const [schemes, setSchemes] = useState(() => {
-    const savedSchemes = localStorage.getItem(SCHEME_STORAGE_KEY);
-    return savedSchemes ? JSON.parse(savedSchemes) : ADMIN_SCHEMES_LIST;
+    try {
+      const saved = localStorage.getItem(SCHEME_STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return SCHEMES.map((s) => ({
+      id: s.id,
+      name: s.name,
+      category: s.category || 'General',
+      government: s.governmentType || 'Central Government',
+      status: 'Active',
+      applications: 0,
+      budget: s.budget || '₹10,000 Cr',
+      documents: s.documentsRequired || ['Aadhaar Card'],
+      lastUpdated: new Date().toISOString().split('T')[0]
+    }));
   });
+
+  const loadData = useCallback(async () => {
+    const apps = await getAllApplications();
+    setApplications(apps);
+
+    // Load registered citizens and merge any who submitted applications
+    const users = getRegisteredCitizens();
+    const citizenMap = new Map();
+    users.forEach((u) => {
+      const key = (u.email || u.id || '').toLowerCase();
+      if (key) citizenMap.set(key, u);
+    });
+
+    apps.forEach((app) => {
+      const key = (app.citizenEmail || app.citizenId || app.citizenName || '').toLowerCase();
+      if (key && !citizenMap.has(key)) {
+        citizenMap.set(key, {
+          id: app.citizenId || `CIT-${Math.floor(100000 + Math.random() * 900000)}`,
+          name: app.citizenName || 'Citizen',
+          email: app.citizenEmail || '',
+          state: app.state || 'Not provided',
+          phone: app.phone || '',
+          role: 'citizen',
+          status: 'Active',
+        });
+      }
+    });
+
+    const citizenList = Array.from(citizenMap.values()).map((user) => {
+      const userApps = apps.filter(
+        (app) =>
+          (user.id && app.citizenId === user.id) ||
+          (user.email && app.citizenEmail?.toLowerCase() === user.email.toLowerCase()) ||
+          (user.name && app.citizenName?.toLowerCase() === user.name.toLowerCase())
+      );
+
+      let score = 50;
+      if (user.name && user.name !== 'Citizen') score += 15;
+      if (user.phone) score += 15;
+      if (user.state && user.state !== 'Not provided') score += 10;
+      if (userApps.length > 0) score += 10;
+
+      return {
+        id: user.id || user.email || `CIT-${Date.now().toString().slice(-6)}`,
+        name: user.name || (user.email ? user.email.split('@')[0] : 'Citizen'),
+        location: user.state || 'Not provided',
+        applicationsCount: userApps.length,
+        eligibilityStatus: userApps.length
+          ? `${userApps.length} Application${userApps.length > 1 ? 's' : ''} Submitted`
+          : 'Profile Registered',
+        profileCompletion: user.profileCompletion || Math.min(score, 100),
+        status: user.status || 'Active',
+      };
+    });
+    setCitizens(citizenList);
+
+    // Sync scheme application counts
+    setSchemes((prev) =>
+      prev.map((s) => {
+        const count = apps.filter(
+          (a) => a.schemeId === s.id || a.schemeName === s.name || a.scheme === s.name
+        ).length;
+        return { ...s, applications: count };
+      })
+    );
+  }, []);
+
+  useEffect(() => {
+    loadData();
+    window.addEventListener('storage', loadData);
+    const interval = setInterval(loadData, 3000);
+    return () => {
+      window.removeEventListener('storage', loadData);
+      clearInterval(interval);
+    };
+  }, [loadData]);
 
   useEffect(() => {
     localStorage.setItem(SCHEME_STORAGE_KEY, JSON.stringify(schemes));
@@ -48,20 +124,34 @@ export function AdminDashboardPage() {
   const tabs = [
     { id: 'overview', label: 'Executive Overview' },
     { id: 'schemes', label: 'Scheme Management' },
-    { id: 'citizens', label: 'Citizen Registry' },
-    { id: 'applications', label: 'Application Queue', count: applications.filter(a => a.status === 'Pending').length },
+    { id: 'citizens', label: 'Citizen Registry', count: citizens.length },
+    {
+      id: 'applications',
+      label: 'Application Queue',
+      count: applications.filter((a) => a.status === 'Pending' || a.status === 'Under Review').length
+    },
   ];
 
-  const handleApprove = (id) => {
-    setApplications((prev) =>
-      prev.map((app) => (app.id === id ? { ...app, status: 'Approved' } : app))
-    );
+  const handleApprove = async (id) => {
+    await updateApplicationStatus(id, 'Approved');
+    recordActivity({
+      level: 'SUCCESS',
+      source: 'APP',
+      message: `Application ${id} approved by nodal officer`,
+      details: `Status set to Approved`,
+    });
+    await loadData();
   };
 
-  const handleReject = (id) => {
-    setApplications((prev) =>
-      prev.map((app) => (app.id === id ? { ...app, status: 'Rejected' } : app))
-    );
+  const handleReject = async (id) => {
+    await updateApplicationStatus(id, 'Rejected');
+    recordActivity({
+      level: 'WARN',
+      source: 'APP',
+      message: `Application ${id} rejected by nodal officer`,
+      details: `Status set to Rejected`,
+    });
+    await loadData();
   };
 
   const handleAddScheme = (newScheme) => {
@@ -89,6 +179,64 @@ export function AdminDashboardPage() {
 
   const handleDeleteScheme = (schemeId) => {
     setSchemes((prev) => prev.filter((scheme) => scheme.id !== schemeId));
+  };
+
+  // Derive live statistics
+  const liveStats = {
+    totalCitizens: citizens.length,
+    activeSchemes: schemes.filter((s) => s.status === 'Active' || !s.status).length,
+    totalApplications: applications.length,
+    pendingReviews: applications.filter(
+      (a) => a.status === 'Pending' || a.status === 'Under Review'
+    ).length
+  };
+
+  // Derive live analytics
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const now = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      month: monthNames[d.getMonth()],
+      applications: 0,
+      approved: 0,
+    });
+  }
+
+  applications.forEach((app) => {
+    const dateStr = app.submittedDate || '';
+    const prefix = dateStr.slice(0, 7);
+    const target = months.find((m) => m.key === prefix);
+    if (target) {
+      target.applications += 1;
+      if (app.status === 'Approved') target.approved += 1;
+    } else if (months.length > 0) {
+      months[months.length - 1].applications += 1;
+      if (app.status === 'Approved') months[months.length - 1].approved += 1;
+    }
+  });
+
+  const countsByScheme = {};
+  applications.forEach((app) => {
+    const name = app.schemeName || app.scheme || 'General Scheme';
+    countsByScheme[name] = (countsByScheme[name] || 0) + 1;
+  });
+
+  const totalApps = applications.length;
+  const liveSchemePopularity = Object.entries(countsByScheme)
+    .map(([name, count]) => ({
+      name,
+      count,
+      percentage: totalApps > 0 ? Math.round((count / totalApps) * 100) : 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  const liveAnalytics = {
+    monthlyApplications: months,
+    schemePopularity: liveSchemePopularity,
+    growthBadge: applications.length > 0 ? `${applications.length} Total Submissions` : 'Real-time Inflow',
   };
 
   return (
@@ -122,7 +270,7 @@ export function AdminDashboardPage() {
       </div>
 
       {/* Admin Summary 4-Stats Grid */}
-      <AdminStatsGrid stats={ADMIN_STATS} />
+      <AdminStatsGrid stats={liveStats} />
 
       {/* Tabs */}
       <Tabs
@@ -134,7 +282,7 @@ export function AdminDashboardPage() {
       {/* Tab Panels */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          <AnalyticsVisual analytics={ADMIN_ANALYTICS} />
+          <AnalyticsVisual analytics={liveAnalytics} />
           <ApplicationManagementTable
             applications={applications}
             onApprove={handleApprove}
@@ -154,7 +302,7 @@ export function AdminDashboardPage() {
 
       {activeTab === 'citizens' && (
         <CitizenManagementTable
-          citizens={ADMIN_CITIZENS_LIST}
+          citizens={citizens}
         />
       )}
 

@@ -23,9 +23,9 @@ export function ApplicationPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const citizenName = user?.name || DEFAULT_CITIZEN.name;
-  const citizenPhone = user?.phone || DEFAULT_CITIZEN.phone;
-  const citizenState = user?.state || DEFAULT_CITIZEN.location.state;
+  const citizenName = user?.name || (user?.email ? user.email.split('@')[0] : 'Citizen');
+  const citizenPhone = user?.phone || '';
+  const citizenState = user?.state || user?.location?.state || 'Uttar Pradesh';
   const [currentStep, setCurrentStep] = useState(1);
   const [appId] = useState(`APP-2026-${Math.floor(10000 + Math.random() * 90000)}`);
   const [submittedApplication, setSubmittedApplication] = useState(null);
@@ -43,6 +43,7 @@ export function ApplicationPage() {
         citizenEmail: user?.email,
         citizenName,
         state: citizenState,
+        phone: citizenPhone,
         schemeId: scheme.id,
         schemeName: scheme.name,
         category: scheme.category,
@@ -164,7 +165,7 @@ export function ApplicationPage() {
             </h3>
 
             <div className="space-y-3">
-              {scheme.requiredDocuments.map((doc, idx) => (
+              {(scheme.requiredDocuments || scheme.documentsRequired || ['Aadhaar Card', 'Bank Passbook']).map((doc, idx) => (
                 <div key={idx} className="flex items-center justify-between p-3.5 rounded-btn bg-slate-bg border border-slate-border text-xs">
                   <div className="flex items-center gap-3">
                     <FileText className="w-5 h-5 text-primary" />

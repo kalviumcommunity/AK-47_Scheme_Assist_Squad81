@@ -18,6 +18,12 @@ function getStoredApplications() {
 function saveStoredApplications(apps) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(apps));
+    try {
+      window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY }));
+      window.dispatchEvent(new Event('storage'));
+    } catch {
+      // ignore
+    }
   } catch (e) {
     console.error('Failed to persist applications to localStorage:', e);
   }
@@ -76,30 +82,52 @@ export async function submitApplication(applicationData) {
   }
 
   const newApp = {
-    id: `APP-2026-${Math.floor(10000 + Math.random() * 90000)}`,
+    id: applicationData.id || `APP-2026-${Math.floor(10000 + Math.random() * 90000)}`,
     schemeId: applicationData.schemeId || 'general-scheme',
     schemeName: applicationData.schemeName || 'Government Welfare Scheme',
     benefit: applicationData.benefit || 'Welfare Support',
     category: applicationData.category || 'General',
     submittedDate: new Date().toISOString().split('T')[0],
-    citizenId: applicationData.citizenId || '',
+    citizenId: applicationData.citizenId || `CIT-${Math.floor(100000 + Math.random() * 900000)}`,
     citizenEmail: applicationData.citizenEmail || '',
     citizenName: applicationData.citizenName || 'Citizen',
     state: applicationData.state || '',
+    phone: applicationData.phone || '',
     scheme: applicationData.schemeName || 'Government Welfare Scheme',
-    status: 'Under Review',
-    statusCode: 'under_review',
+    status: applicationData.status || 'Pending',
+    statusCode: (applicationData.status || 'pending').toLowerCase().replace(/\s+/g, '_'),
     currentStep: 2,
     totalSteps: 5,
     timeline: [
       { step: 'Application Submitted', date: 'Just now', done: true },
-      { step: 'Documents Verification', date: 'In progress', done: false },
-      { step: 'Nodal Officer Review', date: 'Pending', done: false },
-      { step: 'Department Approval', date: 'Pending', done: false },
+      { step: 'Nodal Officer Review', date: 'In Progress', done: false },
+      { step: 'Sanction Approval', date: 'Pending', done: false },
       { step: 'DBT Benefit Credited', date: 'Pending', done: false },
     ],
     ...applicationData,
   };
+
+  // Register or update applicant citizen in users database so they appear in Citizen Registry
+  try {
+    const usersRaw = localStorage.getItem('schemeassist_users_db');
+    const usersDb = usersRaw ? JSON.parse(usersRaw) : {};
+    const key = (newApp.citizenEmail || newApp.citizenId || newApp.citizenName || '').toLowerCase();
+    if (key && !usersDb[key]) {
+      usersDb[key] = {
+        id: newApp.citizenId,
+        name: newApp.citizenName,
+        email: newApp.citizenEmail,
+        phone: newApp.phone || '',
+        state: newApp.state || 'Not provided',
+        role: 'citizen',
+        registeredAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
+      };
+      localStorage.setItem('schemeassist_users_db', JSON.stringify(usersDb));
+    }
+  } catch {
+    // ignore
+  }
 
   const list = getStoredApplications();
   const updated = [newApp, ...list];

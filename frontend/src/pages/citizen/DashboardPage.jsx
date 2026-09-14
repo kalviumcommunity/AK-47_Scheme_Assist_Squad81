@@ -24,7 +24,7 @@ import { getTickets } from '../../services/helpdeskService';
 export function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const citizenName = user?.name || DEFAULT_CITIZEN.name;
+  const citizenName = user?.name || (user?.email ? user.email.split('@')[0] : 'Citizen');
   const [savedSchemes, setSavedSchemes] = useState(['pm-kisan', 'ayushman-bharat']);
   const [applications, setApplications] = useState([]);
   const [documents, setDocuments] = useState([]);

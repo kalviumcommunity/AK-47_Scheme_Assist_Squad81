@@ -2,11 +2,10 @@ import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-// Protects citizen routes — redirects to /login if not authenticated as citizen
+// Protects citizen routes — redirects to /login if not authenticated
 export function ProtectedRoute() {
-  const { isAuthenticated, isCitizen } = useAuth();
+  const { isAuthenticated } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (!isCitizen) return <Navigate to="/login" replace />;
   return <Outlet />;
 }
 
