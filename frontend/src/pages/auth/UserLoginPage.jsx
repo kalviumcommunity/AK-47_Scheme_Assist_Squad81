@@ -17,6 +17,7 @@ import {
   FileCheck2,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { isValidEmail } from '../../utils/validation';
 
 export default function UserLoginPage({ defaultTab = 'login' }) {
   const { login, register, findUserByEmail } = useAuth();
@@ -68,6 +69,11 @@ export default function UserLoginPage({ defaultTab = 'login' }) {
     const cleanEmail = loginForm.email.trim();
     if (!cleanEmail || !loginForm.password) {
       setError('Please provide both your email address and password.');
+      return;
+    }
+
+    if (!isValidEmail(cleanEmail)) {
+      setError('Please enter a valid email address, such as name@example.com.');
       return;
     }
 
@@ -137,6 +143,11 @@ export default function UserLoginPage({ defaultTab = 'login' }) {
 
     if (!cleanEmail) {
       setError('Please provide a valid email address.');
+      return;
+    }
+
+    if (!isValidEmail(cleanEmail)) {
+      setError('Please enter a valid email address, such as name@example.com.');
       return;
     }
 

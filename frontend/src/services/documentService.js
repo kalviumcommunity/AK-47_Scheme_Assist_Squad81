@@ -6,11 +6,15 @@
  *   - /api-shared/documents : Multi-user document metadata and ownership store
  */
 import apiClient from './api';
+<<<<<<< HEAD
 import {
   fetchSharedDocuments,
   registerSharedDocument,
   deleteSharedDocument,
 } from './sharedStoreService';
+=======
+import { recordActivity } from './activityLogService';
+>>>>>>> 34b853f4f01401fa447f1c1aa32c3b3623b2d0b8
 
 const REVIEW_STATUS_KEY = 'schemeassist_document_review_status';
 
@@ -31,6 +35,12 @@ export function setDocumentReviewStatus(filename, status) {
   statuses[filename] = status;
   saveReviewStatuses(statuses);
   window.dispatchEvent(new StorageEvent('storage', { key: REVIEW_STATUS_KEY }));
+  recordActivity({
+    level: status === 'Rejected' ? 'WARN' : 'SUCCESS',
+    source: 'DB',
+    message: `Document review status changed: ${filename}`,
+    details: `Document status set to ${status}`,
+  });
   return status;
 }
 
@@ -76,7 +86,17 @@ export async function uploadDocumentFile(file, onUploadProgress, user = null) {
         }
       },
     });
+<<<<<<< HEAD
     responseData = response.data;
+=======
+    recordActivity({
+      level: 'SUCCESS',
+      source: 'DB',
+      message: `Document uploaded and indexed: ${file.name}`,
+      details: `Document size: ${file.size} bytes | Knowledge base ingestion completed`,
+    });
+    return response.data;
+>>>>>>> 34b853f4f01401fa447f1c1aa32c3b3623b2d0b8
   } catch (error) {
     console.warn('Backend /documents upload warning (using local fallback record):', error.message);
   }
@@ -230,6 +250,7 @@ export async function fetchDocumentFile(filename) {
 }
 
 export async function deleteDocumentFile(filename) {
+<<<<<<< HEAD
   try {
     await apiClient.delete(`/documents/${encodeURIComponent(filename)}`);
   } catch {
@@ -237,6 +258,16 @@ export async function deleteDocumentFile(filename) {
   }
   await deleteSharedDocument(filename);
   return { success: true };
+=======
+  const response = await apiClient.delete(`/documents/${encodeURIComponent(filename)}`);
+  recordActivity({
+    level: 'WARN',
+    source: 'DB',
+    message: `Document deleted: ${filename}`,
+    details: 'Document removed from the knowledge base',
+  });
+  return response.data || {};
+>>>>>>> 34b853f4f01401fa447f1c1aa32c3b3623b2d0b8
 }
 
 export default {

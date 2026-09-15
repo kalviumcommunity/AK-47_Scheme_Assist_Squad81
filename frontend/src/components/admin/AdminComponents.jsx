@@ -6,6 +6,7 @@ import {
   Clock,
   TrendingUp,
   CheckCircle,
+  BadgeCheck,
   XCircle,
   Edit2,
   Trash2,
@@ -623,8 +624,31 @@ export function CitizenManagementTable({ citizens }) {
   );
 }
 
+<<<<<<< HEAD
 export function ApplicationManagementTable({ applications, onApprove, onReject }) {
   const [docsModal, setDocsModal] = useState(null); // { app } | null
+=======
+export function ApplicationManagementTable({ applications, onVerify, onApprove, onReject }) {
+  const [selectedApplication, setSelectedApplication] = useState(null);
+
+  const openVerificationReview = (application) => {
+    setSelectedApplication(application);
+  };
+
+  const confirmVerification = async () => {
+    if (!selectedApplication) return;
+    await onVerify(selectedApplication.id);
+    setSelectedApplication(null);
+  };
+
+  return (
+    <>
+      <Card>
+        <div className="pb-4 border-b border-slate-border mb-4">
+          <h3 className="text-sm font-bold text-navy">Application Review & Verification Queue</h3>
+          <p className="text-xs text-slate-muted">Review citizen details and documents before verification and final approval.</p>
+        </div>
+>>>>>>> 34b853f4f01401fa447f1c1aa32c3b3623b2d0b8
 
   return (
     <>
@@ -647,6 +671,7 @@ export function ApplicationManagementTable({ applications, onApprove, onReject }
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4 text-right">Review Action</th>
               </tr>
+<<<<<<< HEAD
             </thead>
             <tbody className="divide-y divide-slate-100">
               {(!applications || applications.length === 0) && (
@@ -834,6 +859,142 @@ export function ApplicationManagementTable({ applications, onApprove, onReject }
             </div>
           </div>
         </div>
+=======
+            )}
+            {(applications || []).map((app) => (
+              <tr key={app.id} className="hover:bg-slate-50 transition-colors">
+                <td className="py-3 px-4 font-mono font-bold text-navy">{app.id}</td>
+                <td className="py-3 px-4 font-semibold text-slate-700">{app.citizenName}</td>
+                <td className="py-3 px-4 text-slate-600">{app.schemeName || app.scheme || '—'}</td>
+                <td className="py-3 px-4 text-slate-500">{app.state}</td>
+                <td className="py-3 px-4 text-slate-500">{app.submittedDate}</td>
+                <td className="py-3 px-4">
+                  <Badge
+                    variant={
+                      app.status === 'Approved'
+                        ? 'success'
+                        : app.status === 'Pending'
+                          ? 'warning'
+                          : app.status === 'Rejected'
+                            ? 'danger'
+                            : 'primary'
+                    }
+                    size="sm"
+                    dot
+                  >
+                    {app.status}
+                  </Badge>
+                </td>
+                <td className="py-3 px-4 text-right">
+                  {(!app.status || app.status.toLowerCase() === 'pending' || app.status.toLowerCase().includes('review')) ? (
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        icon={BadgeCheck}
+                        onClick={() => openVerificationReview(app)}
+                      >
+                        Verify
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        icon={XCircle}
+                        onClick={() => onReject(app.id)}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  ) : app.status === 'Verified' ? (
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="success"
+                        size="sm"
+                        icon={CheckCircle}
+                        onClick={() => onApprove(app.id)}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        icon={XCircle}
+                        onClick={() => onReject(app.id)}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  ) : (
+                    <span className="text-[11px] font-semibold text-slate-500">{app.status}</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      </Card>
+
+      {selectedApplication && (
+        <Modal
+          isOpen={true}
+          onClose={() => setSelectedApplication(null)}
+          title={`Verify Application: ${selectedApplication.id}`}
+          subtitle="Review the applicant details and attached documents before marking this application verified."
+          maxWidth="max-w-2xl"
+        >
+          <div className="space-y-5">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                ['Applicant name', selectedApplication.citizenName],
+                ['Email', selectedApplication.citizenEmail],
+                ['Phone', selectedApplication.phone],
+                ['State', selectedApplication.state],
+                ['Scheme', selectedApplication.schemeName || selectedApplication.scheme],
+                ['Submitted date', selectedApplication.submittedDate],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-btn border border-slate-border bg-slate-bg p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-muted">{label}</p>
+                  <p className="mt-1 text-sm font-semibold text-navy">{value || 'Not provided'}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-btn border border-slate-border p-4">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                <h4 className="text-sm font-bold text-navy">Application documents</h4>
+              </div>
+              <div className="mt-3 space-y-2">
+                {(selectedApplication.documents || selectedApplication.documentsRequired || []).length > 0 ? (
+                  (selectedApplication.documents || selectedApplication.documentsRequired).map((document, index) => (
+                    <div key={`${document}-${index}`} className="flex items-center justify-between rounded-btn bg-slate-bg px-3 py-2 text-xs">
+                      <span className="font-medium text-slate-700">{typeof document === 'string' ? document : document.name || document.filename}</span>
+                      <span className="font-semibold text-gov-success">Submitted</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-muted">No document list was attached to this application record. Check the citizen document registry before verifying.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2 rounded-btn border border-gov-warning/30 bg-gov-warning-light p-3 text-xs text-slate-700">
+              <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-gov-warning" />
+              <p>Verify only after the citizen details, scheme eligibility information, and supporting documents have been checked. Approval will become available after verification.</p>
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-slate-border pt-4">
+              <Button variant="outline" size="sm" onClick={() => setSelectedApplication(null)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="sm" icon={BadgeCheck} onClick={confirmVerification}>
+                Verify application
+              </Button>
+            </div>
+          </div>
+        </Modal>
+>>>>>>> 34b853f4f01401fa447f1c1aa32c3b3623b2d0b8
       )}
     </>
   );

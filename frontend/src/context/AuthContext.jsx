@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { registerSharedCitizen, fetchSharedCitizens } from '../services/sharedStoreService';
+import { recordActivity } from '../services/activityLogService';
 
 const AuthContext = createContext(null);
 
@@ -123,6 +124,12 @@ export function AuthProvider({ children }) {
       }
     }
 
+    recordActivity({
+      level: 'SUCCESS',
+      source: 'AUTH',
+      message: `${cleanUser.role === 'admin' ? 'Admin' : 'User'} login successful: ${cleanUser.name}`,
+      details: `Email: ${cleanUser.email || 'Not provided'} | Role: ${cleanUser.role}`,
+    });
     setUser(cleanUser);
   };
 
@@ -155,6 +162,12 @@ export function AuthProvider({ children }) {
     }
 
     login(fullUser);
+    recordActivity({
+      level: 'SUCCESS',
+      source: 'AUTH',
+      message: `New user registered: ${fullUser.name}`,
+      details: `Email: ${fullUser.email} | State: ${fullUser.state || 'Not provided'}`,
+    });
     return fullUser;
   };
 
@@ -174,6 +187,14 @@ export function AuthProvider({ children }) {
 
   // Logout handler
   const logout = () => {
+    if (user) {
+      recordActivity({
+        level: 'INFO',
+        source: 'AUTH',
+        message: `${user.role === 'admin' ? 'Admin' : 'User'} logged out: ${user.name}`,
+        details: `Email: ${user.email || 'Not provided'}`,
+      });
+    }
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(AUTH_USER_KEY);
     localStorage.removeItem(AUTH_TOKEN_KEY);

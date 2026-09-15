@@ -14,12 +14,14 @@ export function AdminApplicationsPage() {
     return () => { window.removeEventListener('storage', refresh); clearInterval(interval); };
   }, []);
 
+  const handleVerify = async (id) => { await updateApplicationStatus(id, 'Verified'); await loadApplications(); };
   const handleApprove = async (id) => { await updateApplicationStatus(id, 'Approved'); await loadApplications(); };
   const handleReject = async (id) => { await updateApplicationStatus(id, 'Rejected'); await loadApplications(); };
   return (
     <div className="animate-fadeIn pb-10">
       <ApplicationManagementTable
         applications={applications}
+        onVerify={handleVerify}
         onApprove={handleApprove}
         onReject={handleReject}
       />

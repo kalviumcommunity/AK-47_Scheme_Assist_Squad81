@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'schemeassist_helpdesk_tickets';
+import { recordActivity } from './activityLogService';
 
 function readTickets() {
     try {
@@ -28,6 +29,12 @@ export function createTicket(ticketData) {
         citizenConfirmed: null,
     };
     writeTickets([ticket, ...readTickets()]);
+        recordActivity({
+            level: 'INFO',
+            source: 'HELPDESK',
+            message: `Helpdesk ticket created: ${ticket.id}`,
+            details: `Subject: ${ticket.subject || 'Not provided'} | Citizen: ${ticket.citizenName || ticket.citizenEmail || 'Citizen'}`,
+        });
     return ticket;
 }
 
@@ -39,7 +46,16 @@ export function resolveTicket(ticketId, adminResponse = '') {
         lastUpdate: new Date().toISOString().split('T')[0],
     } : ticket);
     writeTickets(updated);
-    return updated.find((ticket) => ticket.id === ticketId) || null;
+    const ticket = updated.find((item) => item.id === ticketId) || null;
+    if (ticket) {
+        recordActivity({
+            level: 'SUCCESS',
+            source: 'HELPDESK',
+            message: `Helpdesk ticket resolved: ${ticketId}`,
+            details: `Admin response: ${adminResponse || 'No response provided'}`,
+        });
+    }
+    return ticket;
 }
 
 export function confirmTicketResolution(ticketId, resolved) {
@@ -50,7 +66,16 @@ export function confirmTicketResolution(ticketId, resolved) {
         lastUpdate: new Date().toISOString().split('T')[0],
     } : ticket);
     writeTickets(updated);
-    return updated.find((ticket) => ticket.id === ticketId) || null;
+    const ticket = updated.find((item) => item.id === ticketId) || null;
+    if (ticket) {
+        recordActivity({
+            level: resolved ? 'SUCCESS' : 'WARN',
+            source: 'HELPDESK',
+            message: `Citizen ${resolved ? 'confirmed' : 'reopened'} helpdesk ticket: ${ticketId}`,
+            details: `Ticket status: ${ticket.status}`,
+        });
+    }
+    return ticket;
 }
 
 export default { getTickets, createTicket, resolveTicket, confirmTicketResolution };

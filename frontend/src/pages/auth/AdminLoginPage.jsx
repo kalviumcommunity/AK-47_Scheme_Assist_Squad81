@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { isValidEmail } from '../../utils/validation';
 
 export default function AdminLoginPage() {
   const { login } = useAuth();
@@ -17,6 +18,11 @@ export default function AdminLoginPage() {
     setError('');
     if (!form.email || !form.password || !form.adminCode) {
       setError('All fields are required.');
+      return;
+    }
+
+    if (!isValidEmail(form.email)) {
+      setError('Please enter a valid admin email address, such as admin@example.com.');
       return;
     }
 

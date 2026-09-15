@@ -132,9 +132,20 @@ export function AdminDashboardPage() {
     {
       id: 'applications',
       label: 'Application Queue',
-      count: applications.filter((a) => a.status === 'Pending' || a.status === 'Under Review').length
+      count: applications.filter((a) => ['Pending', 'Under Review', 'Verified'].includes(a.status)).length
     },
   ];
+
+  const handleVerify = async (id) => {
+    await updateApplicationStatus(id, 'Verified');
+    recordActivity({
+      level: 'INFO',
+      source: 'APP',
+      message: `Application ${id} verified by nodal officer`,
+      details: 'Applicant details and documents marked as verified',
+    });
+    await loadData();
+  };
 
   const handleApprove = async (id) => {
     await updateApplicationStatus(id, 'Approved');
@@ -289,6 +300,7 @@ export function AdminDashboardPage() {
           <AnalyticsVisual analytics={liveAnalytics} />
           <ApplicationManagementTable
             applications={applications}
+            onVerify={handleVerify}
             onApprove={handleApprove}
             onReject={handleReject}
           />
@@ -313,6 +325,7 @@ export function AdminDashboardPage() {
       {activeTab === 'applications' && (
         <ApplicationManagementTable
           applications={applications}
+          onVerify={handleVerify}
           onApprove={handleApprove}
           onReject={handleReject}
         />
