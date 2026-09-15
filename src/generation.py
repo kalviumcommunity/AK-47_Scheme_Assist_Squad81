@@ -12,7 +12,10 @@ sys.path.append(
     )
 )
 
-from google import genai
+try:
+    from google import genai
+except ImportError:
+    genai = None
 
 from src.config import GEMINI_API_KEY, CHAT_MODEL
 from src.context_assembly import (
@@ -35,6 +38,11 @@ def get_gemini_client():
     """
     Creates and returns Gemini API client.
     """
+    if genai is None:
+        raise ImportError(
+            "The 'google-genai' package is not installed. "
+            "Please install it using: pip install google-genai"
+        )
 
     if not GEMINI_API_KEY or not GEMINI_API_KEY.strip():
         raise ValueError(
