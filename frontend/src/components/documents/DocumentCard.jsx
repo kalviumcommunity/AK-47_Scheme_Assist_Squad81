@@ -15,6 +15,7 @@ import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 import { uploadDocument } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 export function DocumentCard({ doc, onReplace, onView, onDelete }) {
   const isVerified = doc.verified || doc.status === 'Verified';
@@ -43,6 +44,12 @@ export function DocumentCard({ doc, onReplace, onView, onDelete }) {
             <span>Filename:</span>
             <span className="font-mono text-slate-700 truncate max-w-[140px]">{doc.filename}</span>
           </div>
+          {doc.uploaderName && (
+            <div className="flex justify-between">
+              <span>Uploaded By:</span>
+              <span className="text-slate-700 font-medium truncate max-w-[140px]">{doc.uploaderName}</span>
+            </div>
+          )}
           <div className="flex justify-between">
             <span>Uploaded:</span>
             <span className="text-slate-700">{doc.uploadDate}</span>
@@ -73,6 +80,7 @@ export function DocumentCard({ doc, onReplace, onView, onDelete }) {
 }
 
 export function UploadModal({ isOpen, onClose, onUploadSuccess }) {
+  const { user } = useAuth();
   const [file, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState(null);
@@ -95,13 +103,16 @@ export function UploadModal({ isOpen, onClose, onUploadSuccess }) {
     setIsUploading(true);
     setError(null);
     try {
-      const res = await uploadDocument(file);
+      const res = await uploadDocument(file, user);
       setSuccessResult(res);
       if (onUploadSuccess) {
         onUploadSuccess({
           name: file.name.replace(/\.[^/.]+$/, "").replace(/_/g, " "),
           type: "Official Government Circular / Policy",
           filename: file.name,
+          uploaderEmail: user?.email || '',
+          uploaderId: user?.id || '',
+          uploaderName: user?.name || (user?.email ? user.email.split('@')[0] : 'Citizen'),
           size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
           uploadDate: new Date().toISOString().split('T')[0],
           status: "Pending Review",

@@ -39,7 +39,7 @@ export function DashboardPage() {
   const loadUserActivity = async () => {
     const [allApplications, documentResult] = await Promise.all([
       getApplications(),
-      listUploadedDocuments(),
+      listUploadedDocuments(user),
     ]);
     setApplications(allApplications.filter((application) => application.citizenEmail === user?.email || application.citizenId === user?.id));
     setDocuments(documentResult.documents || []);

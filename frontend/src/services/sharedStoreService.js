@@ -163,3 +163,82 @@ export async function updateSharedApplicationStatus(applicationId, status) {
   }
   return null;
 }
+
+// ─── USER DOCUMENTS ────────────────────────────────────────────────────────
+
+const DOCUMENTS_ENDPOINT = '/api-shared/documents';
+const LOCAL_DOCS_KEY = 'schemeassist_user_documents';
+
+export async function fetchSharedDocuments() {
+  let serverDocs = [];
+  try {
+    const res = await fetch(DOCUMENTS_ENDPOINT, { cache: 'no-store' });
+    if (res.ok) {
+      serverDocs = await res.json();
+    }
+  } catch (err) {
+    // network fallback
+  }
+
+  let localDocs = [];
+  try {
+    const raw = localStorage.getItem(LOCAL_DOCS_KEY);
+    localDocs = raw ? JSON.parse(raw) : [];
+  } catch {
+    // ignore
+  }
+
+  const map = new Map();
+  serverDocs.forEach(d => {
+    if (d && (d.filename || d.id)) {
+      map.set(d.filename || d.id, d);
+    }
+  });
+
+  localDocs.forEach(d => {
+    if (d && (d.filename || d.id) && !map.has(d.filename || d.id)) {
+      map.set(d.filename || d.id, d);
+      registerSharedDocument(d).catch(() => {});
+    }
+  });
+
+  const merged = Array.from(map.values());
+  try {
+    localStorage.setItem(LOCAL_DOCS_KEY, JSON.stringify(merged));
+  } catch {
+    // ignore
+  }
+  return merged;
+}
+
+export async function registerSharedDocument(doc) {
+  if (!doc) return;
+  try {
+    await fetch(DOCUMENTS_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(doc),
+    });
+  } catch (err) {
+    // ignore
+  }
+}
+
+export async function deleteSharedDocument(docIdOrName) {
+  if (!docIdOrName) return;
+  try {
+    await fetch(`${DOCUMENTS_ENDPOINT}/${encodeURIComponent(docIdOrName)}`, {
+      method: 'DELETE',
+    });
+  } catch (err) {
+    // ignore
+  }
+  try {
+    const raw = localStorage.getItem(LOCAL_DOCS_KEY);
+    const localDocs = raw ? JSON.parse(raw) : [];
+    const filtered = localDocs.filter(d => d.filename !== docIdOrName && d.id !== docIdOrName);
+    localStorage.setItem(LOCAL_DOCS_KEY, JSON.stringify(filtered));
+  } catch {
+    // ignore
+  }
+}

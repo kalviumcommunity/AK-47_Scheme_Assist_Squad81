@@ -152,7 +152,7 @@ export function SchemeManagementTable({ schemes, onAddScheme, onEditScheme, onDe
     government: 'Central Government',
     status: 'Active',
     applications: 0,
-    budget: '₹0 Cr',
+    budget: 'â‚¹0 Cr',
     documents: []
   });
 
@@ -203,7 +203,7 @@ export function SchemeManagementTable({ schemes, onAddScheme, onEditScheme, onDe
       government: newScheme.government.trim() || 'Central Government',
       status: newScheme.status || 'Active',
       applications: Number(newScheme.applications) || 0,
-      budget: newScheme.budget.trim() || '₹0 Cr',
+      budget: newScheme.budget.trim() || 'â‚¹0 Cr',
       documents: Array.isArray(newScheme.documents)
         ? newScheme.documents.filter(Boolean)
         : (newScheme.documents || '').split(',').map((doc) => doc.trim()).filter(Boolean)
@@ -217,7 +217,7 @@ export function SchemeManagementTable({ schemes, onAddScheme, onEditScheme, onDe
       government: 'Central Government',
       status: 'Active',
       applications: 0,
-      budget: '₹0 Cr',
+      budget: 'â‚¹0 Cr',
       documents: []
     });
     setIsAddModalOpen(false);
@@ -372,7 +372,7 @@ export function SchemeManagementTable({ schemes, onAddScheme, onEditScheme, onDe
                   value={newScheme.budget}
                   onChange={(event) => setNewScheme({ ...newScheme, budget: event.target.value })}
                   className="w-full border border-slate-200 rounded-btn px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  placeholder="₹25,000 Cr"
+                  placeholder="â‚¹25,000 Cr"
                 />
               </label>
 
@@ -596,9 +596,9 @@ export function CitizenManagementTable({ citizens }) {
                   <span className="text-[10px] text-slate-400 font-mono">{c.id}</span>
                 </td>
                 <td className="py-3 px-4">
-                  <span className="text-xs text-slate-600">{c.email || '—'}</span>
+                  <span className="text-xs text-slate-600">{c.email || 'â€”'}</span>
                 </td>
-                <td className="py-3 px-4 text-slate-500">{c.location || '—'}</td>
+                <td className="py-3 px-4 text-slate-500">{c.location || 'â€”'}</td>
                 <td className="py-3 px-4 font-semibold text-slate-700">{c.applicationsCount}</td>
                 <td className="py-3 px-4 text-slate-600">{c.eligibilityStatus}</td>
                 <td className="py-3 px-4">
@@ -624,108 +624,217 @@ export function CitizenManagementTable({ citizens }) {
 }
 
 export function ApplicationManagementTable({ applications, onApprove, onReject }) {
-  return (
-    <Card>
-      <div className="pb-4 border-b border-slate-border mb-4">
-        <h3 className="text-sm font-bold text-navy">Application Review & Verification Queue</h3>
-        <p className="text-xs text-slate-muted">Nodal approval queue for Direct Benefit Transfer sanctioning</p>
-      </div>
+  const [docsModal, setDocsModal] = useState(null); // { app } | null
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs text-slate-text border-collapse">
-          <thead>
-            <tr className="border-b border-slate-border bg-slate-bg/70 text-slate-muted font-bold uppercase tracking-wider text-[10px]">
-              <th className="py-3 px-4">App ID</th>
-              <th className="py-3 px-4">Citizen</th>
-              <th className="py-3 px-4">Applied Scheme</th>
-              <th className="py-3 px-4">State</th>
-              <th className="py-3 px-4">Submitted</th>
-              <th className="py-3 px-4">Status</th>
-              <th className="py-3 px-4 text-right">Review Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {(!applications || applications.length === 0) && (
-              <tr>
-                <td colSpan="7" className="py-12 text-center text-xs text-slate-muted">
-                  No applications submitted yet. Citizen applications will appear here in real time.
-                </td>
+  return (
+    <>
+      <Card>
+        <div className="pb-4 border-b border-slate-border mb-4">
+          <h3 className="text-sm font-bold text-navy">Application Review &amp; Verification Queue</h3>
+          <p className="text-xs text-slate-muted">Nodal approval queue for Direct Benefit Transfer sanctioning</p>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs text-slate-text border-collapse">
+            <thead>
+              <tr className="border-b border-slate-border bg-slate-bg/70 text-slate-muted font-bold uppercase tracking-wider text-[10px]">
+                <th className="py-3 px-4">App ID</th>
+                <th className="py-3 px-4">Citizen</th>
+                <th className="py-3 px-4">Applied Scheme</th>
+                <th className="py-3 px-4">State</th>
+                <th className="py-3 px-4">Submitted</th>
+                <th className="py-3 px-4">Docs</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4 text-right">Review Action</th>
               </tr>
-            )}
-            {(applications || []).map((app) => (
-              <tr key={app.id} className="hover:bg-slate-50 transition-colors">
-                <td className="py-3 px-4 font-mono font-bold text-navy">{app.id}</td>
-                <td className="py-3 px-4 font-semibold text-slate-700">{app.citizenName}</td>
-                <td className="py-3 px-4 text-slate-600">{app.schemeName || app.scheme || '—'}</td>
-                <td className="py-3 px-4 text-slate-500">{app.state}</td>
-                <td className="py-3 px-4 text-slate-500">{app.submittedDate}</td>
-                <td className="py-3 px-4">
-                  <Badge
-                    variant={
-                      app.status === 'Approved'
-                        ? 'success'
-                        : app.status === 'Pending'
-                          ? 'warning'
-                          : app.status === 'Rejected'
-                            ? 'danger'
-                            : 'primary'
-                    }
-                    size="sm"
-                    dot
-                  >
-                    {app.status}
-                  </Badge>
-                </td>
-                <td className="py-3 px-4 text-right">
-                  {(!app.status || app.status.toLowerCase() === 'pending' || app.status.toLowerCase().includes('review')) ? (
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="success"
-                        size="sm"
-                        icon={CheckCircle}
-                        onClick={() => onApprove(app.id)}
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        icon={XCircle}
-                        onClick={() => onReject(app.id)}
-                      >
-                        Reject
-                      </Button>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {(!applications || applications.length === 0) && (
+                <tr>
+                  <td colSpan="8" className="py-12 text-center text-xs text-slate-muted">
+                    No applications submitted yet. Citizen applications will appear here in real time.
+                  </td>
+                </tr>
+              )}
+              {(applications || []).map((app) => (
+                <tr key={app.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="py-3 px-4 font-mono font-bold text-navy">{app.id}</td>
+                  <td className="py-3 px-4">
+                    <div className="font-semibold text-slate-700">{app.citizenName}</div>
+                    {app.citizenEmail && <div className="text-[10px] text-slate-400">{app.citizenEmail}</div>}
+                  </td>
+                  <td className="py-3 px-4 text-slate-600">{app.schemeName || app.scheme || 'â€”'}</td>
+                  <td className="py-3 px-4 text-slate-500">{app.state}</td>
+                  <td className="py-3 px-4 text-slate-500">{app.submittedDate}</td>
+                  {/* Documents column */}
+                  <td className="py-3 px-4">
+                    <button
+                      type="button"
+                      onClick={() => setDocsModal({ app })}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-btn bg-primary-50 hover:bg-primary/10 text-primary text-[11px] font-semibold border border-primary/20 transition-colors"
+                      title="View submitted documents"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      {Array.isArray(app.documents) ? app.documents.length : 0} docs
+                    </button>
+                  </td>
+                  <td className="py-3 px-4">
+                    <Badge
+                      variant={
+                        app.status === 'Approved'
+                          ? 'success'
+                          : app.status === 'Pending'
+                            ? 'warning'
+                            : app.status === 'Rejected'
+                              ? 'danger'
+                              : 'primary'
+                      }
+                      size="sm"
+                      dot
+                    >
+                      {app.status}
+                    </Badge>
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    {(!app.status || app.status.toLowerCase() === 'pending' || app.status.toLowerCase().includes('review')) ? (
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="success"
+                          size="sm"
+                          icon={CheckCircle}
+                          onClick={() => onApprove(app.id)}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          icon={XCircle}
+                          onClick={() => onReject(app.id)}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="text-[11px] font-semibold text-slate-500">{app.status}</span>
+                        <span className="text-slate-200">|</span>
+                        <button
+                          type="button"
+                          onClick={() => onApprove(app.id)}
+                          className={`text-[11px] font-semibold transition-colors ${
+                            app.status === 'Approved' ? 'text-emerald-700 underline font-bold' : 'text-slate-400 hover:text-emerald-600'
+                          }`}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onReject(app.id)}
+                          className={`text-[11px] font-semibold transition-colors ${
+                            app.status === 'Rejected' ? 'text-red-700 underline font-bold' : 'text-slate-400 hover:text-red-600'
+                          }`}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      {/* â”€â”€ Document Preview Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {docsModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={(e) => { if (e.target === e.currentTarget) setDocsModal(null); }}
+        >
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <div>
+                <h2 className="text-sm font-bold text-navy">Submitted Documents</h2>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  {docsModal.app.citizenName} &bull; {docsModal.app.id} &bull; {docsModal.app.schemeName || docsModal.app.scheme}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDocsModal(null)}
+                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal body */}
+            <div className="overflow-y-auto flex-1 p-5 space-y-3">
+              {(!docsModal.app.documents || docsModal.app.documents.length === 0) ? (
+                <div className="py-10 text-center">
+                  <FileText className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                  <p className="text-xs text-slate-400">No documents were submitted with this application.</p>
+                  <p className="text-[10px] text-slate-300 mt-1">The citizen may have submitted before the document upload feature was enabled.</p>
+                </div>
+              ) : (
+                docsModal.app.documents.map((doc, idx) => (
+                  <div key={doc.id || idx} className="flex items-start gap-3 p-3.5 rounded-btn bg-slate-bg border border-slate-border">
+                    <div className="w-9 h-9 rounded-btn bg-primary-50 border border-primary/20 flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4 text-primary" />
                     </div>
-                  ) : (
-                    <div className="flex items-center justify-end gap-2">
-                      <span className="text-[11px] font-semibold text-slate-500">{app.status}</span>
-                      <span className="text-slate-200">|</span>
-                      <button
-                        type="button"
-                        onClick={() => onApprove(app.id)}
-                        className={`text-[11px] font-semibold transition-colors ${
-                          app.status === 'Approved' ? 'text-emerald-700 underline font-bold' : 'text-slate-400 hover:text-emerald-600'
-                        }`}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onReject(app.id)}
-                        className={`text-[11px] font-semibold transition-colors ${
-                          app.status === 'Rejected' ? 'text-red-700 underline font-bold' : 'text-slate-400 hover:text-red-600'
-                        }`}
-                      >
-                        Reject
-                      </button>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-navy truncate">{doc.name}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5 truncate">{doc.fileName}</p>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+                        {doc.fileSize && (
+                          <span className="text-[10px] text-slate-400">{doc.fileSize}</span>
+                        )}
+                        {doc.uploadedBy && (
+                          <span className="text-[10px] text-slate-400">By: <span className="text-slate-600 font-medium">{doc.uploadedBy}</span></span>
+                        )}
+                        {doc.uploadDate && (
+                          <span className="text-[10px] text-slate-400">Date: {doc.uploadDate}</span>
+                        )}
+                        {doc.source && (
+                          <span className="text-[10px] text-primary font-medium">{doc.source}</span>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
+                    <div className="shrink-0">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                        (doc.status === 'Verified' || doc.verified)
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : doc.status === 'Uploaded'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                            : 'bg-slate-50 text-slate-500 border border-slate-200'
+                      }`}>
+                        {doc.status || 'Pending'}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Modal footer */}
+            <div className="px-5 py-3 border-t border-slate-100 bg-slate-bg/50 rounded-b-xl flex items-center justify-between">
+              <span className="text-[11px] text-slate-400">
+                {Array.isArray(docsModal.app.documents) ? docsModal.app.documents.length : 0} document{Array.isArray(docsModal.app.documents) && docsModal.app.documents.length !== 1 ? 's' : ''} submitted
+              </span>
+              <button
+                type="button"
+                onClick={() => setDocsModal(null)}
+                className="px-4 py-1.5 rounded-btn bg-navy text-white text-xs font-semibold hover:bg-navy/80 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

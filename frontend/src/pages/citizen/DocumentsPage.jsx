@@ -15,22 +15,26 @@ import Modal from '../../components/ui/Modal';
 import { DocumentCard, UploadModal } from '../../components/documents/DocumentCard';
 import { listUploadedDocuments } from '../../services/api';
 import { deleteDocumentFile, fetchDocumentFile } from '../../services/documentService';
+import { useAuth } from '../../context/AuthContext';
 
 function normalizeDocument(document) {
   const filename = document.filename || document.name || 'Unnamed document';
   return {
     ...document,
-    id: filename,
-    name: filename.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' '),
+    id: document.id || filename,
+    name: document.name || filename.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' '),
     filename,
-    type: filename.split('.').pop()?.toUpperCase() || 'FILE',
-    size: `${(Number(document.size_bytes || 0) / (1024 * 1024)).toFixed(2)} MB`,
-    uploadDate: document.upload_date || 'Available in backend',
+    type: document.type || filename.split('.').pop()?.toUpperCase() || 'FILE',
+    size: document.size || `${(Number(document.size_bytes || 0) / (1024 * 1024)).toFixed(2)} MB`,
+    uploadDate: document.uploadDate || document.upload_date || 'Available in backend',
     status: document.status || 'Pending Review',
+    uploaderName: document.uploaderName,
+    uploaderEmail: document.uploaderEmail,
   };
 }
 
 export function DocumentsPage() {
+  const { user } = useAuth();
   const [documents, setDocuments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,7 +45,7 @@ export function DocumentsPage() {
   const loadDocuments = async () => {
     setIsLoading(true);
     try {
-      const result = await listUploadedDocuments();
+      const result = await listUploadedDocuments(user);
       setDocuments((result.documents || []).map(normalizeDocument));
       setError(null);
     } catch (err) {
@@ -60,7 +64,7 @@ export function DocumentsPage() {
       window.removeEventListener('storage', refresh);
       clearInterval(interval);
     };
-  }, []);
+  }, [user?.email, user?.id]);
 
   const totalCount = documents.length;
   const approvedCount = documents.filter((d) => d.status === 'Approved').length;

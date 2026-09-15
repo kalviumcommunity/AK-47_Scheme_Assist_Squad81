@@ -37,11 +37,10 @@ function saveStoredApplications(apps) {
 
 function ensureAppDocuments(app) {
   if (!app) return app;
-  if (!Array.isArray(app.documents) || app.documents.length === 0) {
-    return {
-      ...app,
-      documents: generateDefaultDocuments(app.schemeName || app.scheme, app.citizenName)
-    };
+  // Only return real documents stored with this specific application.
+  // Never fabricate placeholder docs — that makes all users look identical.
+  if (!Array.isArray(app.documents)) {
+    return { ...app, documents: [] };
   }
   return app;
 }

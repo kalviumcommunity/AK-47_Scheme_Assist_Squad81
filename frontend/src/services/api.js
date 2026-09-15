@@ -171,30 +171,17 @@ export async function chatWithSchemeAssist(
 /**
  * Upload Document
  */
-export async function uploadDocument(file) {
-
-  const {
-    uploadDocumentFile
-  } =
-    await import('./documentService');
-
-  return uploadDocumentFile(file);
-
+export async function uploadDocument(file, user = null) {
+  const { uploadDocumentFile } = await import('./documentService');
+  return uploadDocumentFile(file, null, user);
 }
-
 
 /**
  * Get Uploaded Documents
  */
-export async function listUploadedDocuments() {
-
-  const {
-    fetchDocuments
-  } =
-    await import('./documentService');
-
-  return fetchDocuments();
-
+export async function listUploadedDocuments(user = null) {
+  const { fetchDocuments } = await import('./documentService');
+  return fetchDocuments(user);
 }
 
 

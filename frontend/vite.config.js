@@ -204,6 +204,49 @@ function sharedDataPlugin() {
           }
         }
 
+        // ─── USER DOCUMENTS ENDPOINTS ───────────────────────
+        if (url === '/api-shared/documents') {
+          const db = readDb()
+          if (!Array.isArray(db.userDocuments)) db.userDocuments = []
+
+          if (req.method === 'GET') {
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify(db.userDocuments))
+            return
+          }
+
+          if (req.method === 'POST') {
+            try {
+              const doc = await parseJsonBody(req)
+              if (doc && (doc.filename || doc.name)) {
+                db.userDocuments = [
+                  doc,
+                  ...db.userDocuments.filter(d => d.filename !== doc.filename && d.id !== doc.id)
+                ]
+                writeDb(db)
+                res.setHeader('Content-Type', 'application/json')
+                res.end(JSON.stringify({ success: true, document: doc }))
+                return
+              }
+            } catch (e) {
+              res.statusCode = 400
+              res.end(JSON.stringify({ error: 'Invalid document payload' }))
+              return
+            }
+          }
+        }
+
+        if (url.startsWith('/api-shared/documents/') && req.method === 'DELETE') {
+          const docIdOrName = decodeURIComponent(url.split('/api-shared/documents/')[1])
+          const db = readDb()
+          if (!Array.isArray(db.userDocuments)) db.userDocuments = []
+          db.userDocuments = db.userDocuments.filter(d => d.filename !== docIdOrName && d.id !== docIdOrName)
+          writeDb(db)
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ success: true }))
+          return
+        }
+
         next()
       })
     }

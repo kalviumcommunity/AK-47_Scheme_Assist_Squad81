@@ -97,23 +97,36 @@ export function AdminDocumentsPage() {
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider text-[10px]">
               <tr>
-                <th className="py-3.5 px-4">File name</th><th className="py-3.5 px-4">Type</th><th className="py-3.5 px-4">Size</th><th className="py-3.5 px-4">Status</th><th className="py-3.5 px-4">Path</th><th className="py-3.5 px-4 text-right">Review</th>
+                <th className="py-3.5 px-4">File name</th>
+                <th className="py-3.5 px-4">Uploaded By</th>
+                <th className="py-3.5 px-4">Type</th>
+                <th className="py-3.5 px-4">Size</th>
+                <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-4">Path</th>
+                <th className="py-3.5 px-4 text-right">Review</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
               {!loading && filtered.map((doc) => (
                 <tr key={doc.filename} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3.5 px-4 font-bold text-slate-900"><FileCheck2 className="w-3.5 h-3.5 text-blue-500 inline mr-1.5" />{doc.filename}</td>
-                  <td className="py-3.5 px-4 text-slate-600">{doc.filename?.split('.').pop()?.toUpperCase()}</td>
+                  <td className="py-3.5 px-4 font-bold text-slate-900">
+                    <FileCheck2 className="w-3.5 h-3.5 text-blue-500 inline mr-1.5" />
+                    {doc.filename}
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <span className="font-semibold text-slate-800 block text-xs">{doc.uploaderName || 'Citizen'}</span>
+                    {doc.uploaderEmail && <span className="text-[10px] text-slate-400 block">{doc.uploaderEmail}</span>}
+                  </td>
+                  <td className="py-3.5 px-4 text-slate-600">{doc.type || doc.filename?.split('.').pop()?.toUpperCase()}</td>
                   <td className="py-3.5 px-4 text-slate-500">{(Number(doc.size_bytes || 0) / 1024).toFixed(1)} KB</td>
                   <td className="py-3.5 px-4">
                     <Badge variant={statusVariant(doc.status)} size="sm" dot>{doc.status || 'Pending Review'}</Badge>
                   </td>
-                  <td className="py-3.5 px-4 text-slate-500 font-mono text-[10px]">{doc.path || '—'}</td>
+                  <td className="py-3.5 px-4 text-slate-500 font-mono text-[10px]">{doc.path || 'Available in backend'}</td>
                   <td className="py-3.5 px-4 text-right"><div className="flex items-center justify-end gap-2"><Button variant="outline" size="sm" onClick={() => handleView(doc)}>View</Button>{doc.status !== 'Approved' && doc.status !== 'Rejected' && <><Button variant="success" size="sm" icon={CheckCircle2} onClick={() => handleApprove(doc.filename)}>Approve</Button><Button variant="danger" size="sm" icon={XCircle} onClick={() => handleReject(doc.filename)}>Reject</Button></>}{doc.status === 'Approved' && <span className="text-[11px] text-gov-success font-semibold">Approved</span>}{doc.status === 'Rejected' && <span className="text-[11px] text-gov-error font-semibold">Rejected</span>}</div></td>
                 </tr>
               ))}
-              {!loading && filtered.length === 0 && <tr><td colSpan="6" className="py-10 text-center text-xs text-slate-500">No backend documents match this search.</td></tr>}
+              {!loading && filtered.length === 0 && <tr><td colSpan="7" className="py-10 text-center text-xs text-slate-500">No backend documents match this search.</td></tr>}
             </tbody>
           </table>
         </div>

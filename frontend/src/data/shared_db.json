@@ -30,7 +30,7 @@
       "state": "Telangana",
       "role": "citizen",
       "registeredAt": "2026-09-14T05:10:43.194Z",
-      "lastLoginAt": "2026-09-15T08:17:32.202Z",
+      "lastLoginAt": "2026-09-15T08:34:26.866Z",
       "status": "Active",
       "avatar": null
     },
@@ -66,6 +66,17 @@
       "role": "citizen",
       "registeredAt": "2026-09-15T08:30:03.021Z",
       "lastLoginAt": "2026-09-15T08:30:03.535Z",
+      "status": "Active"
+    },
+    {
+      "id": "CIT-192161",
+      "name": "asdfghj",
+      "email": "asdfghj@yahoo.com",
+      "phone": "9866708665",
+      "state": "Telangana",
+      "role": "citizen",
+      "registeredAt": "2026-09-15T09:13:20.431Z",
+      "lastLoginAt": "2026-09-15T09:13:20.518Z",
       "status": "Active"
     }
   ],
@@ -314,6 +325,50 @@
         }
       ],
       "reviewedAt": "2026-09-15T08:19:22.576Z"
+    }
+  ],
+  "userDocuments": [
+    {
+      "id": "doc-shammas-1",
+      "filename": "2041622726.pdf",
+      "name": "2041622726",
+      "uploaderEmail": "shammas.uddin@example.com",
+      "uploaderId": "CIT-445786",
+      "uploaderName": "Mohammed Shammas Uddin",
+      "size_bytes": 786303,
+      "size": "0.75 MB",
+      "type": "PDF",
+      "uploadDate": "2026-09-15",
+      "status": "Pending Review",
+      "verified": false
+    },
+    {
+      "id": "doc-shammas-2",
+      "filename": "Addharcard Shammas.pdf",
+      "name": "Addharcard Shammas",
+      "uploaderEmail": "shammas.uddin@example.com",
+      "uploaderId": "CIT-445786",
+      "uploaderName": "Mohammed Shammas Uddin",
+      "size_bytes": 162275,
+      "size": "0.15 MB",
+      "type": "PDF",
+      "uploadDate": "2026-09-15",
+      "status": "Approved",
+      "verified": true
+    },
+    {
+      "id": "doc-shammas-3",
+      "filename": "Mohammed Shammas-Resume.pdf",
+      "name": "Mohammed Shammas Resume",
+      "uploaderEmail": "shammas.uddin@example.com",
+      "uploaderId": "CIT-445786",
+      "uploaderName": "Mohammed Shammas Uddin",
+      "size_bytes": 245508,
+      "size": "0.23 MB",
+      "type": "PDF",
+      "uploadDate": "2026-09-15",
+      "status": "Pending Review",
+      "verified": false
     }
   ]
 }
