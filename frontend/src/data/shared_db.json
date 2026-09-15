@@ -30,7 +30,7 @@
       "state": "Telangana",
       "role": "citizen",
       "registeredAt": "2026-09-14T05:10:43.194Z",
-      "lastLoginAt": "2026-09-15T07:35:59.212Z",
+      "lastLoginAt": "2026-09-15T08:17:32.202Z",
       "status": "Active",
       "avatar": null
     },
@@ -56,9 +56,95 @@
       "lastLoginAt": "2026-09-15T07:38:44.349Z",
       "status": "Active",
       "avatar": null
+    },
+    {
+      "id": "CIT-651218",
+      "name": "Shingen Yamazaki",
+      "email": "mrshammas28@gmail.com",
+      "phone": "9866708665",
+      "state": "Telangana",
+      "role": "citizen",
+      "registeredAt": "2026-09-15T08:30:03.021Z",
+      "lastLoginAt": "2026-09-15T08:30:03.535Z",
+      "status": "Active"
     }
   ],
   "applications": [
+    {
+      "id": "APP-2026-65305",
+      "schemeId": "ayushman-bharat",
+      "schemeName": "Ayushman Bharat",
+      "benefit": "₹5 Lakh / Family / Year",
+      "category": "Healthcare",
+      "submittedDate": "2026-09-15",
+      "citizenId": "CIT-651218",
+      "citizenEmail": "mrshammas28@gmail.com",
+      "citizenName": "Shingen Yamazaki",
+      "state": "Telangana",
+      "phone": "9866708665",
+      "scheme": "Ayushman Bharat",
+      "status": "Pending",
+      "statusCode": "pending",
+      "currentStep": 2,
+      "totalSteps": 5,
+      "documents": [
+        {
+          "id": "doc-0-1789461020499",
+          "name": "Aadhaar Card or Ration Card",
+          "category": "Identity Proof",
+          "fileName": "Aadhaar_Card_or_Ration_Card_Verified.pdf",
+          "fileSize": "0.8 MB",
+          "status": "Verified",
+          "verified": true,
+          "source": "DigiLocker / Self-Attested",
+          "uploadDate": "2026-09-15"
+        },
+        {
+          "id": "doc-1-1789461020499",
+          "name": "Ration Card / SECC Family ID Proof",
+          "category": "Eligibility Record",
+          "fileName": "Ration_Card_/_SECC_Family_ID_Proof_Verified.pdf",
+          "fileSize": "1.2 MB",
+          "status": "Verified",
+          "verified": true,
+          "source": "DigiLocker / Self-Attested",
+          "uploadDate": "2026-09-15"
+        },
+        {
+          "id": "doc-2-1789461020499",
+          "name": "Ayushman Golden Card (generated at hospital)",
+          "category": "Eligibility Record",
+          "fileName": "Ayushman_Golden_Card_(generated_at_hospital)_Verified.pdf",
+          "fileSize": "1.6 MB",
+          "status": "Verified",
+          "verified": true,
+          "source": "DigiLocker / Self-Attested",
+          "uploadDate": "2026-09-15"
+        }
+      ],
+      "timeline": [
+        {
+          "step": "Application Submitted",
+          "date": "Just now",
+          "done": true
+        },
+        {
+          "step": "Nodal Officer Review",
+          "date": "In Progress",
+          "done": false
+        },
+        {
+          "step": "Sanction Approval",
+          "date": "Pending",
+          "done": false
+        },
+        {
+          "step": "DBT Benefit Credited",
+          "date": "Pending",
+          "done": false
+        }
+      ]
+    },
     {
       "id": "APP-2026-21117",
       "schemeId": "pm-kisan",
@@ -160,8 +246,8 @@
       "benefit": "₹6,000 / year",
       "state": "Telangana",
       "phone": "+91 98765 43210",
-      "status": "Under Review",
-      "statusCode": "under_review",
+      "status": "Rejected",
+      "statusCode": "rejected",
       "submittedDate": "2026-09-14",
       "currentStep": 2,
       "totalSteps": 5,
@@ -174,19 +260,20 @@
         {
           "step": "Nodal Officer Review",
           "date": "In Progress",
-          "done": false
+          "done": true
         },
         {
           "step": "Sanction Approval",
-          "date": "Pending",
-          "done": false
+          "date": "2026-09-15",
+          "done": true
         },
         {
           "step": "DBT Benefit Credited",
           "date": "Pending",
-          "done": false
+          "done": true
         }
-      ]
+      ],
+      "reviewedAt": "2026-09-15T08:19:19.318Z"
     },
     {
       "id": "APP-2026-44582",
@@ -199,8 +286,8 @@
       "benefit": "₹5,00,000 / year health cover",
       "state": "Telangana",
       "phone": "+91 98765 43210",
-      "status": "Pending",
-      "statusCode": "pending",
+      "status": "Approved",
+      "statusCode": "approved",
       "submittedDate": "2026-09-15",
       "currentStep": 2,
       "totalSteps": 5,
@@ -213,19 +300,20 @@
         {
           "step": "Nodal Officer Review",
           "date": "In Progress",
-          "done": false
+          "done": true
         },
         {
           "step": "Sanction Approval",
-          "date": "Pending",
-          "done": false
+          "date": "2026-09-15",
+          "done": true
         },
         {
           "step": "DBT Benefit Credited",
           "date": "Pending",
-          "done": false
+          "done": true
         }
-      ]
+      ],
+      "reviewedAt": "2026-09-15T08:19:22.576Z"
     }
   ]
 }

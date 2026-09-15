@@ -35,30 +35,44 @@ function saveStoredApplications(apps) {
   }
 }
 
+function ensureAppDocuments(app) {
+  if (!app) return app;
+  if (!Array.isArray(app.documents) || app.documents.length === 0) {
+    return {
+      ...app,
+      documents: generateDefaultDocuments(app.schemeName || app.scheme, app.citizenName)
+    };
+  }
+  return app;
+}
+
 /**
  * Fetch all applications for the authenticated citizen.
  *
  * @returns {Promise<Array<object>>}
  */
 export async function getApplications() {
+  let list = [];
   try {
     const shared = await fetchSharedApplications();
-    if (Array.isArray(shared) && shared.length > 0) return shared;
-  } catch (error) {
-    // Fallback to local
-  }
-
-  return getStoredApplications();
-}
-
-export async function getAllApplications() {
-  try {
-    const shared = await fetchSharedApplications();
-    if (Array.isArray(shared)) return shared;
+    if (Array.isArray(shared) && shared.length > 0) list = shared;
   } catch (error) {
     // Fallback
   }
-  return getStoredApplications();
+  if (!list.length) list = getStoredApplications();
+  return list.map(ensureAppDocuments);
+}
+
+export async function getAllApplications() {
+  let list = [];
+  try {
+    const shared = await fetchSharedApplications();
+    if (Array.isArray(shared)) list = shared;
+  } catch (error) {
+    // Fallback
+  }
+  if (!list.length) list = getStoredApplications();
+  return list.map(ensureAppDocuments);
 }
 
 /**
@@ -79,6 +93,110 @@ export async function getApplicationById(applicationId) {
   return list.find((a) => a.id === applicationId) || null;
 }
 
+export function generateDefaultDocuments(schemeName = '', citizenName = 'Applicant') {
+  const s = (schemeName || '').toLowerCase();
+  const base = [
+    {
+      id: 'doc-aadhaar',
+      name: 'Aadhaar Card',
+      category: 'Identity Proof',
+      fileName: `Aadhaar_${(citizenName || 'Citizen').replace(/\s+/g, '_')}.pdf`,
+      fileSize: '1.4 MB',
+      fileType: 'application/pdf',
+      status: 'Verified',
+      verified: true,
+      source: 'UIDAI / DigiLocker Verified',
+      issuingAuthority: 'Unique Identification Authority of India',
+      documentNumber: 'XXXX-XXXX-8665',
+      uploadDate: new Date().toISOString().split('T')[0],
+      description: 'Official national biometric identity and domicile verification document.'
+    },
+    {
+      id: 'doc-bank',
+      name: 'Bank Passbook & DBT Mandate',
+      category: 'Financial Record',
+      fileName: 'Bank_Passbook_DBT_Linked.pdf',
+      fileSize: '950 KB',
+      fileType: 'application/pdf',
+      status: 'Verified',
+      verified: true,
+      source: 'PFMS DBT Verified',
+      issuingAuthority: 'Public Financial Management System',
+      documentNumber: 'SBIN0004128-XXXX9012',
+      uploadDate: new Date().toISOString().split('T')[0],
+      description: 'Aadhaar-seeded bank account statement for Direct Benefit Transfer sanction.'
+    },
+  ];
+
+  if (s.includes('kisan') || s.includes('farmer') || s.includes('agriculture')) {
+    base.push({
+      id: 'doc-land',
+      name: 'Land Ownership Record (Khatauni / 7/12 Extract)',
+      category: 'Land & Revenue Record',
+      fileName: 'Land_Title_Khatauni_ROR.pdf',
+      fileSize: '2.1 MB',
+      fileType: 'application/pdf',
+      status: 'Verified',
+      verified: true,
+      source: 'State Revenue Department & Bhulekh Portal',
+      issuingAuthority: 'Department of Land Resources & Revenue',
+      documentNumber: 'ROR-2026-KH-44910',
+      uploadDate: new Date().toISOString().split('T')[0],
+      description: 'Gazetted land record proving cultivable landholding under institutional threshold.'
+    });
+  } else if (s.includes('awas') || s.includes('housing')) {
+    base.push({
+      id: 'doc-income',
+      name: 'Income & Asset Certificate',
+      category: 'Income Certification',
+      fileName: 'Income_Certificate_Verified.pdf',
+      fileSize: '1.1 MB',
+      fileType: 'application/pdf',
+      status: 'Verified',
+      verified: true,
+      source: 'Revenue Office / Tahsildar',
+      issuingAuthority: 'Revenue Divisional Office',
+      documentNumber: 'INC-2026-98124',
+      uploadDate: new Date().toISOString().split('T')[0],
+      description: 'Family income assessment certificate verifying EWS/LIG category eligibility.'
+    });
+  } else if (s.includes('ayushman') || s.includes('health') || s.includes('jay')) {
+    base.push({
+      id: 'doc-ration',
+      name: 'Ration Card / SECC Household Match',
+      category: 'Household Registry',
+      fileName: 'Ration_Card_NFSA_Record.pdf',
+      fileSize: '1.3 MB',
+      fileType: 'application/pdf',
+      status: 'Verified',
+      verified: true,
+      source: 'NFSA Portal / Food & Civil Supplies',
+      issuingAuthority: 'Department of Food and Public Distribution',
+      documentNumber: 'NFSA-TEL-889104',
+      uploadDate: new Date().toISOString().split('T')[0],
+      description: 'Family entitlement document certifying Ayushman Bharat health insurance coverage.'
+    });
+  } else {
+    base.push({
+      id: 'doc-domicile',
+      name: 'Domicile & Residence Certificate',
+      category: 'Domicile Verification',
+      fileName: 'Domicile_Certificate.pdf',
+      fileSize: '820 KB',
+      fileType: 'application/pdf',
+      status: 'Verified',
+      verified: true,
+      source: 'E-Seva / MeeSeva Portal',
+      issuingAuthority: 'Tahsildar / Sub-Divisional Magistrate',
+      documentNumber: 'DOM-2026-00452',
+      uploadDate: new Date().toISOString().split('T')[0],
+      description: 'Certified permanent residential proof within state jurisdiction.'
+    });
+  }
+
+  return base;
+}
+
 /**
  * Submit a new scheme application.
  *
@@ -92,6 +210,10 @@ export async function submitApplication(applicationData) {
   } catch (error) {
     // Generate standard simulated application response if backend endpoint not active
   }
+
+  const applicantDocs = Array.isArray(applicationData.documents) && applicationData.documents.length > 0
+    ? applicationData.documents
+    : generateDefaultDocuments(applicationData.schemeName, applicationData.citizenName);
 
   const newApp = {
     id: applicationData.id || `APP-2026-${Math.floor(10000 + Math.random() * 90000)}`,
@@ -110,6 +232,7 @@ export async function submitApplication(applicationData) {
     statusCode: (applicationData.status || 'pending').toLowerCase().replace(/\s+/g, '_'),
     currentStep: 2,
     totalSteps: 5,
+    documents: applicantDocs,
     timeline: [
       { step: 'Application Submitted', date: 'Just now', done: true },
       { step: 'Nodal Officer Review', date: 'In Progress', done: false },
@@ -117,6 +240,7 @@ export async function submitApplication(applicationData) {
       { step: 'DBT Benefit Credited', date: 'Pending', done: false },
     ],
     ...applicationData,
+    documents: applicantDocs,
   };
 
   // Register or update applicant citizen in users database so they appear in Citizen Registry
