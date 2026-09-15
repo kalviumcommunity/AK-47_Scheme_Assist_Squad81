@@ -76,19 +76,19 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-fadeIn">
-      {/* Top Greeting */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-navy tracking-tight">
-            Good Morning, {citizenName} 👋
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-muted mt-1">
-            Here is your SchemeAssist welfare and eligibility overview.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <section className="relative overflow-hidden rounded-card bg-navy px-5 py-6 text-white shadow-elevated sm:px-8 sm:py-8">
+        <div className="absolute right-0 top-0 h-full w-1/3 bg-primary/20 [clip-path:polygon(35%_0,100%_0,100%_100%,0_100%)]" />
+        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-2xl">
+            <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-primary-light">
+              <span className="h-2 w-2 rounded-full bg-gov-success" /> Your welfare workspace
+            </div>
+            <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">Good morning, {citizenName}</h1>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-300">Your next best step is ready. Review your matched schemes, complete your profile, and move closer to the benefits you qualify for.</p>
+          </div>
+          <div className="relative flex flex-wrap items-center gap-2">
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             icon={Sparkles}
             onClick={() => navigate('/ai-assistant')}
@@ -102,8 +102,9 @@ export function DashboardPage() {
           >
             Find Schemes &rarr;
           </Button>
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* Top 4 Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -143,7 +144,7 @@ export function DashboardPage() {
         <div className="lg:col-span-8 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-bold text-navy">Recommended Schemes for You</h2>
+              <h2 className="civic-rule text-base font-bold text-navy">Recommended Schemes for You</h2>
               <p className="text-xs text-slate-muted">Personalized according to your farming occupation & income</p>
             </div>
             <button

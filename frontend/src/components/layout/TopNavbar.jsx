@@ -73,7 +73,7 @@ export function TopNavbar({ onToggleNotifications, unreadCount = 2 }) {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-border bg-white/95 shadow-subtle backdrop-blur-sm">
       <div className="mx-auto max-w-none px-0">
-        <div className="flex h-20 items-center justify-between gap-3 px-4 md:px-6 lg:px-8">
+        <div className="flex min-h-[72px] items-center justify-between gap-3 px-4 md:px-6 lg:px-8">
           <div className="flex min-w-0 flex-shrink-0 items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen((prev) => !prev)}
@@ -83,26 +83,26 @@ export function TopNavbar({ onToggleNotifications, unreadCount = 2 }) {
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
 
-            <Link to="/dashboard" className="flex items-center -ml-1">
-              <img
-                src="https://i.ibb.co/kg8h6Zz7/image.png"
-                alt="SchemeAssist logo"
-                className="h-12 w-auto object-contain"
-              />
+            <Link to="/dashboard" className="flex items-center gap-2 -ml-1" aria-label="SchemeAssist dashboard">
+              <div className="flex h-10 w-10 items-center justify-center rounded-btn bg-navy text-sm font-black text-white border-b-4 border-primary-light">SA</div>
+              <div className="hidden sm:block">
+                <div className="text-base font-black leading-none tracking-tight text-navy">SchemeAssist</div>
+                <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-muted">Citizen welfare gateway</div>
+              </div>
             </Link>
           </div>
 
           <nav className="hidden min-w-0 flex-1 items-center justify-center md:flex">
-            <div className="flex w-full items-center justify-center gap-1 rounded-full border border-slate-border bg-slate-50 p-1">
+            <div className="flex w-full items-center justify-center gap-1 border-l border-slate-border pl-5">
               {NAV_ITEMS.map((item) => (
                 <NavLink
                   key={item.path}
                   to={item.path}
                   className={({ isActive }) =>
-                    `whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold transition-all ${
+                    `whitespace-nowrap border-b-2 px-3 py-2 text-xs font-bold transition-all ${
                       isActive
-                        ? 'bg-primary text-white shadow-sm'
-                        : 'text-slate-text hover:bg-white hover:text-primary'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-slate-muted hover:border-primary/40 hover:text-primary'
                     }`
                   }
                 >

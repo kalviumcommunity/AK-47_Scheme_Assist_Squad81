@@ -25,11 +25,11 @@ export function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-20 pb-20">
+    <div className="space-y-16 pb-20 md:space-y-20">
       {/* Hero Section */}
-      <section className="relative pt-12 md:pt-20 pb-12 overflow-hidden">
+      <section className="relative overflow-hidden pb-10 pt-10 md:pb-12 md:pt-20">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-12">
             {/* Left Column */}
             <div className="lg:col-span-7 space-y-6 text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-50 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider">
@@ -65,14 +65,14 @@ export function LandingPage() {
               </div>
 
               {/* Citizen trust note */}
-              <div className="pt-4 flex items-center gap-4 text-xs text-slate-500">
+              <div className="flex items-center gap-4 pt-2 text-xs text-slate-500 sm:pt-4">
                 <div className="flex -space-x-2">
                   <div className="w-8 h-8 rounded-full bg-navy text-white flex items-center justify-center font-bold text-[10px] ring-2 ring-white">RK</div>
                   <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-[10px] ring-2 ring-white">SV</div>
                   <div className="w-8 h-8 rounded-full bg-gov-success text-white flex items-center justify-center font-bold text-[10px] ring-2 ring-white">AG</div>
                 </div>
                 <div>
-                  <span className="font-bold text-slate-700">Trusted by 2.4M+ citizens</span> across all 28 states and union territories.
+                  <span className="font-bold text-slate-700">Built for citizens</span> seeking clearer welfare guidance across India.
                 </div>
               </div>
             </div>
@@ -168,7 +168,7 @@ export function LandingPage() {
       </section>
 
       {/* Feature Section - 4 Feature Cards */}
-      <section className="max-w-7xl mx-auto px-4 md:px-8">
+      <section id="about" className="max-w-7xl mx-auto px-4 md:px-8">
         <div className="text-center max-w-2xl mx-auto mb-12 space-y-2">
           <Badge variant="primary" size="sm">Comprehensive Capabilities</Badge>
           <h2 className="text-3xl font-bold text-navy">Engineered for Citizen Empowerment</h2>

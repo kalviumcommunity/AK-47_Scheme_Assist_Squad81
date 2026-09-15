@@ -4,15 +4,15 @@
 
 :root {
   --primary-navy: #0F2B46;
-  --primary-blue: #2563EB;
-  --light-blue: #EFF6FF;
-  --background: #F8FAFC;
+  --primary-blue: #1F5D7A;
+  --light-blue: #EAF3F5;
+  --background: #F5F3EE;
   --card-bg: #FFFFFF;
   --text-primary: #1E293B;
   --text-secondary: #64748B;
-  --border-color: #E2E8F0;
+  --border-color: #D9E0E2;
   --success: #16A34A;
-  --warning: #F59E0B;
+  --warning: #C97A18;
   --error: #DC2626;
 }
 
@@ -22,11 +22,35 @@
     color: var(--text-primary);
     @apply antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-image: linear-gradient(rgba(15, 43, 70, 0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 43, 70, 0.025) 1px, transparent 1px);
+    background-size: 32px 32px;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold tracking-tight text-primary-navy;
   }
+}
+
+button, a, input, select, textarea {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+}
+
+@keyframes pageReveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: pageReveal 450ms ease-out both;
+}
+
+.civic-rule::before {
+  content: '';
+  display: block;
+  width: 42px;
+  height: 3px;
+  margin-bottom: 12px;
+  background: #D48A22;
 }
 
 /* Custom Scrollbar for chat and tables */

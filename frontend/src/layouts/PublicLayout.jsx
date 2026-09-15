@@ -1,27 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { Sparkles, ArrowRight, Shield, Globe, Award, HelpCircle } from 'lucide-react';
+import { Sparkles, Shield, Menu, X } from 'lucide-react';
 import Button from '../components/ui/Button';
 
 export function PublicLayout() {
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-bg text-slate-text">
       {/* Top Banner (Govt Notice style) */}
       <div className="bg-navy-900 text-slate-300 text-[11px] py-1.5 px-4 text-center font-medium border-b border-navy-800 flex items-center justify-center gap-2">
         <span className="w-2 h-2 rounded-full bg-gov-success animate-pulse" />
-        <span>Official Citizen Welfare Digital Advisory Gateway &bull; Powered by SchemeAssist AI &bull; Ministry Guidelines 2026</span>
+        <span>Citizen Welfare Digital Advisory Gateway &bull; Powered by SchemeAssist AI &bull; Guidance workspace 2026</span>
       </div>
 
       {/* Public Navbar */}
-      <header className="h-18 bg-white border-b border-slate-border sticky top-0 z-40 shadow-subtle">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 h-full flex items-center justify-between">
+      <header className="bg-white border-b border-slate-border sticky top-0 z-40 shadow-subtle">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 min-h-[72px] flex items-center justify-between gap-4">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-btn bg-navy text-white flex items-center justify-center font-extrabold text-xl shadow-sm">
-              SA
-            </div>
+            <div className="w-10 h-10 rounded-btn bg-navy text-white flex items-center justify-center font-extrabold text-sm shadow-sm border-b-4 border-primary-light">SA</div>
             <div>
               <span className="text-lg font-black text-navy tracking-tight leading-none block">
                 SchemeAssist
@@ -42,7 +41,10 @@ export function PublicLayout() {
           </nav>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setMobileMenuOpen((open) => !open)} className="rounded-btn p-2 text-navy md:hidden" aria-label="Toggle navigation menu">
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
             <Button
               variant="outline"
               size="sm"
@@ -61,6 +63,17 @@ export function PublicLayout() {
             </Button>
           </div>
         </div>
+        {mobileMenuOpen && (
+          <nav className="border-t border-slate-border bg-slate-bg px-4 py-4 md:hidden">
+            <div className="flex flex-col gap-1 text-sm font-semibold">
+              <Link onClick={() => setMobileMenuOpen(false)} to="/" className="rounded-btn px-3 py-2 hover:bg-white">Home</Link>
+              <a onClick={() => setMobileMenuOpen(false)} href="#how-it-works" className="rounded-btn px-3 py-2 hover:bg-white">How It Works</a>
+              <Link onClick={() => setMobileMenuOpen(false)} to="/schemes" className="rounded-btn px-3 py-2 hover:bg-white">Schemes</Link>
+              <a onClick={() => setMobileMenuOpen(false)} href="#about" className="rounded-btn px-3 py-2 hover:bg-white">About</a>
+              <Link onClick={() => setMobileMenuOpen(false)} to="/helpdesk" className="rounded-btn px-3 py-2 hover:bg-white">Help</Link>
+            </div>
+          </nav>
+        )}
       </header>
 
       {/* Content */}
@@ -84,7 +97,7 @@ export function PublicLayout() {
               </p>
               <div className="flex items-center gap-2 text-xs text-slate-400">
                 <Shield className="w-4 h-4 text-gov-success" />
-                <span>Verified Official Knowledge Base</span>
+                <span>Curated welfare knowledge base</span>
               </div>
             </div>
 
@@ -120,10 +133,10 @@ export function PublicLayout() {
 
           <div className="pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-400 gap-4">
             <p>&copy; 2026 SchemeAssist Platform. Government Welfare Eligibility and Guidance Initiative.</p>
-            <div className="flex gap-6">
-              <span className="hover:text-white cursor-pointer">Privacy Policy</span>
-              <span className="hover:text-white cursor-pointer">Terms of Service</span>
-              <span className="hover:text-white cursor-pointer">Accessibility Statement</span>
+            <div className="flex flex-wrap gap-6">
+              <span>Privacy Policy</span>
+              <span>Terms of Service</span>
+              <span>Accessibility Statement</span>
             </div>
           </div>
         </div>
