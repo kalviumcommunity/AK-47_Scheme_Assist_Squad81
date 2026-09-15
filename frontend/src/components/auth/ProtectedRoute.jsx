@@ -1,11 +1,15 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 // Protects citizen routes — redirects to /login if not authenticated
 export function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  const location = useLocation();
+  if (!isAuthenticated) {
+    // Save the intended URL so we can redirect back after login
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
   return <Outlet />;
 }
 

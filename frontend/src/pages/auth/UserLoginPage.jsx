@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Eye,
   EyeOff,
@@ -21,6 +21,9 @@ import { useAuth } from '../../context/AuthContext';
 export default function UserLoginPage({ defaultTab = 'login' }) {
   const { login, register, findUserByEmail } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  // If user was redirected from a protected page, go back there after login
+  const redirectTo = location.state?.from || '/dashboard';
 
   const [tab, setTab] = useState(defaultTab); // 'login' | 'signup'
   const [showPassword, setShowPassword] = useState(false);
@@ -111,7 +114,7 @@ export default function UserLoginPage({ defaultTab = 'login' }) {
       setSuccessMsg(`Welcome back, ${userName}! Redirecting...`);
 
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate(redirectTo);
       }, 500);
 
       setLoading(false);
@@ -169,7 +172,7 @@ export default function UserLoginPage({ defaultTab = 'login' }) {
       setSuccessMsg(`Account created for ${cleanName}! Redirecting to dashboard...`);
 
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate(redirectTo);
       }, 600);
 
       setLoading(false);

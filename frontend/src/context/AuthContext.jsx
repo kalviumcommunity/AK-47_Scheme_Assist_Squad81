@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { registerSharedCitizen, fetchSharedCitizens } from '../services/sharedStoreService';
 
 const AuthContext = createContext(null);
 
@@ -79,6 +80,11 @@ export function AuthProvider({ children }) {
     }
   });
 
+  // Sync with shared store on mount
+  useEffect(() => {
+    fetchSharedCitizens().catch(() => {});
+  }, []);
+
   // Login handler
   const login = (userData) => {
     if (!userData) return;
@@ -103,6 +109,12 @@ export function AuthProvider({ children }) {
         ...cleanUser,
       };
       localStorage.setItem(USERS_DB_KEY, JSON.stringify(db));
+
+      // Synchronize to shared store so all admins across all browsers see this user
+      if (cleanUser.role === 'citizen') {
+        registerSharedCitizen(cleanUser);
+      }
+
       try {
         window.dispatchEvent(new StorageEvent('storage', { key: USERS_DB_KEY }));
         window.dispatchEvent(new Event('storage'));
@@ -131,6 +143,10 @@ export function AuthProvider({ children }) {
 
     db[normalizedEmail] = fullUser;
     localStorage.setItem(USERS_DB_KEY, JSON.stringify(db));
+
+    // Synchronize to shared store for real-time visibility across all admins/browsers
+    registerSharedCitizen(fullUser);
+
     try {
       window.dispatchEvent(new StorageEvent('storage', { key: USERS_DB_KEY }));
       window.dispatchEvent(new Event('storage'));

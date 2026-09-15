@@ -3,6 +3,12 @@
  * Manages scheme applications, multi-step submissions, and status tracking.
  */
 import apiClient from './api';
+import {
+  fetchSharedApplications,
+  saveSharedApplication,
+  updateSharedApplicationStatus as apiUpdateStatus,
+  registerSharedCitizen,
+} from './sharedStoreService';
 
 const STORAGE_KEY = 'schemeassist_local_applications';
 
@@ -36,16 +42,22 @@ function saveStoredApplications(apps) {
  */
 export async function getApplications() {
   try {
-    const response = await apiClient.get('/applications');
-    if (Array.isArray(response.data)) return response.data;
+    const shared = await fetchSharedApplications();
+    if (Array.isArray(shared) && shared.length > 0) return shared;
   } catch (error) {
-    // Fallback to local storage / demo dataset
+    // Fallback to local
   }
 
   return getStoredApplications();
 }
 
 export async function getAllApplications() {
+  try {
+    const shared = await fetchSharedApplications();
+    if (Array.isArray(shared)) return shared;
+  } catch (error) {
+    // Fallback
+  }
   return getStoredApplications();
 }
 
@@ -113,7 +125,7 @@ export async function submitApplication(applicationData) {
     const usersDb = usersRaw ? JSON.parse(usersRaw) : {};
     const key = (newApp.citizenEmail || newApp.citizenId || newApp.citizenName || '').toLowerCase();
     if (key && !usersDb[key]) {
-      usersDb[key] = {
+      const citizenRecord = {
         id: newApp.citizenId,
         name: newApp.citizenName,
         email: newApp.citizenEmail,
@@ -123,7 +135,9 @@ export async function submitApplication(applicationData) {
         registeredAt: new Date().toISOString(),
         lastLoginAt: new Date().toISOString(),
       };
+      usersDb[key] = citizenRecord;
       localStorage.setItem('schemeassist_users_db', JSON.stringify(usersDb));
+      registerSharedCitizen(citizenRecord).catch(() => {});
     }
   } catch {
     // ignore
@@ -133,10 +147,16 @@ export async function submitApplication(applicationData) {
   const updated = [newApp, ...list];
   saveStoredApplications(updated);
 
+  // Sync to shared backend server for multi-admin and cross-device visibility
+  saveSharedApplication(newApp).catch(() => {});
+
   return newApp;
 }
 
 export async function updateApplicationStatus(applicationId, status) {
+  // Sync to shared backend
+  apiUpdateStatus(applicationId, status).catch(() => {});
+
   const applications = getStoredApplications();
   const updated = applications.map((application) => (
     application.id === applicationId

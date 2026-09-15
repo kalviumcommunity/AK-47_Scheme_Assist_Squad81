@@ -11,6 +11,7 @@ import {
 } from '../../components/admin/AdminComponents';
 import { getAllApplications, updateApplicationStatus } from '../../services/applicationService';
 import { getRegisteredCitizens } from '../../context/AuthContext';
+import { fetchSharedCitizens } from '../../services/sharedStoreService';
 import { SCHEMES } from '../../data/schemesData';
 import { recordActivity } from '../../services/activityLogService';
 
@@ -42,11 +43,13 @@ export function AdminDashboardPage() {
   });
 
   const loadData = useCallback(async () => {
-    const apps = await getAllApplications();
+    const [apps, users] = await Promise.all([
+      getAllApplications().catch(() => []),
+      fetchSharedCitizens().catch(() => getRegisteredCitizens()),
+    ]);
     setApplications(apps);
 
     // Load registered citizens and merge any who submitted applications
-    const users = getRegisteredCitizens();
     const citizenMap = new Map();
     users.forEach((u) => {
       const key = (u.email || u.id || '').toLowerCase();
@@ -85,6 +88,7 @@ export function AdminDashboardPage() {
       return {
         id: user.id || user.email || `CIT-${Date.now().toString().slice(-6)}`,
         name: user.name || (user.email ? user.email.split('@')[0] : 'Citizen'),
+        email: user.email || '',
         location: user.state || 'Not provided',
         applicationsCount: userApps.length,
         eligibilityStatus: userApps.length
