@@ -233,7 +233,24 @@ export function SystemLogsPage() {
                     </div>
                     {/* Message */}
                     <div className="col-span-7 text-white/80 leading-relaxed break-words flex items-start justify-between gap-2">
-                      <span>{log.message}</span>
+                      <div className="flex-1">
+                        {log.message.includes('(Status: Submitted)') && (
+                          <span className="inline-block mr-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                            SUBMITTED
+                          </span>
+                        )}
+                        {log.message.includes('(Status: Failed)') && (
+                          <span className="inline-block mr-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-500/20 text-red-300 border border-red-500/40">
+                            FAILED
+                          </span>
+                        )}
+                        {log.source === 'AI' && (
+                          <span className="inline-block mr-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                            AI QUERY
+                          </span>
+                        )}
+                        <span>{log.message}</span>
+                      </div>
                       {isExpanded
                         ? <ChevronUp className="w-3 h-3 text-white/30 shrink-0 mt-0.5" />
                         : <ChevronDown className="w-3 h-3 text-white/20 shrink-0 mt-0.5" />
@@ -242,9 +259,14 @@ export function SystemLogsPage() {
                   </div>
                   {/* Expanded Details */}
                   {isExpanded && (
-                    <div className="px-4 pb-3 pt-0 text-[10px] text-white/40 border-t border-white/10 bg-white/5">
-                      <p className="font-mono leading-relaxed">{log.details}</p>
-                      <p className="font-mono mt-0.5 text-white/20">Log ID: #{log.id} | Source: {log.source}</p>
+                    <div className="px-4 pb-3 pt-2 text-[11px] text-white/70 border-t border-white/10 bg-white/5 space-y-1.5 font-mono">
+                      <div className="whitespace-pre-wrap leading-relaxed p-2.5 bg-black/40 rounded border border-white/10 text-emerald-200/90">
+                        {log.details || log.message}
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] text-white/30 pt-1">
+                        <span>Log ID: #{log.id}</span>
+                        <span>Source: {log.source} &bull; Timestamp: {new Date(log.timestamp).toLocaleString('en-IN')}</span>
+                      </div>
                     </div>
                   )}
                 </div>

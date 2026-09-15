@@ -10,7 +10,10 @@ import sys
 from typing import List, Dict, Any, Optional, Sequence
 
 from dotenv import load_dotenv
-from google import genai
+try:
+    from google import genai
+except ImportError:
+    genai = None
 
 # Ensure imports resolve correctly
 sys.path.append(

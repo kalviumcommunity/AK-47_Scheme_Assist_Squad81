@@ -73,8 +73,8 @@ export function AIAssistantPage() {
       recordActivity({
         level: response.status === 'answered' ? 'SUCCESS' : 'WARN',
         source: 'AI',
-        message: `User asked: ${text}`,
-        details: `User query:\n${text}\n\nAI response:\n${response.answer || 'No answer returned.'}\n\nAnswer mode: ${response.answer_mode || 'general_ai'}\nSources: ${(response.sources || []).map((source) => source.source || source.scheme || 'Unknown').join(', ') || 'None'}`,
+        message: `AI Assistant Question Asked: "${text}"`,
+        details: `User Question:\n"${text}"\n\nAI Response:\n${response.answer || 'No answer returned.'}\n\nAnswer Mode: ${response.answer_mode || 'general_ai'}\nSources Cited: ${(response.sources || []).map((source) => source.source || source.scheme || 'Unknown').join(', ') || 'None'}`,
       });
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err) {
@@ -88,8 +88,8 @@ export function AIAssistantPage() {
       recordActivity({
         level: 'ERROR',
         source: 'AI',
-        message: `AI request failed for user query: ${text}`,
-        details: `User query:\n${text}\n\nError:\n${err.message || 'Unknown AI service error.'}`,
+        message: `AI Assistant Query Error: "${text}"`,
+        details: `User Question:\n"${text}"\n\nError Name: ${err.name || 'AIQueryError'}\nError Details: ${err.message || 'Unknown AI service error.'}`,
       });
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
