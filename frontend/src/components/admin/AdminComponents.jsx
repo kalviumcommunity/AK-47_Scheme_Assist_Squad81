@@ -573,6 +573,7 @@ export function CitizenManagementTable({ citizens }) {
           <thead>
             <tr className="border-b border-slate-border bg-slate-bg/70 text-slate-muted font-bold uppercase tracking-wider text-[10px]">
               <th className="py-3 px-4">Citizen Name</th>
+              <th className="py-3 px-4">Email</th>
               <th className="py-3 px-4">Location</th>
               <th className="py-3 px-4">Applications</th>
               <th className="py-3 px-4">Eligibility Category</th>
@@ -583,8 +584,8 @@ export function CitizenManagementTable({ citizens }) {
           <tbody className="divide-y divide-slate-100">
             {citizens.length === 0 && (
               <tr>
-                <td colSpan="6" className="py-10 text-center text-xs text-slate-muted">
-                  No citizens have registered or logged in yet.
+                <td colSpan="7" className="py-10 text-center text-xs text-slate-muted">
+                  No citizens have registered or logged in yet. Citizens will appear here automatically when they sign up or log in.
                 </td>
               </tr>
             )}
@@ -594,7 +595,10 @@ export function CitizenManagementTable({ citizens }) {
                   <span className="font-bold text-navy block">{c.name}</span>
                   <span className="text-[10px] text-slate-400 font-mono">{c.id}</span>
                 </td>
-                <td className="py-3 px-4 text-slate-500">{c.location}</td>
+                <td className="py-3 px-4">
+                  <span className="text-xs text-slate-600">{c.email || '—'}</span>
+                </td>
+                <td className="py-3 px-4 text-slate-500">{c.location || '—'}</td>
                 <td className="py-3 px-4 font-semibold text-slate-700">{c.applicationsCount}</td>
                 <td className="py-3 px-4 text-slate-600">{c.eligibilityStatus}</td>
                 <td className="py-3 px-4">
@@ -652,7 +656,7 @@ export function ApplicationManagementTable({ applications, onApprove, onReject }
               <tr key={app.id} className="hover:bg-slate-50 transition-colors">
                 <td className="py-3 px-4 font-mono font-bold text-navy">{app.id}</td>
                 <td className="py-3 px-4 font-semibold text-slate-700">{app.citizenName}</td>
-                <td className="py-3 px-4 text-slate-600">{app.scheme}</td>
+                <td className="py-3 px-4 text-slate-600">{app.schemeName || app.scheme || '—'}</td>
                 <td className="py-3 px-4 text-slate-500">{app.state}</td>
                 <td className="py-3 px-4 text-slate-500">{app.submittedDate}</td>
                 <td className="py-3 px-4">

@@ -10,7 +10,7 @@ export function AdminApplicationsPage() {
     loadApplications();
     const refresh = () => loadApplications();
     window.addEventListener('storage', refresh);
-    const interval = setInterval(refresh, 3000);
+    const interval = setInterval(refresh, 2000);
     return () => { window.removeEventListener('storage', refresh); clearInterval(interval); };
   }, []);
 

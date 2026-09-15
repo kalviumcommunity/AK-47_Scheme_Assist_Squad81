@@ -1,0 +1,219 @@
+{
+  "citizens": [
+    {
+      "id": "CIT-445786",
+      "name": "Mohammed Shammas Uddin",
+      "email": "shammas.uddin@example.com",
+      "phone": "+91 98765 43210",
+      "state": "Telangana",
+      "role": "citizen",
+      "registeredAt": "2026-09-14T10:00:00.000Z",
+      "lastLoginAt": "2026-09-15T07:15:00.000Z",
+      "status": "Active"
+    },
+    {
+      "id": "CIT-287799",
+      "name": "Shammas Uddin",
+      "email": "shammas@example.com",
+      "phone": "+91 98765 12345",
+      "state": "Telangana",
+      "role": "citizen",
+      "registeredAt": "2026-09-14T11:30:00.000Z",
+      "lastLoginAt": "2026-09-15T07:15:00.000Z",
+      "status": "Active"
+    },
+    {
+      "id": "CIT-445786",
+      "name": "Mohammed Shammas Uddin",
+      "email": "mohammed.shammasuddin.s81@kalvium.community",
+      "phone": "9866708665",
+      "state": "Telangana",
+      "role": "citizen",
+      "registeredAt": "2026-09-14T05:10:43.194Z",
+      "lastLoginAt": "2026-09-15T07:35:59.212Z",
+      "status": "Active",
+      "avatar": null
+    },
+    {
+      "id": "CIT-207799",
+      "name": "Shammas Uddin",
+      "email": "m.shammas2k6@gmail.com",
+      "phone": "9866708665",
+      "state": "Telangana",
+      "role": "citizen",
+      "registeredAt": "2026-09-14T15:10:40.702Z",
+      "lastLoginAt": "2026-09-15T07:35:35.978Z",
+      "status": "Active"
+    }
+  ],
+  "applications": [
+    {
+      "id": "APP-2026-21117",
+      "schemeId": "pm-kisan",
+      "schemeName": "PM-KISAN",
+      "benefit": "₹6,000 / Year",
+      "category": "Agriculture",
+      "submittedDate": "2026-09-11",
+      "citizenId": "CIT-117850",
+      "citizenEmail": "mohammed.shammasuddin.s81@kalvium.community",
+      "citizenName": "Mohammed Shammas Uddin",
+      "state": "Telangana",
+      "scheme": "PM-KISAN",
+      "status": "Approved",
+      "statusCode": "approved",
+      "currentStep": 2,
+      "totalSteps": 5,
+      "timeline": [
+        {
+          "step": "Application Submitted",
+          "date": "Just now",
+          "done": true
+        },
+        {
+          "step": "Documents Verification",
+          "date": "In progress",
+          "done": true
+        },
+        {
+          "step": "Nodal Officer Review",
+          "date": "2026-09-11",
+          "done": true
+        },
+        {
+          "step": "Department Approval",
+          "date": "Pending",
+          "done": true
+        },
+        {
+          "step": "DBT Benefit Credited",
+          "date": "Pending",
+          "done": true
+        }
+      ],
+      "reviewedAt": "2026-09-11T05:27:29.330Z"
+    },
+    {
+      "id": "APP-2026-36680",
+      "schemeId": "pm-awas-yojana",
+      "schemeName": "PMAY-Gramin & Urban",
+      "benefit": "Up to ₹2.67 Lakh Subsidy",
+      "category": "Housing",
+      "submittedDate": "2026-09-11",
+      "citizenId": "CIT-117850",
+      "citizenEmail": "mohammed.shammasuddin.s81@kalvium.community",
+      "citizenName": "Mohammed Shammas Uddin",
+      "state": "Telangana",
+      "scheme": "PMAY-Gramin & Urban",
+      "status": "Rejected",
+      "statusCode": "rejected",
+      "currentStep": 2,
+      "totalSteps": 5,
+      "timeline": [
+        {
+          "step": "Application Submitted",
+          "date": "Just now",
+          "done": true
+        },
+        {
+          "step": "Documents Verification",
+          "date": "In progress",
+          "done": true
+        },
+        {
+          "step": "Nodal Officer Review",
+          "date": "2026-09-14",
+          "done": true
+        },
+        {
+          "step": "Department Approval",
+          "date": "Pending",
+          "done": true
+        },
+        {
+          "step": "DBT Benefit Credited",
+          "date": "Pending",
+          "done": true
+        }
+      ],
+      "reviewedAt": "2026-09-14T12:27:05.364Z"
+    },
+    {
+      "id": "APP-2026-44581",
+      "citizenId": "CIT-445786",
+      "citizenName": "Mohammed Shammas Uddin",
+      "citizenEmail": "shammas.uddin@example.com",
+      "schemeId": "pm-kisan",
+      "schemeName": "PM-KISAN Samman Nidhi",
+      "category": "Agriculture & Farmers",
+      "benefit": "₹6,000 / year",
+      "state": "Telangana",
+      "phone": "+91 98765 43210",
+      "status": "Under Review",
+      "statusCode": "under_review",
+      "submittedDate": "2026-09-14",
+      "currentStep": 2,
+      "totalSteps": 5,
+      "timeline": [
+        {
+          "step": "Application Submitted",
+          "date": "14 Sep 2026",
+          "done": true
+        },
+        {
+          "step": "Nodal Officer Review",
+          "date": "In Progress",
+          "done": false
+        },
+        {
+          "step": "Sanction Approval",
+          "date": "Pending",
+          "done": false
+        },
+        {
+          "step": "DBT Benefit Credited",
+          "date": "Pending",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "APP-2026-44582",
+      "citizenId": "CIT-445786",
+      "citizenName": "Mohammed Shammas Uddin",
+      "citizenEmail": "shammas.uddin@example.com",
+      "schemeId": "ayushman-bharat",
+      "schemeName": "Ayushman Bharat (PM-JAY)",
+      "category": "Healthcare & Insurance",
+      "benefit": "₹5,00,000 / year health cover",
+      "state": "Telangana",
+      "phone": "+91 98765 43210",
+      "status": "Pending",
+      "statusCode": "pending",
+      "submittedDate": "2026-09-15",
+      "currentStep": 2,
+      "totalSteps": 5,
+      "timeline": [
+        {
+          "step": "Application Submitted",
+          "date": "15 Sep 2026",
+          "done": true
+        },
+        {
+          "step": "Nodal Officer Review",
+          "date": "In Progress",
+          "done": false
+        },
+        {
+          "step": "Sanction Approval",
+          "date": "Pending",
+          "done": false
+        },
+        {
+          "step": "DBT Benefit Credited",
+          "date": "Pending",
+          "done": false
+        }
+      ]
+    }
+  ]
+}
