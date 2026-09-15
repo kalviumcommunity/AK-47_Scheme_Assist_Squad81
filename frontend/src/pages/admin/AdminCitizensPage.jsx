@@ -2,13 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { CitizenManagementTable } from '../../components/admin/AdminComponents';
 import { getRegisteredCitizens } from '../../context/AuthContext';
 import { getAllApplications } from '../../services/applicationService';
+import { fetchSharedCitizens } from '../../services/sharedStoreService';
 
 export function AdminCitizensPage() {
   const [citizens, setCitizens] = useState([]);
 
   const loadCitizens = async () => {
-    const users = getRegisteredCitizens();
-    const applications = await getAllApplications();
+    const [users, applications] = await Promise.all([
+      fetchSharedCitizens().catch(() => getRegisteredCitizens()),
+      getAllApplications().catch(() => []),
+    ]);
 
     // Map existing users
     const map = new Map();
@@ -51,6 +54,7 @@ export function AdminCitizensPage() {
       return {
         id: user.id || user.email || `CIT-${Date.now().toString().slice(-6)}`,
         name: user.name || (user.email ? user.email.split('@')[0] : 'Citizen'),
+        email: user.email || '',
         location: user.state || 'Not provided',
         applicationsCount: userApplications.length,
         eligibilityStatus: userApplications.length
@@ -68,7 +72,7 @@ export function AdminCitizensPage() {
     loadCitizens();
     const refresh = () => loadCitizens();
     window.addEventListener('storage', refresh);
-    const interval = setInterval(refresh, 5000);
+    const interval = setInterval(refresh, 2500);
     return () => { window.removeEventListener('storage', refresh); clearInterval(interval); };
   }, []);
 

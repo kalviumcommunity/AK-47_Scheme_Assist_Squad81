@@ -33,6 +33,41 @@ export function ApplicationPage() {
 
   const scheme = SCHEMES.find((s) => s.id === id) || SCHEMES[0];
 
+  const defaultDocs = (scheme.requiredDocuments || scheme.documentsRequired || ['Aadhaar Card', 'Bank Passbook']).map((doc, idx) => ({
+    id: `doc-${idx}-${Date.now()}`,
+    name: doc,
+    category: doc.includes('Aadhaar') ? 'Identity Proof' : doc.includes('Bank') ? 'Financial Record' : 'Eligibility Record',
+    fileName: `${doc.replace(/\s+/g, '_')}_Verified.pdf`,
+    fileSize: `${(0.8 + (idx * 0.4)).toFixed(1)} MB`,
+    status: 'Verified',
+    verified: true,
+    source: 'DigiLocker / Self-Attested',
+    uploadDate: new Date().toISOString().split('T')[0],
+  }));
+
+  const [attachedDocs, setAttachedDocs] = useState(defaultDocs);
+
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const newFiles = files.map((file, i) => ({
+      id: `custom-doc-${Date.now()}-${i}`,
+      name: file.name.replace(/\.[^/.]+$/, ""),
+      category: 'Applicant Uploaded Document',
+      fileName: file.name,
+      fileSize: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+      status: 'Uploaded',
+      verified: true,
+      source: 'Direct Upload',
+      uploadDate: new Date().toISOString().split('T')[0],
+    }));
+    setAttachedDocs((prev) => [...prev, ...newFiles]);
+  };
+
+  const handleRemoveDoc = (docId) => {
+    setAttachedDocs((prev) => prev.filter((d) => d.id !== docId));
+  };
+
   const handleSubmit = async () => {
     if (isSubmitting || submittedApplication) return;
     setIsSubmitting(true);
@@ -48,6 +83,7 @@ export function ApplicationPage() {
         schemeName: scheme.name,
         category: scheme.category,
         benefit: scheme.benefit,
+        documents: attachedDocs,
       });
       setSubmittedApplication(application);
       setCurrentStep(5);
