@@ -9,6 +9,7 @@ import {
   updateSharedApplicationStatus as apiUpdateStatus,
   registerSharedCitizen,
 } from './sharedStoreService';
+import { recordActivity } from './activityLogService';
 
 const STORAGE_KEY = 'schemeassist_local_applications';
 
@@ -206,7 +207,15 @@ export function generateDefaultDocuments(schemeName = '', citizenName = 'Applica
 export async function submitApplication(applicationData) {
   try {
     const response = await apiClient.post('/applications', applicationData);
-    if (response.data) return response.data;
+    if (response.data) {
+      recordActivity({
+        level: 'SUCCESS',
+        source: 'APP',
+        message: `Scheme application submitted: ${response.data.id || applicationData.schemeName || 'Application'}`,
+        details: `Citizen: ${applicationData.citizenName || 'Citizen'} | Scheme: ${applicationData.schemeName || 'Not provided'}`,
+      });
+      return response.data;
+    }
   } catch (error) {
     // Generate standard simulated application response if backend endpoint not active
   }
@@ -274,6 +283,13 @@ export async function submitApplication(applicationData) {
   // Sync to shared backend server for multi-admin and cross-device visibility
   saveSharedApplication(newApp).catch(() => {});
 
+  recordActivity({
+    level: 'SUCCESS',
+    source: 'APP',
+    message: `Scheme application submitted: ${newApp.id}`,
+    details: `Citizen: ${newApp.citizenName} | Scheme: ${newApp.schemeName} | Documents: ${(newApp.documents || []).length}`,
+  });
+
   return newApp;
 }
 
@@ -282,6 +298,7 @@ export async function updateApplicationStatus(applicationId, status) {
   apiUpdateStatus(applicationId, status).catch(() => {});
 
   const applications = getStoredApplications();
+  const currentApplication = applications.find((application) => application.id === applicationId);
   const updated = applications.map((application) => (
     application.id === applicationId
       ? {
@@ -298,7 +315,14 @@ export async function updateApplicationStatus(applicationId, status) {
       : application
   ));
   saveStoredApplications(updated);
-  return updated.find((application) => application.id === applicationId) || null;
+  const updatedApplication = updated.find((application) => application.id === applicationId) || null;
+  recordActivity({
+    level: status === 'Rejected' ? 'WARN' : 'SUCCESS',
+    source: 'APP',
+    message: `Application ${applicationId} status changed to ${status}`,
+    details: `Citizen: ${updatedApplication?.citizenName || currentApplication?.citizenName || 'Citizen'} | Previous status: ${currentApplication?.status || 'Pending'}`,
+  });
+  return updatedApplication;
 }
 
 export default {

@@ -46,14 +46,14 @@
       "status": "Active"
     },
     {
-      "id": "CIT-281040",
+      "id": "CIT-144038",
       "name": "Kode Deepak",
       "email": "kode.deepak.s81@kalvium.community",
       "phone": "+919392889720",
       "state": "Andhra Pradesh",
       "role": "citizen",
-      "registeredAt": "2026-09-11T08:52:54.317Z",
-      "lastLoginAt": "2026-09-15T07:38:44.349Z",
+      "registeredAt": "2026-09-15T09:06:25.974Z",
+      "lastLoginAt": "2026-09-15T09:06:26.305Z",
       "status": "Active",
       "avatar": null
     },
@@ -67,9 +67,159 @@
       "registeredAt": "2026-09-15T08:30:03.021Z",
       "lastLoginAt": "2026-09-15T08:30:03.535Z",
       "status": "Active"
+    },
+    {
+      "id": "CIT-582675",
+      "name": "afbfhjkl",
+      "email": "dghjkl@fghhjj",
+      "phone": "6789004333",
+      "state": "Uttar Pradesh",
+      "role": "citizen",
+      "registeredAt": "2026-09-15T09:15:35.607Z",
+      "lastLoginAt": "2026-09-15T09:15:35.948Z",
+      "status": "Active"
+    },
+    {
+      "id": "CIT-193722",
+      "name": "Kode Deepak",
+      "email": "kodedeepaks81@gmail.com",
+      "phone": "+919392889720",
+      "state": "Andhra Pradesh",
+      "role": "citizen",
+      "registeredAt": "2026-09-15T09:18:34.377Z",
+      "lastLoginAt": "2026-09-15T09:18:34.461Z",
+      "status": "Active"
     }
   ],
   "applications": [
+    {
+      "id": "APP-2026-11252",
+      "schemeId": "pm-kisan",
+      "schemeName": "PM-KISAN",
+      "benefit": "₹6,000 / Year",
+      "category": "Agriculture",
+      "submittedDate": "2026-09-15",
+      "citizenId": "CIT-144038",
+      "citizenEmail": "kode.deepak.s81@kalvium.community",
+      "citizenName": "Kode Deepak",
+      "state": "Andhra Pradesh",
+      "phone": "+919392889720",
+      "scheme": "PM-KISAN",
+      "status": "Approved",
+      "statusCode": "approved",
+      "currentStep": 2,
+      "totalSteps": 5,
+      "documents": [
+        {
+          "id": "doc-0-1789463343759",
+          "name": "Aadhaar Card (Mandatory)",
+          "category": "Identity Proof",
+          "fileName": "Aadhaar_Card_(Mandatory)_Verified.pdf",
+          "fileSize": "0.8 MB",
+          "status": "Verified",
+          "verified": true,
+          "source": "DigiLocker / Self-Attested",
+          "uploadDate": "2026-09-15"
+        },
+        {
+          "id": "doc-1-1789463343759",
+          "name": "Landholding Ownership Document / Khasra-Khatauni Record",
+          "category": "Eligibility Record",
+          "fileName": "Landholding_Ownership_Document_/_Khasra-Khatauni_Record_Verified.pdf",
+          "fileSize": "1.2 MB",
+          "status": "Verified",
+          "verified": true,
+          "source": "DigiLocker / Self-Attested",
+          "uploadDate": "2026-09-15"
+        },
+        {
+          "id": "doc-2-1789463343759",
+          "name": "Bank Account Passbook / Statement linked with Aadhaar",
+          "category": "Identity Proof",
+          "fileName": "Bank_Account_Passbook_/_Statement_linked_with_Aadhaar_Verified.pdf",
+          "fileSize": "1.6 MB",
+          "status": "Verified",
+          "verified": true,
+          "source": "DigiLocker / Self-Attested",
+          "uploadDate": "2026-09-15"
+        },
+        {
+          "id": "doc-3-1789463343759",
+          "name": "Active Mobile Number",
+          "category": "Eligibility Record",
+          "fileName": "Active_Mobile_Number_Verified.pdf",
+          "fileSize": "2.0 MB",
+          "status": "Verified",
+          "verified": true,
+          "source": "DigiLocker / Self-Attested",
+          "uploadDate": "2026-09-15"
+        }
+      ],
+      "timeline": [
+        {
+          "step": "Application Submitted",
+          "date": "Just now",
+          "done": true
+        },
+        {
+          "step": "Nodal Officer Review",
+          "date": "In Progress",
+          "done": true
+        },
+        {
+          "step": "Sanction Approval",
+          "date": "2026-09-15",
+          "done": true
+        },
+        {
+          "step": "DBT Benefit Credited",
+          "date": "Pending",
+          "done": true
+        }
+      ],
+      "reviewedAt": "2026-09-15T09:09:53.399Z"
+    },
+    {
+      "id": "APP-2026-24719",
+      "schemeId": "ayushman-bharat",
+      "schemeName": "Ayushman Bharat",
+      "benefit": "₹5 Lakh / Family / Year",
+      "category": "Healthcare",
+      "submittedDate": "2026-09-15",
+      "citizenId": "CIT-126411",
+      "citizenEmail": "kode.deepak.s81@kalvium.community",
+      "citizenName": "Kode Deepak",
+      "state": "Andhra Pradesh",
+      "phone": "+919392889720",
+      "scheme": "Ayushman Bharat",
+      "status": "Approved",
+      "statusCode": "approved",
+      "currentStep": 2,
+      "totalSteps": 5,
+      "timeline": [
+        {
+          "step": "Application Submitted",
+          "date": "Just now",
+          "done": true
+        },
+        {
+          "step": "Nodal Officer Review",
+          "date": "In Progress",
+          "done": true
+        },
+        {
+          "step": "Sanction Approval",
+          "date": "2026-09-15",
+          "done": true
+        },
+        {
+          "step": "DBT Benefit Credited",
+          "date": "Pending",
+          "done": true
+        }
+      ],
+      "reviewedAt": "2026-09-15T08:15:49.968Z"
+    },
     {
       "id": "APP-2026-65305",
       "schemeId": "ayushman-bharat",
@@ -83,8 +233,8 @@
       "state": "Telangana",
       "phone": "9866708665",
       "scheme": "Ayushman Bharat",
-      "status": "Pending",
-      "statusCode": "pending",
+      "status": "Approved",
+      "statusCode": "approved",
       "currentStep": 2,
       "totalSteps": 5,
       "documents": [
@@ -131,19 +281,20 @@
         {
           "step": "Nodal Officer Review",
           "date": "In Progress",
-          "done": false
+          "done": true
         },
         {
           "step": "Sanction Approval",
-          "date": "Pending",
-          "done": false
+          "date": "2026-09-15",
+          "done": true
         },
         {
           "step": "DBT Benefit Credited",
           "date": "Pending",
-          "done": false
+          "done": true
         }
-      ]
+      ],
+      "reviewedAt": "2026-09-15T08:58:38.020Z"
     },
     {
       "id": "APP-2026-21117",

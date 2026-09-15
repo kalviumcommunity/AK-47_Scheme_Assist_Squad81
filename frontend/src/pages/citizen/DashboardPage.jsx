@@ -83,7 +83,7 @@ export function DashboardPage() {
             <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-primary-light">
               <span className="h-2 w-2 rounded-full bg-gov-success" /> Your welfare workspace
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">Good morning, {citizenName}</h1>
+            <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">Welcome, {citizenName}</h1>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-300">Your next best step is ready. Review your matched schemes, complete your profile, and move closer to the benefits you qualify for.</p>
           </div>
           <div className="relative flex flex-wrap items-center gap-2">
