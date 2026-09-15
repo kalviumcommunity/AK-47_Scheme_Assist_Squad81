@@ -39,7 +39,7 @@ export function ApplicationTrackingPage() {
 
   const totalCount = applications.length;
   const approvedCount = applications.filter((a) => a.status === 'Approved').length;
-  const inProgressCount = applications.filter((a) => a.status === 'In Progress' || a.status === 'Under Review').length;
+  const inProgressCount = applications.filter((a) => ['In Progress', 'Under Review', 'Verified'].includes(a.status)).length;
   const pendingCount = applications.filter((a) => a.status === 'Pending').length;
 
   const getStatusBadge = (status) => {
@@ -48,6 +48,7 @@ export function ApplicationTrackingPage() {
         return <Badge variant="success" size="sm" dot>Approved</Badge>;
       case 'Under Review':
       case 'In Progress':
+      case 'Verified':
         return <Badge variant="primary" size="sm" dot>{status}</Badge>;
       case 'Rejected':
         return <Badge variant="danger" size="sm" dot>Rejected</Badge>;

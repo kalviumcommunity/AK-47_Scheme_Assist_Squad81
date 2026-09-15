@@ -291,8 +291,8 @@ export async function updateApplicationStatus(applicationId, status) {
         reviewedAt: new Date().toISOString(),
         timeline: (application.timeline || []).map((stage, index) => ({
           ...stage,
-          done: status === 'Approved' ? true : index === 0 || stage.done,
-          date: index === 2 && status !== 'Under Review' ? new Date().toISOString().split('T')[0] : stage.date,
+          done: status === 'Approved' ? true : index === 0 || (status === 'Verified' && index < 2) || stage.done,
+          date: index === 1 && status === 'Verified' ? new Date().toISOString().split('T')[0] : stage.date,
         })),
       }
       : application

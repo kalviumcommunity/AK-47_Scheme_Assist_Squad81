@@ -6,6 +6,7 @@ import {
   Clock,
   TrendingUp,
   CheckCircle,
+  BadgeCheck,
   XCircle,
   Edit2,
   Trash2,
@@ -623,13 +624,26 @@ export function CitizenManagementTable({ citizens }) {
   );
 }
 
-export function ApplicationManagementTable({ applications, onApprove, onReject }) {
+export function ApplicationManagementTable({ applications, onVerify, onApprove, onReject }) {
+  const [selectedApplication, setSelectedApplication] = useState(null);
+
+  const openVerificationReview = (application) => {
+    setSelectedApplication(application);
+  };
+
+  const confirmVerification = async () => {
+    if (!selectedApplication) return;
+    await onVerify(selectedApplication.id);
+    setSelectedApplication(null);
+  };
+
   return (
-    <Card>
-      <div className="pb-4 border-b border-slate-border mb-4">
-        <h3 className="text-sm font-bold text-navy">Application Review & Verification Queue</h3>
-        <p className="text-xs text-slate-muted">Nodal approval queue for Direct Benefit Transfer sanctioning</p>
-      </div>
+    <>
+      <Card>
+        <div className="pb-4 border-b border-slate-border mb-4">
+          <h3 className="text-sm font-bold text-navy">Application Review & Verification Queue</h3>
+          <p className="text-xs text-slate-muted">Review citizen details and documents before verification and final approval.</p>
+        </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs text-slate-text border-collapse">
@@ -680,6 +694,25 @@ export function ApplicationManagementTable({ applications, onApprove, onReject }
                   {(!app.status || app.status.toLowerCase() === 'pending' || app.status.toLowerCase().includes('review')) ? (
                     <div className="flex items-center justify-end gap-2">
                       <Button
+                        variant="primary"
+                        size="sm"
+                        icon={BadgeCheck}
+                        onClick={() => openVerificationReview(app)}
+                      >
+                        Verify
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        icon={XCircle}
+                        onClick={() => onReject(app.id)}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  ) : app.status === 'Verified' ? (
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
                         variant="success"
                         size="sm"
                         icon={CheckCircle}
@@ -697,28 +730,7 @@ export function ApplicationManagementTable({ applications, onApprove, onReject }
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-end gap-2">
-                      <span className="text-[11px] font-semibold text-slate-500">{app.status}</span>
-                      <span className="text-slate-200">|</span>
-                      <button
-                        type="button"
-                        onClick={() => onApprove(app.id)}
-                        className={`text-[11px] font-semibold transition-colors ${
-                          app.status === 'Approved' ? 'text-emerald-700 underline font-bold' : 'text-slate-400 hover:text-emerald-600'
-                        }`}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onReject(app.id)}
-                        className={`text-[11px] font-semibold transition-colors ${
-                          app.status === 'Rejected' ? 'text-red-700 underline font-bold' : 'text-slate-400 hover:text-red-600'
-                        }`}
-                      >
-                        Reject
-                      </button>
-                    </div>
+                    <span className="text-[11px] font-semibold text-slate-500">{app.status}</span>
                   )}
                 </td>
               </tr>
@@ -726,6 +738,68 @@ export function ApplicationManagementTable({ applications, onApprove, onReject }
           </tbody>
         </table>
       </div>
-    </Card>
+      </Card>
+
+      {selectedApplication && (
+        <Modal
+          isOpen={true}
+          onClose={() => setSelectedApplication(null)}
+          title={`Verify Application: ${selectedApplication.id}`}
+          subtitle="Review the applicant details and attached documents before marking this application verified."
+          maxWidth="max-w-2xl"
+        >
+          <div className="space-y-5">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                ['Applicant name', selectedApplication.citizenName],
+                ['Email', selectedApplication.citizenEmail],
+                ['Phone', selectedApplication.phone],
+                ['State', selectedApplication.state],
+                ['Scheme', selectedApplication.schemeName || selectedApplication.scheme],
+                ['Submitted date', selectedApplication.submittedDate],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-btn border border-slate-border bg-slate-bg p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-muted">{label}</p>
+                  <p className="mt-1 text-sm font-semibold text-navy">{value || 'Not provided'}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-btn border border-slate-border p-4">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                <h4 className="text-sm font-bold text-navy">Application documents</h4>
+              </div>
+              <div className="mt-3 space-y-2">
+                {(selectedApplication.documents || selectedApplication.documentsRequired || []).length > 0 ? (
+                  (selectedApplication.documents || selectedApplication.documentsRequired).map((document, index) => (
+                    <div key={`${document}-${index}`} className="flex items-center justify-between rounded-btn bg-slate-bg px-3 py-2 text-xs">
+                      <span className="font-medium text-slate-700">{typeof document === 'string' ? document : document.name || document.filename}</span>
+                      <span className="font-semibold text-gov-success">Submitted</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-muted">No document list was attached to this application record. Check the citizen document registry before verifying.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2 rounded-btn border border-gov-warning/30 bg-gov-warning-light p-3 text-xs text-slate-700">
+              <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-gov-warning" />
+              <p>Verify only after the citizen details, scheme eligibility information, and supporting documents have been checked. Approval will become available after verification.</p>
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-slate-border pt-4">
+              <Button variant="outline" size="sm" onClick={() => setSelectedApplication(null)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="sm" icon={BadgeCheck} onClick={confirmVerification}>
+                Verify application
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 }
