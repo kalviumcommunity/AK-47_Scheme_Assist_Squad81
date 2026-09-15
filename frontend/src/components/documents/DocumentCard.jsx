@@ -16,6 +16,8 @@ import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 import { uploadDocument } from '../../services/api';
 
+import { recordActivity } from '../../services/activityLogService';
+
 export function DocumentCard({ doc, onReplace, onView, onDelete }) {
   const isVerified = doc.verified || doc.status === 'Verified';
 
@@ -97,6 +99,14 @@ export function UploadModal({ isOpen, onClose, onUploadSuccess }) {
     try {
       const res = await uploadDocument(file);
       setSuccessResult(res);
+
+      recordActivity({
+        level: 'SUCCESS',
+        source: 'SYSTEM',
+        message: `Document Uploaded: ${file.name} (Status: Submitted)`,
+        details: `Filename: ${file.name}\nSize: ${(file.size / 1024).toFixed(1)} KB\nStatus: Submitted & Indexed\nKnowledge-base Chunks Generated: ${res?.summary?.chunks || res?.chunks || 0}`,
+      });
+
       if (onUploadSuccess) {
         onUploadSuccess({
           name: file.name.replace(/\.[^/.]+$/, "").replace(/_/g, " "),
@@ -109,7 +119,15 @@ export function UploadModal({ isOpen, onClose, onUploadSuccess }) {
         });
       }
     } catch (err) {
-      setError(err.message || 'Upload and indexing failed.');
+      const errorMsg = err.message || 'Upload and indexing failed.';
+      setError(errorMsg);
+
+      recordActivity({
+        level: 'ERROR',
+        source: 'SYSTEM',
+        message: `Document Upload Error: ${file.name} (Status: Failed)`,
+        details: `Filename: ${file.name}\nStatus: Failed / Not Submitted\nError Name: ${err.name || 'DocumentUploadError'}\nError Details: ${errorMsg}`,
+      });
     } finally {
       setIsUploading(false);
     }

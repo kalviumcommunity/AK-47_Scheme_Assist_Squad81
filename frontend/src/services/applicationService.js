@@ -3,12 +3,15 @@
  * Manages scheme applications, multi-step submissions, and status tracking.
  */
 import apiClient from './api';
+<<<<<<< HEAD
 import {
   fetchSharedApplications,
   saveSharedApplication,
   updateSharedApplicationStatus as apiUpdateStatus,
   registerSharedCitizen,
 } from './sharedStoreService';
+=======
+>>>>>>> 65df2d360fa9e2a286252205b7e8d1de43fc5502
 import { recordActivity } from './activityLogService';
 
 const STORAGE_KEY = 'schemeassist_local_applications';
@@ -206,6 +209,7 @@ export function generateDefaultDocuments(schemeName = '', citizenName = 'Applica
  */
 export async function submitApplication(applicationData) {
   try {
+<<<<<<< HEAD
     const response = await apiClient.post('/applications', applicationData);
     if (response.data) {
       recordActivity({
@@ -219,7 +223,70 @@ export async function submitApplication(applicationData) {
   } catch (error) {
     // Generate standard simulated application response if backend endpoint not active
   }
+=======
+    try {
+      const response = await apiClient.post('/applications', applicationData);
+      if (response.data) {
+        const app = response.data;
+        recordActivity({
+          level: 'SUCCESS',
+          source: 'APP',
+          message: `Scheme Application Submitted: ${app.schemeName || applicationData.schemeName} (Status: Submitted)`,
+          details: `Application ID: ${app.id}\nScheme: ${app.schemeName || applicationData.schemeName}\nApplicant: ${app.citizenName || applicationData.citizenName} (${app.citizenEmail || applicationData.citizenEmail || 'No email'})\nStatus: Submitted / Pending Review\nDisbursal Benefit: ${app.benefit || applicationData.benefit || 'Welfare Benefit'}`,
+        });
+        return app;
+      }
+    } catch (error) {
+      // Backend request failed or inactive, fallback to local application storage
+    }
+>>>>>>> 65df2d360fa9e2a286252205b7e8d1de43fc5502
 
+    const newApp = {
+      id: applicationData.id || `APP-2026-${Math.floor(10000 + Math.random() * 90000)}`,
+      schemeId: applicationData.schemeId || 'general-scheme',
+      schemeName: applicationData.schemeName || 'Government Welfare Scheme',
+      benefit: applicationData.benefit || 'Welfare Support',
+      category: applicationData.category || 'General',
+      submittedDate: new Date().toISOString().split('T')[0],
+      citizenId: applicationData.citizenId || `CIT-${Math.floor(100000 + Math.random() * 900000)}`,
+      citizenEmail: applicationData.citizenEmail || '',
+      citizenName: applicationData.citizenName || 'Citizen',
+      state: applicationData.state || '',
+      phone: applicationData.phone || '',
+      scheme: applicationData.schemeName || 'Government Welfare Scheme',
+      status: applicationData.status || 'Pending',
+      statusCode: (applicationData.status || 'pending').toLowerCase().replace(/\s+/g, '_'),
+      currentStep: 2,
+      totalSteps: 5,
+      timeline: [
+        { step: 'Application Submitted', date: 'Just now', done: true },
+        { step: 'Nodal Officer Review', date: 'In Progress', done: false },
+        { step: 'Sanction Approval', date: 'Pending', done: false },
+        { step: 'DBT Benefit Credited', date: 'Pending', done: false },
+      ],
+      ...applicationData,
+    };
+
+    // Register or update applicant citizen in users database so they appear in Citizen Registry
+    try {
+      const usersRaw = localStorage.getItem('schemeassist_users_db');
+      const usersDb = usersRaw ? JSON.parse(usersRaw) : {};
+      const key = (newApp.citizenEmail || newApp.citizenId || newApp.citizenName || '').toLowerCase();
+      if (key && !usersDb[key]) {
+        usersDb[key] = {
+          id: newApp.citizenId,
+          name: newApp.citizenName,
+          email: newApp.citizenEmail,
+          phone: newApp.phone || '',
+          state: newApp.state || 'Not provided',
+          role: 'citizen',
+          registeredAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
+        };
+        localStorage.setItem('schemeassist_users_db', JSON.stringify(usersDb));
+      }
+    } catch {
+      // ignore
   const applicantDocs = Array.isArray(applicationData.documents) && applicationData.documents.length > 0
     ? applicationData.documents
     : generateDefaultDocuments(applicationData.schemeName, applicationData.citizenName);
@@ -272,14 +339,29 @@ export async function submitApplication(applicationData) {
       localStorage.setItem('schemeassist_users_db', JSON.stringify(usersDb));
       registerSharedCitizen(citizenRecord).catch(() => {});
     }
-  } catch {
-    // ignore
+
+    const list = getStoredApplications();
+    const updated = [newApp, ...list];
+    saveStoredApplications(updated);
+
+    recordActivity({
+      level: 'SUCCESS',
+      source: 'APP',
+      message: `Scheme Application Submitted: ${newApp.schemeName} (Status: Submitted)`,
+      details: `Application ID: ${newApp.id}\nScheme: ${newApp.schemeName}\nApplicant: ${newApp.citizenName} (${newApp.citizenEmail || 'No email'})\nStatus: Submitted / Pending Review\nDisbursal Benefit: ${newApp.benefit}`,
+    });
+
+    return newApp;
+  } catch (err) {
+    const errorMsg = err.message || 'Application submission failed.';
+    recordActivity({
+      level: 'ERROR',
+      source: 'APP',
+      message: `Scheme Application Failed: ${applicationData.schemeName || 'Scheme'} (Status: Failed)`,
+      details: `Scheme: ${applicationData.schemeName || 'Unknown Scheme'}\nApplicant: ${applicationData.citizenName || 'Citizen'}\nStatus: Failed / Rejected\nError Name: ${err.name || 'ApplicationSubmissionError'}\nError Details: ${errorMsg}`,
+    });
+    throw err;
   }
-
-  const list = getStoredApplications();
-  const updated = [newApp, ...list];
-  saveStoredApplications(updated);
-
   // Sync to shared backend server for multi-admin and cross-device visibility
   saveSharedApplication(newApp).catch(() => {});
 
